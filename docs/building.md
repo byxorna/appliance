@@ -31,10 +31,13 @@ When you run `make shell` or `make kas-shell`, the Makefile bind-mounts:
 | `~/.cache/reterminal-hifi-builder/downloads` | `/workspace/downloads` | Yocto `DL_DIR` — fetched source tarballs |
 | `~/.cache/reterminal-hifi-builder/sstate` | `/workspace/sstate-cache` | Yocto `SSTATE_DIR` — shared state cache |
 | `~/.cache/reterminal-hifi-builder/repos` | `/workspace/repos` | `KAS_REPO_REF_DIR` — git reference clones for upstream layers |
+| Named volume `reterminal-hifi-tmpdir` | `/workspace/build/tmp` | Yocto `TMPDIR` — case-sensitive filesystem for build artifacts |
 
 All cache directories are created automatically. They persist across container runs so you don't re-fetch or re-compile unchanged packages.
 
 The repo reference cache (`KAS_REPO_REF_DIR`) stores bare git clones of upstream layers. When kas needs a repo, it clones using git's `--reference` mechanism against this cache, making subsequent clones near-instant.
+
+The build's `TMPDIR` uses a named container volume instead of a bind mount because macOS filesystems (HFS+/APFS) are case-insensitive, which Yocto rejects. The named volume lives on the Podman VM's case-sensitive ext4 filesystem and persists across container runs for incremental builds.
 
 ## Running a full build
 
@@ -49,7 +52,7 @@ kas shell kas/reterminal-hifi.yml
 bitbake core-image-minimal
 ```
 
-> **Note:** As of Phase 0, upstream layer SRCREVs are placeholder stubs (`TODO-*`). A real build will not succeed until Phase 1 resolves them.
+> **Note:** Upstream SRCREVs are pinned in `kas/reterminal-hifi.yml`. See `docs/layers.md` for the pinned versions table.
 
 ## Cache management
 
@@ -61,7 +64,7 @@ All caches live under `~/.cache/reterminal-hifi-builder/`:
 | `sstate/` | Yocto shared state | Yes — rebuild will be slower but correct |
 | `repos/` | Bare git reference clones of upstream layers | Yes — repos will be re-cloned |
 
-`make clean` removes the container image **and** the entire cache directory, giving you a true clean slate.
+`make clean` removes the container image, the named TMPDIR volume, **and** the entire cache directory, giving you a true clean slate.
 
 To remove only the caches without deleting the container image:
 

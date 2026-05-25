@@ -216,6 +216,6 @@ After scaffolding:
 
 ### Follow-ups (not Phase 0 acceptance, deferred to Phase 1 entry)
 
-- [ ] Resolve real SRCREVs for every layer in `kas/reterminal-hifi.yml`
+- [x] Resolve real SRCREVs for every layer in `kas/reterminal-hifi.yml` (done 2026-05-25, commit b5dc9e3)
 - [ ] Decide whether to mirror upstream sources before first real build (cheap insurance against a vendor takedown; one-evening task)
-- [ ] Consider switching `git://` URLs to `https://` if git protocol remains blocked in the Podman container
+- [x] Consider switching `git://` URLs to `https://` if git protocol remains blocked in the Podman container (done 2026-05-25 — git protocol is dead server-side)

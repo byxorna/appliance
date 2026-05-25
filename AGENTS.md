@@ -73,7 +73,9 @@ poky (scarthgap)
   meta-clang (scarthgap, required by meta-chromium)
   meta-browser/meta-chromium (scarthgap)
   meta-rauc (scarthgap)
-  meta-rauc-community (scarthgap)
+  meta-rauc-community/meta-rauc-raspberrypi (scarthgap)
+  meta-lts-mixins (scarthgap/rust — backported Rust for Chromium)
+  meta-lts-mixins (scarthgap/u-boot — backported U-Boot for RAUC)
   meta-kiosk-os (custom — platform)
   meta-kiosk-app-feishin (custom — Feishin app)
 ```
@@ -97,12 +99,14 @@ All upstream layers are pinned by SRCREV in `kas/reterminal-hifi.yml`. Never use
 - **eMMC boot requires `rootwait`** in kernel cmdline. The controller enumerates asynchronously.
 - **No eMMC boot0/boot1.** BCM2711 EEPROM can't read them. Everything boots from user partition `mmcblk0`.
 - **RPi firmware watchdog is 16s.** U-Boot must pet or disable it within 16s of cold start.
+- **TMPDIR on named volume:** macOS filesystems are case-insensitive, which Yocto rejects. TMPDIR is mounted on a named Podman volume (`reterminal-hifi-tmpdir`) so it lives on the VM's case-sensitive ext4 filesystem. Persists across runs; cleaned by `make clean`.
 - **Container engine:** Dockerfile uses `docker.io/library/ubuntu:22.04` (fully qualified) to avoid registry ambiguity. `:Z` SELinux flag is harmless on macOS. Makefile defaults to Podman; override with `CONTAINER_ENGINE=docker`.
 - **Chromium + CM4 memory:** Chromium link step needs ~16GB RAM. CI runners need 16+ vCPU, 32+ GB RAM. The default GitHub Actions runner will OOM.
 
 ## Current Status
 
-**Phase 0: Scaffolding** — repo structure, build container, kas stub, skeleton layers. No Yocto builds run yet, no real SRCREVs resolved.
+**Phase 0: Scaffolding** — Complete. Phase 1 in progress.
+**Phase 1: First bootable image** — bitbake parses all 12 layers (2904 recipes). First `core-image-minimal` build running with `distro: poky` (kiosk-os distro not yet created).
 
 ## Phase Roadmap
 
