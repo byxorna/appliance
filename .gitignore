@@ -1,0 +1,47 @@
+# Yocto build artifacts
+build/tmp/
+build/tmp-*/
+build/downloads/
+build/sstate-cache/
+build-*/
+tmp-*/
+sstate-cache/
+
+# kas state
+.kas-cache/
+
+# kas-managed upstream layer checkouts (cloned by kas at build time)
+# Only our custom meta-kiosk-* layers are tracked in this repo.
+/poky/
+/meta-openembedded/
+/meta-raspberrypi/
+/meta-seeed-cm4/
+/meta-clang/
+/meta-browser/
+/meta-rauc/
+/meta-rauc-community/
+
+# Podman / Docker
+*.tar
+docker-compose.override.yml
+
+# Editor cruft
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+\#*\#
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Python (kas may leave these)
+__pycache__/
+*.pyc
+
+# Crush / agent tooling (keep .agents/ tracked, ignore tool state)
+.crush/

@@ -1,0 +1,9 @@
+poky                   git://git.yoctoproject.org/poky                                 scarthgap
+meta-openembedded      git://git.openembedded.org/meta-openembedded                    scarthgap
+meta-raspberrypi       git://git.yoctoproject.org/meta-raspberrypi                     scarthgap
+meta-seeed-cm4         https://github.com/Seeed-Studio/meta-seeed-cm4.git              scarthgap
+meta-clang             https://github.com/kraj/meta-clang.git                          scarthgap
+meta-browser           https://github.com/OSSystems/meta-browser.git                   scarthgap
+meta-rauc              https://github.com/rauc/meta-rauc.git                           scarthgap
+meta-rauc-community    https://github.com/rauc/meta-rauc-community.git                 scarthgap
+seeed-linux-dtoverlays https://github.com/Seeed-Studio/seeed-linux-dtoverlays.git       master

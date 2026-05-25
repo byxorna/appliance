@@ -1,0 +1,67 @@
+# kas configuration for reTerminal HiFi Appliance
+# https://kas.readthedocs.io/en/latest/userguide/project-configuration.html
+
+header:
+  version: 14
+
+machine: seeed-reterminal
+distro: kiosk-os
+target: core-image-minimal
+
+repos:
+  poky:
+    url: "git://git.yoctoproject.org/poky"
+    branch: scarthgap
+    commit: TODO-poky  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    layers:
+      meta:
+      meta-poky:
+
+  meta-openembedded:
+    url: "git://git.openembedded.org/meta-openembedded"
+    branch: scarthgap
+    commit: TODO-meta-openembedded  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    layers:
+      meta-oe:
+      meta-python:
+      meta-networking:
+      meta-multimedia:
+
+  meta-raspberrypi:
+    url: "git://git.yoctoproject.org/meta-raspberrypi"
+    branch: scarthgap
+    commit: TODO-meta-raspberrypi  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+
+  meta-seeed-cm4:
+    url: "https://github.com/Seeed-Studio/meta-seeed-cm4.git"
+    branch: main
+    commit: TODO-meta-seeed-cm4  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+
+  meta-clang:
+    url: "https://github.com/kraj/meta-clang.git"
+    branch: scarthgap
+    commit: TODO-meta-clang  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+
+  meta-browser:
+    url: "https://github.com/OSSystems/meta-browser.git"
+    branch: scarthgap
+    commit: TODO-meta-browser  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    layers:
+      meta-chromium:
+
+  meta-rauc:
+    url: "https://github.com/rauc/meta-rauc.git"
+    branch: scarthgap
+    commit: TODO-meta-rauc  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+
+  meta-rauc-community:
+    url: "https://github.com/rauc/meta-rauc-community.git"
+    branch: scarthgap
+    commit: TODO-meta-rauc-community  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+
+  # Local layers (paths relative to repo root)
+  meta-kiosk-os:
+    path: meta-kiosk-os
+
+  meta-kiosk-app-feishin:
+    path: meta-kiosk-app-feishin
