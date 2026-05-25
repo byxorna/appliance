@@ -45,7 +45,7 @@ make kas-shell   # Drop into `kas shell kas/reterminal-hifi.yml`
 make clean       # Remove the container image
 ```
 
-Yocto sstate and downloads are persisted at `~/.cache/reterminal-hifi-builder/{sstate,downloads}` via bind mounts. The repo itself is bind-mounted at `/workspace` inside the container.
+Yocto sstate, downloads, and upstream repo reference clones are persisted at `~/.cache/reterminal-hifi-builder/{sstate,downloads,repos}` via bind mounts. The repo itself is bind-mounted at `/workspace` inside the container. `make clean` removes the container image and all caches.
 
 ## Repository Layout
 

@@ -31,5 +31,9 @@ RUN pip3 install --no-cache-dir --upgrade pip \
 RUN groupadd -o -g ${BUILDER_GID} builder \
     && useradd -m -o -u ${BUILDER_UID} -g ${BUILDER_GID} -s /bin/bash builder
 
+# Bind-mounted repos may be owned by a different UID (host vs container).
+# Tell git to trust everything under /workspace.
+RUN git config --system safe.directory '*'
+
 USER builder
 WORKDIR /workspace

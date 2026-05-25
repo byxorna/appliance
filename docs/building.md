@@ -8,7 +8,7 @@ The reTerminal HiFi Appliance builds inside an OCI container (Podman by default;
 make image       # Build the build-host container image (~5 min first time)
 make shell       # Open an interactive bash shell in the build environment
 make kas-shell   # Enter a kas shell with kas/reterminal-hifi.yml loaded
-make clean       # Remove the container image
+make clean       # Remove the container image and all caches
 ```
 
 ## What `make image` builds
@@ -30,8 +30,11 @@ When you run `make shell` or `make kas-shell`, the Makefile bind-mounts:
 | Repo root (`.`) | `/workspace` | Source tree, kas configs, layers |
 | `~/.cache/reterminal-hifi-builder/downloads` | `/workspace/downloads` | Yocto `DL_DIR` — fetched source tarballs |
 | `~/.cache/reterminal-hifi-builder/sstate` | `/workspace/sstate-cache` | Yocto `SSTATE_DIR` — shared state cache |
+| `~/.cache/reterminal-hifi-builder/repos` | `/workspace/repos` | `KAS_REPO_REF_DIR` — git reference clones for upstream layers |
 
-Both cache directories are created automatically. They persist across container runs so you don't re-fetch or re-compile unchanged packages.
+All cache directories are created automatically. They persist across container runs so you don't re-fetch or re-compile unchanged packages.
+
+The repo reference cache (`KAS_REPO_REF_DIR`) stores bare git clones of upstream layers. When kas needs a repo, it clones using git's `--reference` mechanism against this cache, making subsequent clones near-instant.
 
 ## Running a full build
 
@@ -50,13 +53,18 @@ bitbake core-image-minimal
 
 ## Cache management
 
-- **sstate-cache**: Safe to delete anytime. Rebuild will be slower but correct.
-- **downloads**: Safe to delete. Sources will be re-fetched.
-- `make clean` only removes the container image, not the caches.
+All caches live under `~/.cache/reterminal-hifi-builder/`:
 
-To nuke everything:
+| Directory | Contents | Safe to delete? |
+|---|---|---|
+| `downloads/` | Yocto source tarballs | Yes — sources will be re-fetched |
+| `sstate/` | Yocto shared state | Yes — rebuild will be slower but correct |
+| `repos/` | Bare git reference clones of upstream layers | Yes — repos will be re-cloned |
+
+`make clean` removes the container image **and** the entire cache directory, giving you a true clean slate.
+
+To remove only the caches without deleting the container image:
 
 ```bash
-make clean
 rm -rf ~/.cache/reterminal-hifi-builder
 ```

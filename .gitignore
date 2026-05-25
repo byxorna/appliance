@@ -7,6 +7,13 @@ build-*/
 tmp-*/
 sstate-cache/
 
+# Yocto downloads and sstate (bind-mounted from host cache)
+/downloads/
+/sstate-cache/
+
+# kas repo reference cache (bind-mounted from host cache)
+/repos/
+
 # kas state
 .kas-cache/
 

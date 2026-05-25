@@ -8,10 +8,11 @@ BUILDER_GID := $(shell id -g)
 CACHE_DIR := $(HOME)/.cache/reterminal-hifi-builder
 DOWNLOADS_DIR := $(CACHE_DIR)/downloads
 SSTATE_DIR := $(CACHE_DIR)/sstate
+REPO_REF_DIR := $(CACHE_DIR)/repos
 
 # Podman inherits ~/.docker/config.json credHelpers, which may reference
 # helpers not installed on this host (e.g. ecr-login).  An empty auth file
-# prevents Podman from trying to load them.
+# prevents the container engine from trying to load them.
 EMPTY_AUTH := $(CACHE_DIR)/.podman-auth.json
 
 COMMON_RUN_FLAGS := \
@@ -20,6 +21,8 @@ COMMON_RUN_FLAGS := \
 	-v "$(CURDIR)":/workspace:Z \
 	-v "$(DOWNLOADS_DIR)":/workspace/downloads:Z \
 	-v "$(SSTATE_DIR)":/workspace/sstate-cache:Z \
+	-v "$(REPO_REF_DIR)":/workspace/repos:Z \
+	-e KAS_REPO_REF_DIR=/workspace/repos \
 	$(IMAGE_NAME)
 
 .PHONY: image shell kas-shell clean
@@ -29,7 +32,7 @@ $(EMPTY_AUTH):
 	@echo '{}' > "$@"
 
 image: $(EMPTY_AUTH)
-	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)"
+	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) build \
 		--authfile "$(EMPTY_AUTH)" \
 		--build-arg BUILDER_UID=$(BUILDER_UID) \
@@ -37,12 +40,13 @@ image: $(EMPTY_AUTH)
 		-t $(IMAGE_NAME) build/
 
 shell: $(EMPTY_AUTH)
-	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)"
+	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) /bin/bash
 
 kas-shell: $(EMPTY_AUTH)
-	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)"
+	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell kas/reterminal-hifi.yml
 
 clean:
 	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || true
+	rm -rf "$(CACHE_DIR)"
