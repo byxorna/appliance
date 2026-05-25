@@ -1,6 +1,6 @@
-poky                   git://git.yoctoproject.org/poky                                 scarthgap
-meta-openembedded      git://git.openembedded.org/meta-openembedded                    scarthgap
-meta-raspberrypi       git://git.yoctoproject.org/meta-raspberrypi                     scarthgap
+poky                   https://git.yoctoproject.org/poky                                scarthgap
+meta-openembedded      https://git.openembedded.org/meta-openembedded                   scarthgap
+meta-raspberrypi       https://git.yoctoproject.org/meta-raspberrypi                    scarthgap
 meta-seeed-cm4         https://github.com/Seeed-Studio/meta-seeed-cm4.git              scarthgap
 meta-clang             https://github.com/kraj/meta-clang.git                          scarthgap
 meta-browser           https://github.com/OSSystems/meta-browser.git                   scarthgap

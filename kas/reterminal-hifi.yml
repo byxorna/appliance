@@ -12,7 +12,7 @@ repos:
   poky:
     url: "https://git.yoctoproject.org/poky"
     branch: scarthgap
-    commit: TODO-poky  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    commit: d4576e3c081a7ee7b57d48421c4c4f491cb4defe
     layers:
       meta:
       meta-poky:
@@ -20,7 +20,7 @@ repos:
   meta-openembedded:
     url: "https://git.openembedded.org/meta-openembedded"
     branch: scarthgap
-    commit: TODO-meta-openembedded  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
     layers:
       meta-oe:
       meta-python:
@@ -30,34 +30,36 @@ repos:
   meta-raspberrypi:
     url: "https://git.yoctoproject.org/meta-raspberrypi"
     branch: scarthgap
-    commit: TODO-meta-raspberrypi  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    commit: 2c646d29912dcc873469a57b1c207e1549c5094d
 
   meta-seeed-cm4:
     url: "https://github.com/Seeed-Studio/meta-seeed-cm4.git"
     branch: main
-    commit: TODO-meta-seeed-cm4  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    commit: a2f9438ee3d2e16b17d40476de344889e4a92c9b
 
   meta-clang:
     url: "https://github.com/kraj/meta-clang.git"
     branch: scarthgap
-    commit: TODO-meta-clang  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    commit: 5bce7e26a38a58bb52242494e54ab2af40009574
 
   meta-browser:
     url: "https://github.com/OSSystems/meta-browser.git"
     branch: scarthgap
-    commit: TODO-meta-browser  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    commit: 85eeb6b50883d22c977396f5e8fe211a7961cf2e
     layers:
       meta-chromium:
 
   meta-rauc:
     url: "https://github.com/rauc/meta-rauc.git"
     branch: scarthgap
-    commit: TODO-meta-rauc  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    commit: d63878f20eba7a85ecf53566e7a3377e78bb46ac
 
   meta-rauc-community:
     url: "https://github.com/rauc/meta-rauc-community.git"
     branch: scarthgap
-    commit: TODO-meta-rauc-community  # TODO Phase 0 follow-up: resolve real SRCREV before first build
+    commit: 222c61275054974cdbd09bd5faa2b7a37ddbd840
+    layers:
+      meta-rauc-raspberrypi:
 
   # Local layers (paths relative to repo root)
   meta-kiosk-os:
