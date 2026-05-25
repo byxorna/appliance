@@ -9,12 +9,17 @@ CACHE_DIR := $(HOME)/.cache/reterminal-hifi-builder
 DOWNLOADS_DIR := $(CACHE_DIR)/downloads
 SSTATE_DIR := $(CACHE_DIR)/sstate
 REPO_REF_DIR := $(CACHE_DIR)/repos
+TMPDIR_VOL := reterminal-hifi-tmpdir
 
 # Podman inherits ~/.docker/config.json credHelpers, which may reference
 # helpers not installed on this host (e.g. ecr-login).  An empty auth file
 # prevents the container engine from trying to load them.
 EMPTY_AUTH := $(CACHE_DIR)/.podman-auth.json
 
+# macOS filesystems (HFS+/APFS) are case-insensitive, which Yocto rejects.
+# TMPDIR is placed on a named volume so it lives on the VM's case-sensitive
+# ext4 filesystem. The volume persists across runs (fast incremental builds)
+# and is cleaned by `make clean`.
 COMMON_RUN_FLAGS := \
 	--rm -it \
 	--authfile "$(EMPTY_AUTH)" \
@@ -22,6 +27,7 @@ COMMON_RUN_FLAGS := \
 	-v "$(DOWNLOADS_DIR)":/workspace/downloads:Z \
 	-v "$(SSTATE_DIR)":/workspace/sstate-cache:Z \
 	-v "$(REPO_REF_DIR)":/workspace/repos:Z \
+	-v "$(TMPDIR_VOL)":/workspace/build/tmp:Z \
 	-e KAS_REPO_REF_DIR=/workspace/repos \
 	$(IMAGE_NAME)
 
@@ -49,4 +55,5 @@ kas-shell: $(EMPTY_AUTH)
 
 clean:
 	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || true
+	$(CONTAINER_ENGINE) volume rm $(TMPDIR_VOL) || true
 	rm -rf "$(CACHE_DIR)"

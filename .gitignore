@@ -6,6 +6,7 @@ build/cache/
 build/downloads/
 build/sstate-cache/
 build/bitbake-cookerdaemon.log
+build/bitbake.lock
 build-*/
 tmp-*/
 sstate-cache/
@@ -30,6 +31,8 @@ sstate-cache/
 /meta-browser/
 /meta-rauc/
 /meta-rauc-community/
+/meta-lts-mixins-rust/
+/meta-lts-mixins-uboot/
 
 # Podman / Docker
 *.tar
