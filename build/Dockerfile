@@ -21,7 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN locale-gen en_US.UTF-8
 
 # kas (Yocto build orchestrator)
-RUN pip3 install --no-cache-dir kas
+# Ubuntu 22.04 ships pip 22.0.2, which cannot parse kas 5.x pyproject.toml
+# metadata (produces package name "unknown"). Upgrade pip first.
+RUN pip3 install --no-cache-dir --upgrade pip \
+    && pip3 install --no-cache-dir kas==5.2
 
 # Non-root builder user with configurable UID/GID
 # Use -o to allow reusing an existing GID (e.g. macOS GID 20 = dialout in Ubuntu)

@@ -6,7 +6,7 @@ Built with Yocto scarthgap (5.0 LTS). Immutable rootfs with RAUC A/B atomic upda
 
 ## Quickstart
 
-Builds run inside a Podman container on macOS (or Linux). Prerequisites: [Podman](https://podman.io/) installed and running.
+Builds run inside a container (Podman by default; Docker also works). See [docs/dependencies.md](docs/dependencies.md) for full setup.
 
 ```bash
 make image       # Build the build-host container image (~5 min first time)
@@ -23,11 +23,15 @@ Inside the container, `kas` and the full Yocto host toolchain are available. The
 ├── .agents/plans/           # Task and phase plans
 ├── build/
 │   └── Dockerfile           # Build-host container definition
+├── docs/                    # Project documentation
+│   ├── building.md          # Build instructions and cache management
+│   └── dependencies.md      # Host prerequisites and container contents
 ├── kas/
 │   └── reterminal-hifi.yml  # kas build configuration (layer pins, machine, distro)
 ├── meta-kiosk-os/           # Custom platform layer (distro, BSP config, daemons, shell, image)
 ├── meta-kiosk-app-feishin/  # Feishin application layer
 ├── mirror-sources.txt       # Upstream repos to mirror (future task)
+├── .mise.toml               # Host dev tool versions (mise)
 ├── Makefile                 # Build orchestration
 ├── AGENTS.md                # Agent instructions and project context
 └── README.md                # This file

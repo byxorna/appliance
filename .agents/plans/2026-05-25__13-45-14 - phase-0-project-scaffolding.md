@@ -163,10 +163,10 @@ After scaffolding:
 
 - Podman on macOS uses applehv; image build pulls Ubuntu base from a registry (Docker Hub by default). If the user's Podman is configured for a different default registry, `make image` may prompt or fail. The Makefile uses fully qualified `docker.io/library/ubuntu:22.04` to avoid this.
 - macOS-side filesystem perf is the long-term bottleneck for Yocto builds. Phase 0 doesn't hit it. Phase 1+ may motivate moving sstate to a Podman-managed named volume; out of scope here.
-- We intentionally do not pin kas to a specific version yet; the `kas` Python package gets a `>=` pin loose enough to install, and we'll tighten in a Phase 0 follow-up alongside the SRCREVs.
+- kas is pinned to 5.2 in the Dockerfile. The kas config uses header version 14, which is backwards compatible with kas 5.x (latest format is version 22).
 - **Discovered during implementation:** macOS default GID (20, `staff`) collides with Ubuntu's `dialout` group. Dockerfile uses `groupadd -o` / `useradd -o` to allow GID reuse.
 - **Discovered during implementation:** Host `~/.docker/config.json` may contain `credHelpers` entries (e.g. `ecr-login`) that Podman tries to load, causing `error getting credentials`. Makefile creates an empty auth file at `~/.cache/reterminal-hifi-builder/.podman-auth.json` and passes `--authfile` to all Podman commands to bypass this.
-- **Discovered during implementation:** kas 5.0+ has a metadata regression (`pip` rejects it due to package name mismatch `kas` vs `unknown`). kas 4.7 installs cleanly. Pin to a specific version in the Phase 0 follow-up.
+- **Discovered during implementation:** kas 5.0+ uses `pyproject.toml` for packaging, and Ubuntu 22.04's pip 22.0.2 cannot parse the metadata (produces package name `unknown` instead of `kas`). Fixed by upgrading pip before installing kas. kas is now pinned to 5.2.
 
 ## Task List
 
@@ -202,10 +202,20 @@ After scaffolding:
 
 ### Commit
 
-- [ ] `git add -A && git commit -m "Phase 0 scaffolding"` (no push; no remote configured)
+- [x] `git add -A && git commit -m "Phase 0 scaffolding"` (no push; no remote configured)
+
+### Phase 0 close-out (post-scaffold additions)
+
+- [x] Fix kas version: upgrade pip in Dockerfile to work around Ubuntu 22.04 pip 22.0.2 metadata bug, pin kas==5.2
+- [x] Add `docs/building.md` — build instructions, cache management, bind mounts
+- [x] Add `docs/dependencies.md` — host prerequisites, container contents, mise
+- [x] Add `.mise.toml` — skeleton mise config for host dev tool management
+- [x] Update `README.md` — add docs/ and .mise.toml to layout, link to docs/dependencies.md
+- [x] Update `AGENTS.md` — add docs/ and .mise.toml to layout, note kas 5.2
+- [x] Commit close-out additions
 
 ### Follow-ups (not Phase 0 acceptance, deferred to Phase 1 entry)
 
 - [ ] Resolve real SRCREVs for every layer in `kas/reterminal-hifi.yml`
-- [ ] Pin `kas` to a specific version in `build/Dockerfile`
 - [ ] Decide whether to mirror upstream sources before first real build (cheap insurance against a vendor takedown; one-evening task)
+- [ ] Consider switching `git://` URLs to `https://` if git protocol remains blocked in the Podman container

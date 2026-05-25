@@ -1,0 +1,12 @@
+# https://mise.jdx.dev/
+#
+# Host-side dev dependencies for building the reTerminal HiFi Appliance.
+# Run `mise install` to install all pinned tools.
+
+min_version = "2026.1"
+
+[tools]
+# Add tools here as the project grows. Examples:
+# shellcheck = "0.10"
+# yamllint = "1.35"
+# shfmt = "3.10"

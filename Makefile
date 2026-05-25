@@ -1,4 +1,5 @@
 IMAGE_NAME := reterminal-hifi-builder:latest
+# Override with `make CONTAINER_ENGINE=docker <target>` to use Docker
 CONTAINER_ENGINE := podman
 
 BUILDER_UID := $(shell id -u)

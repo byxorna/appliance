@@ -34,12 +34,12 @@ After completing work:
 - **Shell** (`kiosk-shell`): web app hosting iframe-based app switcher, settings, now-playing bar, WebSocket clients to `kiosk-buttond` and `kiosk-playd`
 - **Applications** (`meta-kiosk-app-*`): self-contained web app bundles with `app.json` manifests, installed to `/usr/share/kiosk-apps/<name>/`
 
-**Build system:** Yocto scarthgap (5.0 LTS) with kas, built inside a Podman container on macOS arm64.
+**Build system:** Yocto scarthgap (5.0 LTS) with kas 5.2, built inside an OCI container (Podman default, Docker supported) on macOS arm64. Host dev tools managed via [mise](https://mise.jdx.dev/).
 
 ## Build Environment
 
 ```bash
-make image       # Build the Podman container image (Ubuntu 22.04 + kas + Yocto host deps)
+make image       # Build the container image (Ubuntu 22.04 + kas + Yocto host deps)
 make shell       # Interactive shell inside the build container
 make kas-shell   # Drop into `kas shell kas/reterminal-hifi.yml`
 make clean       # Remove the container image
@@ -52,11 +52,13 @@ Yocto sstate and downloads are persisted at `~/.cache/reterminal-hifi-builder/{s
 ```
 ├── .agents/plans/       # Task plans (this repo only, not the private vault)
 ├── build/Dockerfile     # Yocto build host container
+├── docs/                # Project documentation (build guide, dependencies)
 ├── kas/                 # kas configuration files
 │   └── reterminal-hifi.yml
 ├── meta-kiosk-os/       # Platform layer (distro, BSP config, platform daemons, shell, image recipe)
 ├── meta-kiosk-app-feishin/  # Feishin app layer
 ├── mirror-sources.txt   # Upstream repos to mirror (not yet mirrored)
+├── .mise.toml           # Host dev tool versions (mise)
 ├── Makefile             # Build orchestration
 └── AGENTS.md            # This file
 ```
@@ -95,7 +97,7 @@ All upstream layers are pinned by SRCREV in `kas/reterminal-hifi.yml`. Never use
 - **eMMC boot requires `rootwait`** in kernel cmdline. The controller enumerates asynchronously.
 - **No eMMC boot0/boot1.** BCM2711 EEPROM can't read them. Everything boots from user partition `mmcblk0`.
 - **RPi firmware watchdog is 16s.** U-Boot must pet or disable it within 16s of cold start.
-- **Podman on macOS:** Dockerfile uses `docker.io/library/ubuntu:22.04` (fully qualified) to avoid registry ambiguity. `:Z` SELinux flag is harmless on macOS.
+- **Container engine:** Dockerfile uses `docker.io/library/ubuntu:22.04` (fully qualified) to avoid registry ambiguity. `:Z` SELinux flag is harmless on macOS. Makefile defaults to Podman; override with `CONTAINER_ENGINE=docker`.
 - **Chromium + CM4 memory:** Chromium link step needs ~16GB RAM. CI runners need 16+ vCPU, 32+ GB RAM. The default GitHub Actions runner will OOM.
 
 ## Current Status
