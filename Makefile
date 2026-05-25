@@ -31,7 +31,7 @@ COMMON_RUN_FLAGS := \
 	-e KAS_REPO_REF_DIR=/workspace/repos \
 	$(IMAGE_NAME)
 
-.PHONY: image shell kas-shell clean
+.PHONY: image shell kas-shell status clean
 
 $(EMPTY_AUTH):
 	@mkdir -p "$(dir $@)"
@@ -52,6 +52,28 @@ shell: $(EMPTY_AUTH)
 kas-shell: $(EMPTY_AUTH)
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell kas/reterminal-hifi.yml
+
+status:
+	@CIDS=$$($(CONTAINER_ENGINE) ps -q --filter ancestor=$(IMAGE_NAME)); \
+	if [ -z "$$CIDS" ]; then \
+		echo "No build container running."; \
+	else \
+		for CID in $$CIDS; do \
+			echo "=== Container $$CID ==="; \
+			$(CONTAINER_ENGINE) exec "$$CID" bash -c ' \
+				LOG=$$(find /workspace/build -path "*/log/cooker/*/console-latest.log" -printf "%T@ %p\n" 2>/dev/null \
+					| sort -rn | head -1 | cut -d" " -f2-); \
+				if [ -n "$$LOG" ]; then \
+					tail -30 "$$LOG"; \
+				else \
+					echo "No bitbake log found."; \
+				fi; \
+				PIDS=$$(pgrep -f "bitbake" 2>/dev/null | tr "\n" " "); \
+				if [ -n "$$PIDS" ]; then \
+					echo "--- bitbake running (PIDs: $$PIDS) ---"; \
+				fi'; \
+		done; \
+	fi
 
 clean:
 	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || true

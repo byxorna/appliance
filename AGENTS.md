@@ -1,125 +1,37 @@
 # AGENTS.md
 
-## Prime Directive
+Read this file completely before taking any action in this repository.
 
-You are working on a Yocto-based embedded Linux appliance for the Seeed reTerminal (CM4). Read this file completely before taking any action in this repository.
+## Project
 
-## Plan Storage
+Yocto-based kiosk/appliance OS for the Seeed reTerminal (CM4). Boots into fullscreen Chromium hosting web apps via iframes. First app: Feishin (Navidrome/Jellyfin frontend). Immutable rootfs with RAUC A/B updates.
 
-All plans go in `.agents/plans/` inside this repository, **not** in the private vault. File naming convention:
+See `docs/` for build instructions, layer details, and dependency info. See `kas/reterminal-hifi.yml` for the full layer stack and pinned SRCREVs. See `Makefile` for available build targets.
 
-```
-.agents/plans/<YYYY-MM-DD>__<HH-MM-SS> - <task-name>.md
-```
+## Plans
 
-Each plan must have three sections: **Requirements**, **Detailed Implementation Plan + Reasoning**, and **Task List**. The top-level project plan lives in the private sync vault at `/Users/gconradi/sync/private.enc/agents/plans/2026-05-23__18-02-43 - reterminal-feishin-appliance.md`. Refer to it for full architecture and phase roadmap, but never copy it wholesale into this repo.
+All plans go in `.agents/plans/` (not the private vault). Naming: `<YYYY-MM-DD>__<HH-MM-SS> - <task-name>.md`. Each plan has: **Requirements**, **Detailed Implementation Plan + Reasoning**, **Task List**.
 
-## Plan & Review Cadence
+The top-level project plan is at `/Users/gconradi/sync/private.enc/agents/plans/2026-05-23__18-02-43 - reterminal-feishin-appliance.md`. Refer to it for full architecture and phase roadmap; never copy it wholesale into this repo.
 
-Before starting work:
-1. Read the relevant plan in `.agents/plans/`.
-2. If no plan exists for the task, write one first.
-3. Check off tasks as you complete them.
-
-After completing work:
-1. Update the task list in the relevant plan.
-2. If you discovered new information, update the plan's reasoning section.
-
-## Project Overview
-
-**What this builds:** A kiosk/appliance OS for the Seeed reTerminal (CM4, 4GB RAM, 32GB eMMC, 5" 720×1280 DSI touchscreen). Boots into a fullscreen Chromium kiosk shell hosting web applications via iframes. First application is Feishin (music player frontend for Navidrome/Jellyfin). Immutable rootfs with RAUC A/B updates.
-
-**Key architecture layers:**
-- **Platform** (`meta-kiosk-os`): hardware, display, compositor (Cage), Chromium, networking, RAUC updates, PipeWire audio, persistent storage
-- **Shell** (`kiosk-shell`): web app hosting iframe-based app switcher, settings, now-playing bar, WebSocket clients to `kiosk-buttond` and `kiosk-playd`
-- **Applications** (`meta-kiosk-app-*`): self-contained web app bundles with `app.json` manifests, installed to `/usr/share/kiosk-apps/<name>/`
-
-**Build system:** Yocto scarthgap (5.0 LTS) with kas 5.2, built inside an OCI container (Podman default, Docker supported) on macOS arm64. Host dev tools managed via [mise](https://mise.jdx.dev/).
-
-## Build Environment
-
-```bash
-make image       # Build the container image (Ubuntu 22.04 + kas + Yocto host deps)
-make shell       # Interactive shell inside the build container
-make kas-shell   # Drop into `kas shell kas/reterminal-hifi.yml`
-make clean       # Remove the container image
-```
-
-Yocto sstate, downloads, and upstream repo reference clones are persisted at `~/.cache/reterminal-hifi-builder/{sstate,downloads,repos}` via bind mounts. The repo itself is bind-mounted at `/workspace` inside the container. `make clean` removes the container image and all caches.
-
-## Repository Layout
-
-```
-├── .agents/plans/       # Task plans (this repo only, not the private vault)
-├── build/Dockerfile     # Yocto build host container
-├── docs/                # Project documentation (build guide, dependencies)
-├── kas/                 # kas configuration files
-│   └── reterminal-hifi.yml
-├── meta-kiosk-os/       # Platform layer (distro, BSP config, platform daemons, shell, image recipe)
-├── meta-kiosk-app-feishin/  # Feishin app layer
-├── mirror-sources.txt   # Upstream repos to mirror (not yet mirrored)
-├── .mise.toml           # Host dev tool versions (mise)
-├── Makefile             # Build orchestration
-└── AGENTS.md            # This file
-```
-
-## Layer Stack
-
-```
-poky (scarthgap)
-  meta-openembedded (meta-oe, meta-python, meta-networking, meta-multimedia)
-  meta-raspberrypi (scarthgap)
-  meta-seeed-cm4 (main, tracks scarthgap — provides MACHINE=seeed-reterminal)
-  meta-clang (scarthgap, required by meta-chromium)
-  meta-browser/meta-chromium (scarthgap)
-  meta-rauc (scarthgap)
-  meta-rauc-community/meta-rauc-raspberrypi (scarthgap)
-  meta-lts-mixins (scarthgap/rust — backported Rust for Chromium)
-  meta-lts-mixins (scarthgap/u-boot — backported U-Boot for RAUC)
-  meta-kiosk-os (custom — platform)
-  meta-kiosk-app-feishin (custom — Feishin app)
-```
-
-All upstream layers are pinned by SRCREV in `kas/reterminal-hifi.yml`. Never use `${AUTOREV}` in production.
+Before starting work: read the relevant plan, or write one if none exists. After work: update the task list and reasoning if new info was discovered.
 
 ## Conventions
 
 - **Machine:** `seeed-reterminal` (from `meta-seeed-cm4`)
 - **Distro:** `kiosk-os` (custom, Wayland-only, systemd, no Qt, no X11)
 - **Image:** `kiosk-os-image` (custom image recipe in `meta-kiosk-os`)
-- **App manifest:** Every app ships `app.json` with name, port, capabilities, config_dir. Ports must be unique across all apps. Apps inherit `kiosk-app.bbclass`.
-- **Persistent data:** `/data/platform/` for platform config, `/data/apps/<name>/` for per-app state. rootfs is read-only.
-- **Services bind to `127.0.0.1` only.** Nothing is exposed on the LAN.
+- **App manifest:** Apps ship `app.json` (name, port, capabilities, config_dir). Ports must be unique. Apps inherit `kiosk-app.bbclass`.
+- **Persistent data:** `/data/platform/` for platform, `/data/apps/<name>/` for per-app state. rootfs is read-only.
+- **Services bind `127.0.0.1` only.**
+- **Never use `${AUTOREV}`** — all upstream layers pinned by SRCREV.
 
 ## Gotchas
 
-- **Display rotation:** The reTerminal DSI panel is 720×1280 portrait. Landscape requires *both* Cage `transform 270` and DT overlay `tp_rotate=1`. Missing either one causes touch/display mismatch.
-- **I2S pins reserved:** GPIOs 18-21 carry I2S audio to the WM8960 codec. Do not use them for IR or other GPIO functions. IR receiver goes on GPIO 24.
-- **meta-seeed-cm4 pulls Qt by default.** Strip it via `IMAGE_INSTALL:remove` and by not adding `meta-qt5` to the layer list. If `meta-seeed-cm4` has `LAYERDEPENDS` on it, satisfy parse-time deps but never install Qt packages.
-- **eMMC boot requires `rootwait`** in kernel cmdline. The controller enumerates asynchronously.
-- **No eMMC boot0/boot1.** BCM2711 EEPROM can't read them. Everything boots from user partition `mmcblk0`.
-- **RPi firmware watchdog is 16s.** U-Boot must pet or disable it within 16s of cold start.
-- **TMPDIR on named volume:** macOS filesystems are case-insensitive, which Yocto rejects. TMPDIR is mounted on a named Podman volume (`reterminal-hifi-tmpdir`) so it lives on the VM's case-sensitive ext4 filesystem. Persists across runs; cleaned by `make clean`.
-- **Container engine:** Dockerfile uses `docker.io/library/ubuntu:22.04` (fully qualified) to avoid registry ambiguity. `:Z` SELinux flag is harmless on macOS. Makefile defaults to Podman; override with `CONTAINER_ENGINE=docker`.
-- **Chromium + CM4 memory:** Chromium link step needs ~16GB RAM. CI runners need 16+ vCPU, 32+ GB RAM. The default GitHub Actions runner will OOM.
-
-## Current Status
-
-**Phase 0: Scaffolding** — Complete. Phase 1 in progress.
-**Phase 1: First bootable image** — bitbake parses all 12 layers (2904 recipes). First `core-image-minimal` build running with `distro: poky` (kiosk-os distro not yet created).
-
-## Phase Roadmap
-
-See the top-level plan for full details. Summary:
-
-0. Project scaffolding (current)
-1. Minimal bootable image (core-image-minimal on CM4)
-2. reTerminal hardware support (display, touch, buttons, sensors)
-3. Platform kiosk infrastructure (Cage, Chromium, kiosk-init, kiosk-httpd)
-4. Shell + button daemon + playback coordinator
-5. Feishin app integration
-6. Audio (PipeWire, USB DAC, bit-perfect path validation)
-7. RAUC A/B updates
-8. Persistent data
-9. Update delivery
-10. Polish (boot splash, boot time, lockdown, docs)
+- **Display rotation:** 720×1280 portrait panel. Landscape needs *both* Cage `transform 270` and DT overlay `tp_rotate=1`.
+- **I2S pins reserved:** GPIOs 18-21 are I2S to WM8960. IR receiver on GPIO 24.
+- **meta-seeed-cm4 pulls Qt by default.** Don't add `meta-qt5`; strip via `IMAGE_INSTALL:remove`.
+- **eMMC boot requires `rootwait`.** No boot0/boot1 — BCM2711 EEPROM boots from `mmcblk0` user partition only.
+- **RPi firmware watchdog is 16s.** U-Boot must pet or disable it in time.
+- **TMPDIR on named volume:** macOS is case-insensitive; TMPDIR lives on a Podman named volume (VM ext4).
+- **Chromium link needs ~16GB RAM.** CI runners need 16+ vCPU, 32+ GB.
