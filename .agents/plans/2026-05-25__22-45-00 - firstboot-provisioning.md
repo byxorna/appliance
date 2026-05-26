@@ -1,6 +1,6 @@
 # Firstboot Provisioning Service
 
-**Goal**: A systemd service (`kiosk-firstboot`) that applies install-time configuration
+**Goal**: A systemd service (`appliance-firstboot`) that applies install-time configuration
 from the boot FAT partition on first boot, covering WiFi, hostname, SSH keys, and timezone.
 Runs once, deletes consumed config files, and disables itself.
 
@@ -9,7 +9,7 @@ Runs once, deletes consumed config files, and disables itself.
 1. After flashing a `.wic` image, the user can mount the boot FAT partition on any OS
    and drop config files before first boot — no special tooling required.
 2. Config files are plain-text, one concern per file, easy to create by hand or script.
-3. The service runs early (before NetworkManager, before kiosk-shell) on first boot only.
+3. The service runs early (before NetworkManager, before the application shell) on first boot only.
 4. Consumed config files are deleted from the boot partition after processing.
 5. If no config files are present, the service is a no-op (the on-device touch flow
    handles WiFi provisioning instead — see private plan "First-time WiFi provisioning").
@@ -42,7 +42,7 @@ add rpi-imager compat as a future enhancement (parse `custom.toml` if present).
 ### Boot partition mount point
 
 The RPi firmware partition is mounted read-only by default on Yocto/meta-raspberrypi.
-`kiosk-firstboot` remounts it read-write to delete consumed files, then remounts
+`appliance-firstboot` remounts it read-write to delete consumed files, then remounts
 read-only when done. The mount point is `/boot/firmware` (or `/boot` depending on
 meta-raspberrypi version — the service checks both).
 
@@ -50,7 +50,7 @@ meta-raspberrypi version — the service checks both).
 
 ```
 [Unit]
-Description=Kiosk firstboot provisioning
+Description=Appliance firstboot provisioning
 DefaultDependencies=no
 Before=NetworkManager.service systemd-hostnamed.service
 After=local-fs.target
@@ -70,7 +70,7 @@ are deleted, so subsequent boots skip processing. This is simpler and more robus
 than a "ran once" stamp file — if the user re-drops config files later (e.g., to
 change WiFi), the service picks them up on next reboot.
 
-### Processing logic (`kiosk-firstboot.sh`)
+### Processing logic (`appliance-firstboot.sh`)
 
 ```
 1. Check if any config files exist on the boot partition. Exit 0 if none.
@@ -97,29 +97,29 @@ for paths like `/etc/hostname` and `/etc/localtime` that point into `/data/platf
 ### Recipe structure
 
 ```
-meta-kiosk-os/
-  recipes-core/kiosk-firstboot/
-    kiosk-firstboot.bb
+meta-appliance-os/
+  recipes-core/appliance-firstboot/
+    appliance-firstboot.bb
     files/
-      kiosk-firstboot.sh
-      kiosk-firstboot.service
+      appliance-firstboot.sh
+      appliance-firstboot.service
 ```
 
-The recipe installs the script to `/usr/libexec/kiosk-firstboot.sh` and enables
+The recipe installs the script to `/usr/libexec/appliance-firstboot.sh` and enables
 the systemd service via `SYSTEMD_SERVICE`.
 
 ### Future enhancements (not in scope now)
 
 - Parse rpi-imager `custom.toml` for GUI-based provisioning compat
-- On-device touch WiFi provisioning (kiosk-shell first-time setup mode)
+- On-device touch WiFi provisioning (first-time setup mode)
 - QR-code scanning for WiFi creds via the DSI touchscreen camera (if present)
 - USB stick provisioning (read config from removable media)
 
 ## Task List
 
-- [ ] Create `meta-kiosk-os/recipes-core/kiosk-firstboot/files/kiosk-firstboot.sh`
-- [ ] Create `meta-kiosk-os/recipes-core/kiosk-firstboot/files/kiosk-firstboot.service`
-- [ ] Create `meta-kiosk-os/recipes-core/kiosk-firstboot/kiosk-firstboot.bb`
+- [ ] Create `meta-appliance-os/recipes-core/appliance-firstboot/files/appliance-firstboot.sh`
+- [ ] Create `meta-appliance-os/recipes-core/appliance-firstboot/files/appliance-firstboot.service`
+- [ ] Create `meta-appliance-os/recipes-core/appliance-firstboot/appliance-firstboot.bb`
 - [ ] Add bind-mount units for `/etc/hostname` → `/data/platform/hostname` (or defer to Phase 8)
 - [ ] Test with config files on boot partition (requires hardware — Phase 2+)
 - [ ] Document config file format in `docs/provisioning.md`
@@ -132,5 +132,5 @@ the systemd service via `SYSTEMD_SERVICE`.
 
 ## Scheduling
 
-The recipe skeleton can land alongside the `kiosk-os` distro conf in Phase 1.
+The recipe skeleton can land alongside the `appliance-os` distro conf in Phase 1.
 Full integration and testing is Phase 8 (Persistent data) per the roadmap.

@@ -4,7 +4,7 @@
 header:
   version: 14
 
-machine: kiosk-reterminal
+machine: appliance-reterminal
 distro: poky
 target: core-image-minimal
 
@@ -74,8 +74,8 @@ repos:
     commit: a44882db02a0ed0f149371831bfbe067665eb42b
 
   # Local layers (paths relative to repo root)
-  meta-kiosk-os:
-    path: meta-kiosk-os
+  meta-appliance-os:
+    path: meta-appliance-os
 
-  meta-kiosk-app-feishin:
-    path: meta-kiosk-app-feishin
+  meta-appliance-app-feishin:
+    path: meta-appliance-app-feishin

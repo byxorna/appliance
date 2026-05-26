@@ -10,7 +10,7 @@ Phase 0 success criteria:
 2. Repo-local `AGENTS.md` is in place and directs the assistant to store future plans at `.agents/plans/`. The Phase 0 plan itself lives there as the first entry.
 3. Repo-local plan storage directory `.agents/plans/` exists and contains this plan.
 4. `kas/` directory exists with a stub `reterminal-hifi.yml` that lists the layers we'll pin in Phase 0+1 (poky, meta-openembedded, meta-raspberrypi, meta-seeed-cm4, meta-clang, meta-browser, meta-rauc, meta-rauc-community). SRCREVs may be placeholder TODO values; resolving real pins is a Phase 0 follow-up task, not a blocker for the scaffold.
-5. `meta-kiosk-os/` and `meta-kiosk-app-feishin/` skeleton layers exist with valid `conf/layer.conf` (layer name, priority, compat scarthgap, no recipes yet). `bitbake-layers add-layer` would accept them.
+5. `meta-appliance-os/` and `meta-appliance-app-feishin/` skeleton layers exist with valid `conf/layer.conf` (layer name, priority, compat scarthgap, no recipes yet). `bitbake-layers add-layer` would accept them.
 6. `build/Dockerfile` defines a Yocto build host image (Ubuntu 22.04, `kas`, the Yocto host-package list, locale, non-root user). Image builds on this Mac under Podman.
 7. `Makefile` exposes at least: `make image` (build the container image), `make shell` (open an interactive shell inside the container with the repo bind-mounted at the same path), `make kas-shell` (drop into `kas shell kas/reterminal-hifi.yml`), `make clean` (remove the container image).
 8. `mirror-sources.txt` lists the upstream repos we'll later mirror to our own infra (per top-level plan Phase 0 task #5). No mirroring is actually performed in Phase 0.
@@ -44,12 +44,12 @@ Out of scope for Phase 0:
 │   └── Dockerfile
 ├── kas/
 │   └── reterminal-hifi.yml
-├── meta-kiosk-os/
+├── meta-appliance-os/
 │   ├── COPYING.MIT
 │   ├── README.md
 │   └── conf/
 │       └── layer.conf
-└── meta-kiosk-app-feishin/
+└── meta-appliance-app-feishin/
     ├── COPYING.MIT
     ├── README.md
     └── conf/
@@ -95,16 +95,16 @@ A bind-mounted sstate-cache and downloads dir (under `~/.cache/reterminal-hifi-b
 
 - header version 14
 - machine `seeed-reterminal` (declared but unused until Phase 2)
-- distro `kiosk-os` (placeholder, no distro conf yet)
+- distro `appliance-os` (placeholder, no distro conf yet)
 - target `core-image-minimal` for Phase 1
 - repos: poky, meta-openembedded, meta-raspberrypi, meta-seeed-cm4, meta-clang, meta-browser, meta-rauc, meta-rauc-community with `branch: scarthgap` and `commit: TODO-<layer>` placeholders
-- layers list referencing `meta-kiosk-os` and `meta-kiosk-app-feishin` from this repo
+- layers list referencing `meta-appliance-os` and `meta-appliance-app-feishin` from this repo
 
 The placeholder commits are flagged in the file with a `# TODO Phase 0 follow-up: resolve real SRCREV before first build` comment so Phase 1 can't accidentally build against floating HEAD.
 
 ### Skeleton layers
 
-Each of `meta-kiosk-os/` and `meta-kiosk-app-feishin/` ships:
+Each of `meta-appliance-os/` and `meta-appliance-app-feishin/` ships:
 
 - `COPYING.MIT` (standard MIT text)
 - `README.md` (one paragraph: what this layer is for)
@@ -172,7 +172,7 @@ After scaffolding:
 
 ### Setup
 
-- [x] Create `~/code/byxorna/reterminal-hifi-appliance` directory tree (`.agents/plans/`, `build/`, `kas/`, `meta-kiosk-os/conf/`, `meta-kiosk-app-feishin/conf/`)
+- [x] Create `~/code/byxorna/reterminal-hifi-appliance` directory tree (`.agents/plans/`, `build/`, `kas/`, `meta-appliance-os/conf/`, `meta-appliance-app-feishin/conf/`)
 - [x] `git init` in repo root, default branch `main`
 
 ### Docs and policy
@@ -191,8 +191,8 @@ After scaffolding:
 ### Yocto skeleton
 
 - [x] Write `kas/reterminal-hifi.yml` stub: header v14, machine `seeed-reterminal`, distro `kiosk-os`, target `core-image-minimal`, layer list with placeholder TODO SRCREVs and an explicit follow-up comment
-- [x] Write `meta-kiosk-os/conf/layer.conf`, `meta-kiosk-os/README.md`, `meta-kiosk-os/COPYING.MIT`
-- [x] Write `meta-kiosk-app-feishin/conf/layer.conf`, `meta-kiosk-app-feishin/README.md`, `meta-kiosk-app-feishin/COPYING.MIT`
+- [x] Write `meta-appliance-os/conf/layer.conf`, `meta-appliance-os/README.md`, `meta-appliance-os/COPYING.MIT`
+- [x] Write `meta-appliance-app-feishin/conf/layer.conf`, `meta-appliance-app-feishin/README.md`, `meta-appliance-app-feishin/COPYING.MIT`
 
 ### Validation
 

@@ -1,6 +1,6 @@
 # reTerminal HiFi Appliance
 
-A kiosk/appliance OS for the [Seeed reTerminal](https://www.seeedstudio.com/ReTerminal-with-CM4-p-4904.html) (CM4, 4GB RAM, 32GB eMMC, 5" touchscreen). Boots into a fullscreen web kiosk hosting pluggable applications. First application: [Feishin](https://github.com/jeffvli/feishin) music player for Navidrome/Jellyfin.
+A single-purpose appliance OS for the [Seeed reTerminal](https://www.seeedstudio.com/ReTerminal-with-CM4-p-4904.html) (CM4, 4GB RAM, 32GB eMMC, 5" touchscreen). Boots into a fullscreen application shell hosting pluggable web applications. First application: [Feishin](https://github.com/jeffvli/feishin) music player for Navidrome/Jellyfin.
 
 Built with Yocto scarthgap (5.0 LTS). Immutable rootfs with RAUC A/B atomic updates.
 
@@ -31,8 +31,8 @@ Inside the container, `kas` and the full Yocto host toolchain are available. The
 │   └── layers.md            # Upstream layer versions and release constraints
 ├── kas/
 │   └── reterminal-hifi.yml  # kas build configuration (layer pins, machine, distro)
-├── meta-kiosk-os/           # Custom platform layer (machine conf, BSP fixes, distro)
-├── meta-kiosk-app-feishin/  # Feishin application layer
+├── meta-appliance-os/       # Platform layer (machine conf, BSP fixes, distro)
+├── meta-appliance-app-feishin/  # Feishin application layer
 ├── mirror-sources.txt       # Upstream repos to mirror (future task)
 ├── .mise.toml               # Host dev tool versions (mise)
 ├── Makefile                 # Build orchestration
@@ -46,4 +46,4 @@ The top-level project plan lives in the private sync vault. Phase-level and feat
 
 ## Status
 
-**Phase 1: First Bootable Image.** Building `core-image-minimal` with `distro: poky` and `machine: kiosk-reterminal`. Upstream layer incompatibilities fixed via bbappends and BBMASK in meta-kiosk-os. Build reaching image generation stage (~3668/3671 tasks).
+**Phase 1: First Bootable Image.** Building `core-image-minimal` with `distro: poky` and `machine: appliance-reterminal`. Upstream layer incompatibilities fixed via bbappends and BBMASK in meta-appliance-os. Build complete (~3671 tasks).
