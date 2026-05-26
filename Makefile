@@ -9,7 +9,7 @@ ARTIFACTS_DIR := $(CURDIR)/artifacts
 BUILDER_UID := $(shell id -u)
 BUILDER_GID := $(shell id -g)
 
-CACHE_DIR := $(HOME)/.cache/reterminal-hifi-builder
+CACHE_DIR := $(CURDIR)/.cache
 DOWNLOADS_DIR := $(CACHE_DIR)/downloads
 SSTATE_DIR := $(CACHE_DIR)/sstate
 REPO_REF_DIR := $(CACHE_DIR)/repos

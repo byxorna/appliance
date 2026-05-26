@@ -59,5 +59,8 @@ docker-compose.override.yml
 __pycache__/
 *.pyc
 
+# Local build cache (downloads, sstate, repo refs, podman auth)
+/.cache/
+
 # Crush / agent tooling (keep .agents/ tracked, ignore tool state)
 .crush/
