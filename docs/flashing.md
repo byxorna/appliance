@@ -9,7 +9,7 @@ How to extract build artifacts from the container and flash them to the reTermin
 Decompress it:
 
 ```bash
-bunzip2 artifacts/core-image-minimal-appliance-reterminal.wic.bz2
+bunzip2 artifacts/core-image-minimal-appliance-reterminal.rootfs.wic.bz2
 ```
 
 ## Flashing to SD card
@@ -26,7 +26,7 @@ diskutil list
 diskutil unmountDisk /dev/diskN
 
 # Flash (use rdiskN for raw device — much faster)
-sudo dd if=artifacts/core-image-minimal-appliance-reterminal.wic of=/dev/rdiskN bs=4m status=progress
+sudo dd if=artifacts/core-image-minimal-appliance-reterminal.rootfs.wic of=/dev/rdiskN bs=4m status=progress
 
 # Eject
 diskutil eject /dev/diskN
@@ -39,7 +39,7 @@ diskutil eject /dev/diskN
 lsblk
 
 # Flash
-sudo dd if=artifacts/core-image-minimal-appliance-reterminal.wic of=/dev/sdX bs=4M status=progress conv=fsync
+sudo dd if=artifacts/core-image-minimal-appliance-reterminal.rootfs.wic of=/dev/sdX bs=4M status=progress conv=fsync
 
 # Sync and remove
 sync

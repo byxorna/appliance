@@ -68,10 +68,10 @@ build: check
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) bash -c '\
 		SRC=/workspace/build/tmp/deploy/images/$(MACHINE); \
 		DST=/workspace/artifacts; \
-		cp -v "$$SRC"/$(IMAGE)-$(MACHINE).wic.bz2 "$$DST/" 2>/dev/null \
-			|| cp -v "$$SRC"/$(IMAGE)-$(MACHINE).wic "$$DST/" 2>/dev/null \
+		cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.wic.bz2 "$$DST/" 2>/dev/null \
+			|| cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.wic "$$DST/" 2>/dev/null \
 			|| { echo "ERROR: No .wic or .wic.bz2 image found in $$SRC"; exit 1; }; \
-		cp -v "$$SRC"/$(IMAGE)-$(MACHINE).manifest "$$DST/" 2>/dev/null || true; \
+		cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.manifest "$$DST/" 2>/dev/null || true; \
 		echo "Artifacts copied to $(ARTIFACTS_DIR)/"'
 
 status:
