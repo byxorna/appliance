@@ -18,7 +18,7 @@ Before starting work: read the relevant plan, or write one if none exists. After
 
 ## Conventions
 
-- **Machine:** `appliance-reterminal` (derived from `seeed-reterminal` in `meta-appliance-os/conf/machine/`)
+- **Machine:** `seeed-reterminal` (upstream BSP from meta-seeed-cm4; 6.1-incompatible DT overlays removed in `meta-appliance-os/conf/layer.conf`)
 - **Distro:** `appliance-os` (thin wrapper around poky; systemd init)
 - **Image:** `core-image-minimal` (temporary; `appliance-os-image` will be the final image recipe)
 - **App manifest:** Apps ship `app.json` (name, port, capabilities, config_dir). Ports must be unique. Apps inherit `appliance-app.bbclass`.

@@ -2,8 +2,8 @@ IMAGE_NAME := reterminal-hifi-builder:latest
 # Override with `make CONTAINER_ENGINE=docker <target>` to use Docker
 CONTAINER_ENGINE := podman
 KAS_CONFIG := kas/reterminal-hifi.yaml
-MACHINE := appliance-reterminal
-IMAGE := core-image-minimal
+MACHINE := $(shell awk '/^machine:/ {print $$2}' $(KAS_CONFIG))
+IMAGE := $(shell awk '/^target:/ {print $$2}' $(KAS_CONFIG))
 ARTIFACTS_DIR := $(CURDIR)/artifacts
 
 BUILDER_UID := $(shell id -u)

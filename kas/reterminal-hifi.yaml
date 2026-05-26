@@ -4,7 +4,7 @@
 header:
   version: 14
 
-machine: appliance-reterminal
+machine: seeed-reterminal
 distro: appliance-os
 target: core-image-minimal
 
