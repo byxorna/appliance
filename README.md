@@ -10,9 +10,11 @@ Builds run inside a container (Podman by default; Docker also works). See [docs/
 
 ```bash
 make image       # Build the build-host container image (~5 min first time)
+make build       # Run the full bitbake build non-interactively
 make shell       # Open an interactive shell in the build environment
 make kas-shell   # Drop into kas shell with the project config loaded
-make clean       # Remove the container image
+make status      # Show bitbake progress from running build containers
+make clean       # Remove the container image and all caches
 ```
 
 Inside the container, `kas` and the full Yocto host toolchain are available. The repo is bind-mounted at `/workspace`.
@@ -25,10 +27,11 @@ Inside the container, `kas` and the full Yocto host toolchain are available. The
 │   └── Dockerfile           # Build-host container definition
 ├── docs/                    # Project documentation
 │   ├── building.md          # Build instructions and cache management
-│   └── dependencies.md      # Host prerequisites and container contents
+│   ├── dependencies.md      # Host prerequisites and container contents
+│   └── layers.md            # Upstream layer versions and release constraints
 ├── kas/
 │   └── reterminal-hifi.yml  # kas build configuration (layer pins, machine, distro)
-├── meta-kiosk-os/           # Custom platform layer (distro, BSP config, daemons, shell, image)
+├── meta-kiosk-os/           # Custom platform layer (machine conf, BSP fixes, distro)
 ├── meta-kiosk-app-feishin/  # Feishin application layer
 ├── mirror-sources.txt       # Upstream repos to mirror (future task)
 ├── .mise.toml               # Host dev tool versions (mise)
@@ -43,4 +46,4 @@ The top-level project plan lives in the private sync vault. Phase-level and feat
 
 ## Status
 
-**Phase 0: Scaffolding.** Repo structure, build container, kas stub, skeleton layers. No working Yocto image yet.
+**Phase 1: First Bootable Image.** Building `core-image-minimal` with `distro: poky` and `machine: kiosk-reterminal`. Upstream layer incompatibilities fixed via bbappends and BBMASK in meta-kiosk-os. Build reaching image generation stage (~3668/3671 tasks).

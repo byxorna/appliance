@@ -1,10 +1,12 @@
 # Phase 1: First Bootable Image
 
-**Goal**: Build `core-image-minimal` for `MACHINE=seeed-reterminal` using the
-upstream `poky` distro. Verify all 10 upstream layers parse and compile cleanly.
+**Goal**: Build `core-image-minimal` for `MACHINE=kiosk-reterminal` using the
+upstream `poky` distro. Verify all 12 layers parse and compile cleanly.
 Once the base image builds, create the `kiosk-os` distro and switch to it.
 
-**Status**: In progress — first build running (3671 tasks, cold sstate cache).
+**Status**: In progress — build reaching image generation (~3668/3671 tasks).
+Three upstream layer incompatibilities fixed. Pending: DT overlay removal
+needs kernel sstate clean after machine rename.
 
 ## Tasks
 
@@ -17,6 +19,10 @@ Once the base image builds, create the `kiosk-os` distro and switch to it.
 - [x] Mount TMPDIR on named Podman volume (macOS case-insensitivity workaround)
 - [x] Temporarily switch distro to `poky` for first build
 - [x] Achieve clean bitbake parse (2904 recipes, 0 errors)
+- [x] Fix GCC 13 parallel build race (gcc-cross bbappend, `-j 2`)
+- [x] Fix missing DT overlays for 6.1 kernel (machine conf `KERNEL_DEVICETREE:remove`)
+- [x] Fix rpi-bootfiles 404 wget (BBMASK seeed bbappend)
+- [x] Derive `kiosk-reterminal` machine from `seeed-reterminal` (proper scoping for IMAGE_BOOT_FILES)
 - [ ] Complete `core-image-minimal` build with `distro: poky`
 - [ ] Create `meta-kiosk-os/conf/distro/kiosk-os.conf` (minimal distro based on poky)
 - [ ] Switch kas config back to `distro: kiosk-os`
@@ -56,12 +62,26 @@ after the base build succeeds, starting as a thin wrapper around poky with
 | 4 | TMPDIR rejected on case-insensitive macOS filesystem | Named Podman volume for `/workspace/build/tmp` |
 | 5 | meta-seeed-cm4 missing LAYERSERIES_COMPAT | Upstream issue, harmless warning, not our fix |
 | 6 | meta-rauc wants `rauc` in DISTRO_FEATURES | Expected — will be enabled in kiosk-os distro |
+| 7 | GCC 13 parallel build race on aarch64 (`cc1plus` link fails) | `PARALLEL_MAKE = "-j 2"` in `gcc-cross_%.bbappend` |
+| 8 | DT overlays missing in 6.1 kernel (post-6.1 additions in rpi-base.inc) | `KERNEL_DEVICETREE:remove` in `kiosk-reterminal.conf` machine conf |
+| 9 | rpi-bootfiles wget 404 (dt-blob-disp1-cam2.bin) | `BBMASK +=` in `meta-kiosk-os/conf/layer.conf` to mask seeed bbappend |
+| 10 | KERNEL_DEVICETREE:remove in bbappend doesn't affect IMAGE_BOOT_FILES | Derived `kiosk-reterminal` machine — :remove at machine conf scope |
 
 ## Build environment
 
 - Host: macOS arm64, Podman 5.5.0, applehv VM (4 CPU, 17 GB RAM, 93 GB disk)
 - Container: Ubuntu 22.04 aarch64 (native), kas 5.2
-- Machine: seeed-reterminal (Cortex-A72 aarch64, RPi CM4 based)
+- Machine: kiosk-reterminal (derived from seeed-reterminal, Cortex-A72 aarch64, RPi CM4 based)
 - Distro: poky 5.0.18 (temporary, will switch to kiosk-os)
 - Layers: 10 upstream + 2 local (meta-kiosk-os, meta-kiosk-app-feishin)
-- Tasks: 3671 total, 0% sstate match (cold cache)
+- Tasks: ~3671 total
+
+## Layer priorities
+
+| Layer | Priority |
+|-------|----------|
+| meta (poky) | 5 |
+| meta-seeed-cm4 | 6 |
+| meta-raspberrypi | 9 |
+| meta-kiosk-os | 10 |
+| meta-kiosk-app-feishin | 10 |

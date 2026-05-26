@@ -18,9 +18,9 @@ Before starting work: read the relevant plan, or write one if none exists. After
 
 ## Conventions
 
-- **Machine:** `seeed-reterminal` (from `meta-seeed-cm4`)
-- **Distro:** `kiosk-os` (custom, Wayland-only, systemd, no Qt, no X11)
-- **Image:** `kiosk-os-image` (custom image recipe in `meta-kiosk-os`)
+- **Machine:** `kiosk-reterminal` (derived from `seeed-reterminal` in `meta-kiosk-os/conf/machine/`)
+- **Distro:** `poky` (temporary; `kiosk-os` distro conf doesn't exist yet)
+- **Image:** `core-image-minimal` (temporary; `kiosk-os-image` will be the final image recipe)
 - **App manifest:** Apps ship `app.json` (name, port, capabilities, config_dir). Ports must be unique. Apps inherit `kiosk-app.bbclass`.
 - **Persistent data:** `/data/platform/` for platform, `/data/apps/<name>/` for per-app state. rootfs is read-only.
 - **Services bind `127.0.0.1` only.**
@@ -34,4 +34,7 @@ Before starting work: read the relevant plan, or write one if none exists. After
 - **eMMC boot requires `rootwait`.** No boot0/boot1 — BCM2711 EEPROM boots from `mmcblk0` user partition only.
 - **RPi firmware watchdog is 16s.** U-Boot must pet or disable it in time.
 - **TMPDIR on named volume:** macOS is case-insensitive; TMPDIR lives on a Podman named volume (VM ext4).
+- **BBMASK in layer.conf:** `meta-seeed-cm4`'s `rpi-bootfiles.bbappend` wget is 404. Masked via `BBMASK +=` in `meta-kiosk-os/conf/layer.conf`.
+- **`:append` can't be un-appended:** Redefining a shell function in a bbappend does NOT cancel `:append` fragments from other layers. Use `BBMASK` to mask the offending bbappend.
+- **Recipe bbappend scope != machine conf scope:** `KERNEL_DEVICETREE:remove` in a kernel bbappend only affects the kernel recipe's datastore, not `IMAGE_BOOT_FILES` in image recipes. Machine-level variable overrides must go in machine conf.
 - **Chromium link needs ~16GB RAM.** CI runners need 16+ vCPU, 32+ GB.

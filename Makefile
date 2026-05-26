@@ -31,7 +31,7 @@ COMMON_RUN_FLAGS := \
 	-e KAS_REPO_REF_DIR=/workspace/repos \
 	$(IMAGE_NAME)
 
-.PHONY: image shell kas-shell status clean
+.PHONY: image shell kas-shell build status clean
 
 $(EMPTY_AUTH):
 	@mkdir -p "$(dir $@)"
@@ -52,6 +52,10 @@ shell: $(EMPTY_AUTH)
 kas-shell: $(EMPTY_AUTH)
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell kas/reterminal-hifi.yml
+
+build: $(EMPTY_AUTH)
+	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
+	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell kas/reterminal-hifi.yml -c 'bitbake -c build core-image-minimal'
 
 status:
 	@CIDS=$$($(CONTAINER_ENGINE) ps -q --filter ancestor=$(IMAGE_NAME)); \
