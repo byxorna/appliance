@@ -1,9 +1,11 @@
-IMAGE_NAME := reterminal-hifi-builder:latest
+BUILD := reterminal-hifi
+KAS_CONFIG := kas/$(BUILD).yaml
+
+IMAGE_NAME := appliance-builder:latest
 # Override with `make CONTAINER_ENGINE=docker <target>` to use Docker
 CONTAINER_ENGINE := podman
-KAS_CONFIG := kas/reterminal-hifi.yaml
 MACHINE := $(shell awk '/^machine:/ {print $$2}' $(KAS_CONFIG))
-IMAGE := $(shell awk '/^target:/ {print $$2}' $(KAS_CONFIG))
+IMAGE := $(shell awk '/^target:/ {print $$2}' $(KAS_CONFIG) kas/common.yaml | head -1)
 ARTIFACTS_DIR := $(CURDIR)/artifacts
 
 BUILDER_UID := $(shell id -u)
@@ -13,7 +15,7 @@ CACHE_DIR := $(CURDIR)/.cache
 DOWNLOADS_DIR := $(CACHE_DIR)/downloads
 SSTATE_DIR := $(CACHE_DIR)/sstate
 REPO_REF_DIR := $(CACHE_DIR)/repos
-TMPDIR_VOL := reterminal-hifi-tmpdir
+TMPDIR_VOL := appliance-$(BUILD)-tmpdir
 
 # Podman inherits ~/.docker/config.json credHelpers, which may reference
 # helpers not installed on this host (e.g. ecr-login).  An empty auth file

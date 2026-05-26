@@ -1,32 +1,14 @@
 # kas configuration for reTerminal HiFi Appliance
-# https://kas.readthedocs.io/en/latest/userguide/project-configuration.html
+# Builds on common.yaml, adding the reTerminal BSP and HiFi-specific packages.
 
 header:
   version: 14
+  includes:
+    - kas/common.yaml
 
 machine: seeed-reterminal
-distro: appliance-os
-target: core-image-minimal
 
 repos:
-  poky:
-    url: "https://git.yoctoproject.org/poky"
-    branch: scarthgap
-    commit: d4576e3c081a7ee7b57d48421c4c4f491cb4defe
-    layers:
-      meta:
-      meta-poky:
-
-  meta-openembedded:
-    url: "https://git.openembedded.org/meta-openembedded"
-    branch: scarthgap
-    commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
-    layers:
-      meta-oe:
-      meta-python:
-      meta-networking:
-      meta-multimedia:
-
   meta-raspberrypi:
     url: "https://git.yoctoproject.org/meta-raspberrypi"
     branch: scarthgap
@@ -37,23 +19,6 @@ repos:
     branch: main
     commit: a2f9438ee3d2e16b17d40476de344889e4a92c9b
 
-  meta-clang:
-    url: "https://github.com/kraj/meta-clang.git"
-    branch: scarthgap
-    commit: 5bce7e26a38a58bb52242494e54ab2af40009574
-
-  meta-browser:
-    url: "https://github.com/OSSystems/meta-browser.git"
-    branch: scarthgap
-    commit: 85eeb6b50883d22c977396f5e8fe211a7961cf2e
-    layers:
-      meta-chromium:
-
-  meta-rauc:
-    url: "https://github.com/rauc/meta-rauc.git"
-    branch: scarthgap
-    commit: d63878f20eba7a85ecf53566e7a3377e78bb46ac
-
   meta-rauc-community:
     url: "https://github.com/rauc/meta-rauc-community.git"
     branch: scarthgap
@@ -61,21 +26,16 @@ repos:
     layers:
       meta-rauc-raspberrypi:
 
-  # LTS mixin layers (backport newer components to scarthgap)
-  # Both come from meta-lts-mixins but use different branches.
-  meta-lts-mixins-rust:
-    url: "https://git.yoctoproject.org/meta-lts-mixins"
-    branch: scarthgap/rust
-    commit: c19b6da5a3afd3c892b3b1b44983e993ac6d5308
+  meta-appliance-bsp-reterminal:
+    path: meta-appliance-bsp-reterminal
 
-  meta-lts-mixins-uboot:
-    url: "https://git.yoctoproject.org/meta-lts-mixins"
-    branch: scarthgap/u-boot
-    commit: a44882db02a0ed0f149371831bfbe067665eb42b
-
-  # Local layers (paths relative to repo root)
-  meta-appliance-os:
-    path: meta-appliance-os
-
-  meta-appliance-app-feishin:
-    path: meta-appliance-app-feishin
+local_conf_header:
+  reterminal-hw: |
+    IMAGE_INSTALL:append = " \
+        seeed-linux-dtoverlays \
+        reterminal-config \
+        linux-firmware-rpidistro-bcm43455 \
+    "
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch"
+  identity: |
+    hostname:pn-base-files = "reterminal-hifi"

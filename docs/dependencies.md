@@ -41,7 +41,7 @@ podman machine start
 
 ### ECR credential helper workaround (Podman only)
 
-If your `~/.docker/config.json` contains ECR credential helpers (e.g. from AWS work), Podman will try to load them and fail. The Makefile handles this automatically by creating an empty auth file at `~/.cache/reterminal-hifi-builder/.podman-auth.json` and passing `--authfile` to all Podman commands. Docker users are unaffected.
+If your `~/.docker/config.json` contains ECR credential helpers (e.g. from AWS work), Podman will try to load them and fail. The Makefile handles this automatically by creating an empty auth file at `.cache/.podman-auth.json` and passing `--authfile` to all Podman commands. Docker users are unaffected.
 
 ## What the container provides
 

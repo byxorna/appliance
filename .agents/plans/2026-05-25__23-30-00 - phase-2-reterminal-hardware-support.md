@@ -1,7 +1,7 @@
 # Phase 2: reTerminal Hardware Support
 
 **Goal**: Verify that all reTerminal-specific hardware works under `appliance-os`
-on the `appliance-reterminal` machine: DSI display, capacitive touchscreen,
+using the upstream `seeed-reterminal` machine directly: DSI display, capacitive touchscreen,
 user buttons (F1-F4), power button, front-bezel LEDs, I2S WM8960 audio codec,
 accelerometer, ambient light sensor, and IR receiver (GPIO 24, wired by us).
 Write a `reterminal-config` recipe that owns the hardware-specific config.txt
@@ -63,9 +63,12 @@ The pinned commit `a2f9438` in `kas/reterminal-hifi.yaml` provides:
   curl, nano, tmux, etc.), and `kernel-modules`. These are intrusive and will
   be masked or overridden.
 
-Our `appliance-reterminal.conf` already `require`s `seeed-reterminal.conf` and
-adds `KERNEL_DEVICETREE:remove` for overlays missing from the 6.1 kernel tree.
-Phase 2 extends this machine conf and adds a new recipe.
+We use `MACHINE = "seeed-reterminal"` directly (no derived machine conf).
+`KERNEL_DEVICETREE:remove` for 6.1-missing overlays lives in
+`meta-appliance-os/conf/layer.conf` where it's visible to both kernel and
+image recipes. Our `rpi-config_git.bbappend` only adds the lines upstream
+doesn't have (`i2s=on`, `gpio-ir`); the upstream bbappend's machine guard
+fires correctly since `MACHINE` matches `seeed-reterminal`.
 
 ### The AUTOREV problem in seeed-linux-dtoverlays
 
@@ -129,14 +132,14 @@ grep-then-echo pattern that meta-seeed-cm4 uses. This keeps all config.txt
 management in one idiom. Alternatively, use `RPI_EXTRA_CONFIG` if
 meta-raspberrypi supports it cleanly — check during implementation.
 
-### Machine conf updates for appliance-reterminal
+### No derived machine conf
 
-The `appliance-reterminal.conf` machine conf may need additions:
-
-- `KERNEL_MODULE_AUTOLOAD:append = " mipi_dsi"` — ensures the display module
-  loads without udev triggering. (Check whether meta-seeed-cm4 already handles
-  this via the overlay; if the overlay triggers the module bind automatically,
-  this line is redundant but harmless.)
+Originally planned a derived `appliance-reterminal` machine, but this caused
+the upstream `rpi-config_git.bbappend` machine guards to miss (they check
+`MACHINE = "seeed-reterminal"` literally). Using the upstream machine name
+directly avoids duplicating all upstream config.txt lines and makes upstream
+updates automatic. The only fixup needed is `KERNEL_DEVICETREE:remove` in
+`layer.conf` for 6.1-missing overlays.
 
 ### Display rotation: what Phase 2 validates vs. what Phase 3 does
 
@@ -275,34 +278,35 @@ the auto-loaded ones).
 
 ### Recipes and configuration
 
-- [ ] Create `meta-appliance-os/recipes-kernel/seeed-linux-dtoverlays/seeed-linux-dtoverlays.bbappend`
-      — override `SRCREV` with pinned commit
-- [ ] Create `meta-appliance-os/recipes-bsp/reterminal-config/reterminal-config.bb`
+- [x] Create `meta-appliance-os/recipes-kernel/seeed-linux-dtoverlays/seeed-linux-dtoverlays.bbappend`
+      — override `SRCREV` with pinned commit `c336085a3a60a39afcc64fd784ec27dca71dbed2`
+- [x] Create `meta-appliance-os/recipes-bsp/reterminal-config/reterminal-config.bb`
       — installs `/etc/modules-load.d/reterminal.conf` (lists `mipi_dsi`)
-- [ ] Create `meta-appliance-os/recipes-bsp/rpi-config/rpi-config_git.bbappend`
-      — adds `dtoverlay=gpio-ir,gpio_pin=24` and `dtparam=i2s=on` to config.txt
-- [ ] Add `BBMASK` entries to `meta-appliance-os/conf/layer.conf` masking
+- [x] Switch from derived `appliance-reterminal` to upstream `seeed-reterminal`
+      machine. Deleted `conf/machine/appliance-reterminal.conf`. Moved
+      `KERNEL_DEVICETREE:remove` to `layer.conf`. Slimmed `rpi-config_git.bbappend`
+      to only `i2s=on` and `gpio-ir` (upstream handles all base reTerminal lines).
+      Updated kas, Makefile (now derives MACHINE/IMAGE from kas YAML), docs.
+- [x] Create `meta-appliance-os/recipes-bsp/bootfiles/rpi-config_git.bbappend`
+      — adds `dtparam=i2s=on` and `dtoverlay=gpio-ir,gpio_pin=24` to config.txt
+- [x] Add `BBMASK` entries to `meta-appliance-os/conf/layer.conf` masking
       `meta-seeed-cm4/recipes-core/images/core-image-minimal.bbappend` and
       `meta-seeed-cm4/recipes-core/images/core-image-base.bbappend`
-- [ ] Create `kas/test-tools.yaml` — kas include adding `evtest`, `i2c-tools`,
-      `alsa-utils`, `ir-keytable`, `v4l-utils`, `devmem2`, `kernel-modules` to
-      `IMAGE_INSTALL`
-- [ ] Add `IMAGE_INSTALL:append = " seeed-linux-dtoverlays"` somewhere
-      appropriate (machine conf, image recipe, or kas include) — verify that
-      the DT overlay recipe's output is actually installed into the rootfs.
-      meta-seeed-cm4's `core-image-base.bbappend` did this via
-      `kernel-modules`; our masked image means we need to ensure the overlays
-      and modules land in the image explicitly.
+- [x] Create `kas/test-tools.yaml` — kas include adding `evtest`, `i2c-tools`,
+      `alsa-utils`, `ir-keytable`, `v4l-utils`, `devmem2`, `kernel-modules`
+- [x] Add `seeed-linux-dtoverlays` and `reterminal-config` to `IMAGE_INSTALL`
+      via `local_conf_header` in `kas/reterminal-hifi.yaml`
 
 ### Build and verify (host-side)
 
-- [ ] `make build` succeeds with the new recipes and bbappends
-- [ ] Verify the generated `config.txt` in the deploy dir contains the
+- [x] `make build` succeeds with the new recipes and bbappends
+- [x] Verify the generated `config.txt` in the deploy dir contains the
       expected overlays (`reTerminal,tp_rotate=1,addr=0x38`, `gpio-ir,gpio_pin=24`,
-      `i2c3,pins_4_5`, `i2s=on`, `vc4-kms-v3d-pi4`)
-- [ ] Verify the rootfs manifest does not contain any Qt packages
-- [ ] Verify `seeed-linux-dtoverlays` built against the pinned SRCREV (check
-      build log for the fetched commit)
+      `i2c3,pins_4_5`, `i2s=on`, `vc4-kms-v3d-pi4`) — confirmed all present
+- [x] Verify the rootfs manifest does not contain any Qt packages — confirmed.
+      Only `qt` matches are kernel modules (`mi0283qt`, `qt1010` tuner driver).
+- [x] Verify `seeed-linux-dtoverlays` built against the pinned SRCREV (check
+      build log for the fetched commit) — confirmed `c336085a3a60a39afcc64fd784ec27dca71dbed2`
 
 ### Hardware validation (on-device)
 

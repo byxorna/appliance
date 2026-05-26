@@ -1,6 +1,6 @@
 # Flashing
 
-How to extract build artifacts from the container and flash them to the reTerminal.
+How to flash the built image to the reTerminal.
 
 ## Extracting the image
 
@@ -12,42 +12,20 @@ Decompress it:
 bunzip2 artifacts/core-image-minimal-seeed-reterminal.rootfs.wic.bz2
 ```
 
-## Flashing to SD card
+## SD card vs eMMC
 
-Write the `.wic` image to a microSD card. Replace `/dev/diskN` with the correct device.
+The reTerminal ships with a CM4 module that has 32GB onboard eMMC. There is **no exposed microSD card slot** — the CM4 sits on a carrier board inside the enclosure.
 
-### macOS
+| Method | When to use | Requires hardware access? |
+|---|---|---|
+| **eMMC via rpiboot** | Normal workflow. Writes directly to the onboard storage. | Yes — must open the back cover to flip the boot-mode switch. |
+| **SD card (CM4 Lite only)** | Only if you have swapped the CM4 for a Lite variant (no eMMC) and added an SD card adapter. Not the stock configuration. | N/A |
 
-```bash
-# Identify the SD card
-diskutil list
-
-# Unmount (do NOT eject)
-diskutil unmountDisk /dev/diskN
-
-# Flash (use rdiskN for raw device — much faster)
-sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/rdiskN bs=4m status=progress
-
-# Eject
-diskutil eject /dev/diskN
-```
-
-### Linux
-
-```bash
-# Identify the SD card
-lsblk
-
-# Flash
-sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/sdX bs=4M status=progress conv=fsync
-
-# Sync and remove
-sync
-```
+For the stock reTerminal, **always use eMMC flashing**.
 
 ## Flashing to eMMC
 
-The reTerminal's CM4 has 32GB onboard eMMC. To flash directly to eMMC, the CM4 must be put into USB mass storage mode using `rpiboot`.
+The CM4 must be put into USB mass storage mode so the host can write to the eMMC as a block device. This requires `rpiboot` on the host and physical access to the boot-mode switch inside the enclosure.
 
 ### Prerequisites
 
@@ -64,8 +42,8 @@ sudo apt install rpiboot
 ### Procedure
 
 1. **Power off** the reTerminal.
-2. **Open the back cover** and locate the Boot mode switch (near the CM4 module).
-3. **Flip the boot switch** to the "disable eMMC boot" position (this forces USB boot).
+2. **Open the back cover** and locate the boot-mode switch (near the CM4 module).
+3. **Flip the boot switch DOWN** — this holds `nRPI_BOOT` low, telling the CM4 bootrom to skip eMMC and wait for USB.
 4. **Connect** the reTerminal's USB-C port to your host machine.
 5. **Run rpiboot:**
 
@@ -73,25 +51,70 @@ sudo apt install rpiboot
 sudo rpiboot
 ```
 
-The CM4's eMMC will appear as a USB mass storage device (e.g., `/dev/diskN` on macOS, `/dev/sdX` on Linux).
+Wait for `rpiboot` to complete. The CM4's eMMC will appear as a USB mass storage device.
 
-6. **Flash** using the same `dd` commands above, targeting the eMMC device.
-7. **Flip the boot switch back** to the normal position.
-8. **Disconnect USB** and power on.
+6. **Identify the eMMC device:**
+
+```bash
+# macOS
+diskutil list        # look for the new ~29GB disk
+
+# Linux
+lsblk
+```
+
+7. **Flash the image:**
+
+```bash
+# macOS (replace N with the correct disk number)
+diskutil unmountDisk /dev/diskN
+sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/rdiskN bs=4m status=progress
+diskutil eject /dev/diskN
+
+# Linux (replace sdX with the correct device)
+sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/sdX bs=4M status=progress conv=fsync
+sync
+```
+
+8. **Flip the boot switch back UP.** This is mandatory — if the switch stays down, the CM4 will not boot from eMMC regardless of USB state.
+9. **Disconnect USB** and power on.
+
+## Flashing to SD card
+
+Only applicable if you have a CM4 Lite variant with an SD card adapter. Write the `.wic` image to a microSD card:
+
+### macOS
+
+```bash
+diskutil list
+diskutil unmountDisk /dev/diskN
+sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/rdiskN bs=4m status=progress
+diskutil eject /dev/diskN
+```
+
+### Linux
+
+```bash
+lsblk
+sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/sdX bs=4M status=progress conv=fsync
+sync
+```
 
 ## First boot
 
-Insert the SD card (or, if you flashed eMMC, just power on) and connect a serial console or HDMI monitor.
+Power on and connect a serial console. There is no graphical login yet — `core-image-minimal` provides a text console only.
 
 Default serial console settings: **115200 8N1** on the debug UART (GPIO 14/15 via the 40-pin header, or the USB-C port if the debug firmware is installed).
 
-The system boots to a login prompt. Default credentials depend on the image — `core-image-minimal` typically uses `root` with no password.
+Login as `root` with no password.
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| No video output | Display rotation not configured | Expected for `core-image-minimal` (no GUI). Use serial console. |
+| `rpiboot` doesn't detect the device | Boot switch not flipped, or bad cable | Verify the switch is DOWN. Try a different USB-C cable (must support data, not charge-only). |
+| `rpiboot` completes but no disk appears | macOS sometimes delays enumeration | Wait 10–15 seconds. Run `diskutil list` again. Try `sudo rpiboot -d mass-storage-gadget64` for the faster gadget path. |
 | Boot hangs at rainbow screen | Kernel not loading | Check that the boot partition has the correct `config.txt` and kernel image. |
-| `rpiboot` doesn't detect the device | Boot switch not flipped | Verify the switch position. Try a different USB cable (must support data). |
+| No video output on DSI panel | Display driver not loaded | Check `dmesg` via serial console for `mipi_dsi` errors. Expected for early bring-up. |
 | `dd` is very slow on macOS | Using `/dev/diskN` instead of `/dev/rdiskN` | Use the raw device (`rdiskN`) for unbuffered writes. |
+| Forgot to flip boot switch back up | CM4 won't boot from eMMC | Open the back cover and flip the switch UP. |

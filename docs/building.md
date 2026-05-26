@@ -1,6 +1,6 @@
 # Building
 
-The reTerminal HiFi Appliance builds inside an OCI container (Podman by default; Docker also works). The host machine does not need Yocto, BitBake, or any cross-compiler — everything runs in the container.
+All builds run inside an OCI container (Podman by default; Docker also works). The host machine does not need Yocto, BitBake, or any cross-compiler — everything runs in the container.
 
 ## Quick start
 
@@ -8,9 +8,15 @@ The reTerminal HiFi Appliance builds inside an OCI container (Podman by default;
 make image       # Build the build-host container image (~5 min first time)
 make build       # Run the full bitbake build non-interactively
 make shell       # Open an interactive bash shell in the build environment
-make kas-shell   # Enter a kas shell with kas/reterminal-hifi.yaml loaded
+make kas-shell   # Enter a kas shell with the active kas config loaded
 make status      # Show bitbake progress from running build containers
 make clean       # Remove the container image and all caches
+```
+
+The default build target is `reterminal-hifi`. To build a different target:
+
+```bash
+make BUILD=reterminal-hifi build
 ```
 
 ## What `make image` builds
@@ -21,7 +27,7 @@ make clean       # Remove the container image and all caches
 - [kas 5.2](https://kas.readthedocs.io/) — Yocto build orchestrator
 - A non-root `builder` user whose UID/GID match the host user (avoids file ownership issues with bind mounts)
 
-The image is tagged `reterminal-hifi-builder:latest`. Override the container engine with `make CONTAINER_ENGINE=docker image`.
+The image is tagged `appliance-builder:latest`. Override the container engine with `make CONTAINER_ENGINE=docker image`.
 
 ## Bind mounts
 
@@ -30,10 +36,10 @@ When you run `make shell` or `make kas-shell`, the Makefile bind-mounts:
 | Host path | Container path | Purpose |
 |---|---|---|
 | Repo root (`.`) | `/workspace` | Source tree, kas configs, layers |
-| `~/.cache/reterminal-hifi-builder/downloads` | `/workspace/downloads` | Yocto `DL_DIR` — fetched source tarballs |
-| `~/.cache/reterminal-hifi-builder/sstate` | `/workspace/sstate-cache` | Yocto `SSTATE_DIR` — shared state cache |
-| `~/.cache/reterminal-hifi-builder/repos` | `/workspace/repos` | `KAS_REPO_REF_DIR` — git reference clones for upstream layers |
-| Named volume `reterminal-hifi-tmpdir` | `/workspace/build/tmp` | Yocto `TMPDIR` — case-sensitive filesystem for build artifacts |
+| `.cache/downloads` | `/workspace/downloads` | Yocto `DL_DIR` — fetched source tarballs |
+| `.cache/sstate` | `/workspace/sstate-cache` | Yocto `SSTATE_DIR` — shared state cache |
+| `.cache/repos` | `/workspace/repos` | `KAS_REPO_REF_DIR` — git reference clones for upstream layers |
+| Named volume `appliance-<BUILD>-tmpdir` | `/workspace/build/tmp` | Yocto `TMPDIR` — case-sensitive filesystem for build artifacts |
 
 All cache directories are created automatically. They persist across container runs so you don't re-fetch or re-compile unchanged packages.
 
@@ -54,22 +60,48 @@ make kas-shell
 bitbake -c build core-image-minimal
 ```
 
-> **Note:** Upstream SRCREVs are pinned in `kas/reterminal-hifi.yaml`. See `docs/layers.md` for the pinned versions table.
+To include hardware test tools (evtest, i2c-tools, alsa-utils, etc.):
+
+```bash
+kas build kas/reterminal-hifi.yaml:kas/test-tools.yaml
+```
+
+> **Note:** Common upstream SRCREVs are pinned in `kas/common.yaml`. Build-specific repos and machine config are in `kas/<build>.yaml`. See `docs/layers.md` for the pinned versions table.
+
+## Inspecting build output
+
+The build's `TMPDIR` lives on a Podman named volume, so it's not directly accessible from macOS. To inspect files inside the build tree, use `make shell` and browse from there:
+
+```bash
+make shell
+
+# View the generated config.txt
+cat /workspace/build/tmp/deploy/images/seeed-reterminal/bootfiles/config.txt
+
+# List deployed images
+ls -lh /workspace/build/tmp/deploy/images/seeed-reterminal/
+
+# Check the rootfs manifest
+cat /workspace/build/tmp/deploy/images/seeed-reterminal/core-image-minimal-seeed-reterminal.rootfs.manifest
+
+# Check build logs for a recipe
+cat /workspace/build/tmp/work/seeed_reterminal-poky-linux/seeed-linux-dtoverlays/1.0/temp/log.do_compile
+```
 
 ## Cache management
 
-All caches live under `~/.cache/reterminal-hifi-builder/`:
+All caches live under `.cache/` in the repo root (gitignored):
 
 | Directory | Contents | Safe to delete? |
 |---|---|---|
-| `downloads/` | Yocto source tarballs | Yes — sources will be re-fetched |
-| `sstate/` | Yocto shared state | Yes — rebuild will be slower but correct |
-| `repos/` | Bare git reference clones of upstream layers | Yes — repos will be re-cloned |
+| `.cache/downloads/` | Yocto source tarballs | Yes — sources will be re-fetched |
+| `.cache/sstate/` | Yocto shared state | Yes — rebuild will be slower but correct |
+| `.cache/repos/` | Bare git reference clones of upstream layers | Yes — repos will be re-cloned |
 
 `make clean` removes the container image, the named TMPDIR volume, **and** the entire cache directory, giving you a true clean slate.
 
 To remove only the caches without deleting the container image:
 
 ```bash
-rm -rf ~/.cache/reterminal-hifi-builder
+rm -rf .cache
 ```
