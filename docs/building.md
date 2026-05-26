@@ -8,7 +8,7 @@ The reTerminal HiFi Appliance builds inside an OCI container (Podman by default;
 make image       # Build the build-host container image (~5 min first time)
 make build       # Run the full bitbake build non-interactively
 make shell       # Open an interactive bash shell in the build environment
-make kas-shell   # Enter a kas shell with kas/reterminal-hifi.yml loaded
+make kas-shell   # Enter a kas shell with kas/reterminal-hifi.yaml loaded
 make status      # Show bitbake progress from running build containers
 make clean       # Remove the container image and all caches
 ```
@@ -54,7 +54,7 @@ make kas-shell
 bitbake -c build core-image-minimal
 ```
 
-> **Note:** Upstream SRCREVs are pinned in `kas/reterminal-hifi.yml`. See `docs/layers.md` for the pinned versions table.
+> **Note:** Upstream SRCREVs are pinned in `kas/reterminal-hifi.yaml`. See `docs/layers.md` for the pinned versions table.
 
 ## Cache management
 

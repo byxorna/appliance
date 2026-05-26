@@ -5,7 +5,7 @@ header:
   version: 14
 
 machine: appliance-reterminal
-distro: poky
+distro: appliance-os
 target: core-image-minimal
 
 repos:

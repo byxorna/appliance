@@ -17,7 +17,7 @@ Pinned versions of all upstream Yocto layers used by the project. All commits ar
 | **meta-lts-mixins** (rust) | scarthgap/rust | `c19b6da5a3afd3c8…` | — | git.yoctoproject.org |
 | **meta-lts-mixins** (u-boot) | scarthgap/u-boot | `a44882db02a0ed0f…` | — | git.yoctoproject.org |
 
-Full commit hashes are in `kas/reterminal-hifi.yml`.
+Full commit hashes are in `kas/reterminal-hifi.yaml`.
 
 ## Yocto release constraint
 

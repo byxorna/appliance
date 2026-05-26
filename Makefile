@@ -1,6 +1,7 @@
 IMAGE_NAME := reterminal-hifi-builder:latest
 # Override with `make CONTAINER_ENGINE=docker <target>` to use Docker
 CONTAINER_ENGINE := podman
+KAS_CONFIG := kas/reterminal-hifi.yaml
 
 BUILDER_UID := $(shell id -u)
 BUILDER_GID := $(shell id -g)
@@ -31,7 +32,7 @@ COMMON_RUN_FLAGS := \
 	-e KAS_REPO_REF_DIR=/workspace/repos \
 	$(IMAGE_NAME)
 
-.PHONY: image shell kas-shell build status clean
+.PHONY: image shell kas-shell check build status clean
 
 $(EMPTY_AUTH):
 	@mkdir -p "$(dir $@)"
@@ -51,11 +52,15 @@ shell: $(EMPTY_AUTH)
 
 kas-shell: $(EMPTY_AUTH)
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
-	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell kas/reterminal-hifi.yml
+	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG)
 
-build: $(EMPTY_AUTH)
+check: $(EMPTY_AUTH)
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
-	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell kas/reterminal-hifi.yml -c 'bitbake -c build core-image-minimal'
+	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG) -c 'bitbake -p'
+
+build: check
+	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
+	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG) -c 'bitbake -c build core-image-minimal'
 
 status:
 	@CIDS=$$($(CONTAINER_ENGINE) ps -q --filter ancestor=$(IMAGE_NAME)); \
