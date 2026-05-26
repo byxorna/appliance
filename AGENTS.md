@@ -19,12 +19,18 @@ Before starting work: read the relevant plan, or write one if none exists. After
 ## Conventions
 
 - **Machine:** `appliance-reterminal` (derived from `seeed-reterminal` in `meta-appliance-os/conf/machine/`)
-- **Distro:** `poky` (temporary; `appliance-os` distro conf doesn't exist yet)
+- **Distro:** `appliance-os` (thin wrapper around poky; systemd init)
 - **Image:** `core-image-minimal` (temporary; `appliance-os-image` will be the final image recipe)
 - **App manifest:** Apps ship `app.json` (name, port, capabilities, config_dir). Ports must be unique. Apps inherit `appliance-app.bbclass`.
 - **Persistent data:** `/data/platform/` for platform, `/data/apps/<name>/` for per-app state. rootfs is read-only.
 - **Services bind `127.0.0.1` only.**
 - **Never use `${AUTOREV}`** — all upstream layers pinned by SRCREV.
+
+## Documentation preferences
+
+- **No "Status" section in README.md.** The README should be stable reference material, not a changelog.
+- **Keep docs generalizable.** Avoid coupling descriptions to specific implementation details that may change. Prefer describing purpose over enumerating internals.
+- **Use `.yaml` extension** for YAML files, not `.yml`.
 
 ## Gotchas
 

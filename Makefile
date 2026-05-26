@@ -2,6 +2,9 @@ IMAGE_NAME := reterminal-hifi-builder:latest
 # Override with `make CONTAINER_ENGINE=docker <target>` to use Docker
 CONTAINER_ENGINE := podman
 KAS_CONFIG := kas/reterminal-hifi.yaml
+MACHINE := appliance-reterminal
+IMAGE := core-image-minimal
+ARTIFACTS_DIR := $(CURDIR)/artifacts
 
 BUILDER_UID := $(shell id -u)
 BUILDER_GID := $(shell id -g)
@@ -60,7 +63,16 @@ check: $(EMPTY_AUTH)
 
 build: check
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
-	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG) -c 'bitbake -c build core-image-minimal'
+	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG) -c 'bitbake -c build $(IMAGE)'
+	@mkdir -p "$(ARTIFACTS_DIR)"
+	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) bash -c '\
+		SRC=/workspace/build/tmp/deploy/images/$(MACHINE); \
+		DST=/workspace/artifacts; \
+		cp -v "$$SRC"/$(IMAGE)-$(MACHINE).wic.bz2 "$$DST/" 2>/dev/null \
+			|| cp -v "$$SRC"/$(IMAGE)-$(MACHINE).wic "$$DST/" 2>/dev/null \
+			|| { echo "ERROR: No .wic or .wic.bz2 image found in $$SRC"; exit 1; }; \
+		cp -v "$$SRC"/$(IMAGE)-$(MACHINE).manifest "$$DST/" 2>/dev/null || true; \
+		echo "Artifacts copied to $(ARTIFACTS_DIR)/"'
 
 status:
 	@CIDS=$$($(CONTAINER_ENGINE) ps -q --filter ancestor=$(IMAGE_NAME)); \
