@@ -4,7 +4,7 @@
 header:
   version: 14
 
-machine: seeed-reterminal
+machine: kiosk-reterminal
 distro: poky
 target: core-image-minimal
 
