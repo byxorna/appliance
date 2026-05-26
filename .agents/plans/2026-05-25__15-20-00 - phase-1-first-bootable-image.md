@@ -24,9 +24,9 @@ needs kernel sstate clean after machine rename.
 - [x] Fix rpi-bootfiles 404 wget (BBMASK seeed bbappend)
 - [x] Derive `appliance-reterminal` machine from `seeed-reterminal` (proper scoping for IMAGE_BOOT_FILES)
 - [x] Complete `core-image-minimal` build with `distro: poky`
-- [ ] Create `meta-appliance-os/conf/distro/appliance-os.conf` (minimal distro based on poky)
-- [ ] Switch kas config back to `distro: appliance-os`
-- [ ] Verify build with appliance-os distro
+- [x] Create `meta-appliance-os/conf/distro/appliance-os.conf` (minimal distro based on poky)
+- [x] Switch kas config back to `distro: appliance-os`
+- [x] Verify build with appliance-os distro
 - [ ] Flash image to SD card and boot on reTerminal hardware
 - [ ] Document build time, image size, and any issues in this plan
 
