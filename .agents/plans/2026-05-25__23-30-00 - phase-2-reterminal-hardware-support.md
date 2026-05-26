@@ -255,14 +255,14 @@ the auto-loaded ones).
 
 - [x] Resolve the pinned SRCREV for `seeed-linux-dtoverlays` (check upstream
       repo for latest 6.1-compatible commit on `master` branch)
-      **Result**: Pin to `e9d88ebad195561a0b788d36f59bc67a7bcc697b` (2025-08-02,
-      "fix: fix compilation issues in the yocto scarthgap branch"). This commit
-      sits on `master` after the `2025-04-03-reTerminal-V2.0` tag and includes
-      three fixes relevant to us: (1) panel-ili9881d crash fix during driver
-      removal (Apr 15), (2) reTerminal-bridge.dts build target (Apr 9),
-      (3) missing `#include <linux/backlight.h>` for scarthgap build (Aug 2).
-      Commits after this are ili9881c/R2x features and 6.18/trixie compat —
-      not relevant and potentially risky for our 6.1 kernel.
+      **Result**: Pin to `c336085a3a60a39afcc64fd784ec27dca71dbed2` (master
+      HEAD, 2026-05-26). Initially considered pinning to `e9d88eb` (2025-08-02,
+      the scarthgap build fix) to avoid post-tag 6.12/6.18 compat patches.
+      Tested master HEAD instead — builds cleanly against the 6.1 kernel.
+      The 6.12/6.18 patches use `#if` version guards and are harmless on 6.1.
+      Pinning to HEAD gives us all upstream fixes including the panel crash
+      fix, scarthgap build fix, ch343 driver update, and newer overlay
+      support.
 - [x] Verify GPIO 24 is free on the reTerminal expansion-board schematic
       **Result**: Confirmed free. GPIO 24 (BCM) / physical pin 18 is routed
       through to the 40-pin header via a series resistor and is not consumed
