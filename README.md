@@ -20,7 +20,7 @@ make clean       # Remove the container image and all caches
 
 Inside the container, `kas` and the full Yocto host toolchain are available. The repo is bind-mounted at `/workspace`.
 
-See [docs/flashing.md](docs/flashing.md) for extracting artifacts and writing the image to SD card or eMMC.
+See [docs/flashing.md](docs/flashing.md) for extracting artifacts and writing the image to SD card or eMMC. See [docs/post-install.md](docs/post-install.md) for WiFi and other post-install configuration.
 
 ## Repository Layout
 

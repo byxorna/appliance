@@ -62,5 +62,8 @@ __pycache__/
 # Local build cache (downloads, sstate, repo refs, podman auth)
 /.cache/
 
+# User-local config overrides (secrets, wpa_supplicant.conf, etc.)
+/local/
+
 # Crush / agent tooling (keep .agents/ tracked, ignore tool state)
 .crush/

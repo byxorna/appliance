@@ -35,7 +35,10 @@ local_conf_header:
         seeed-linux-dtoverlays \
         reterminal-config \
         linux-firmware-rpidistro-bcm43455 \
+        bluez-firmware-rpidistro-bcm4345c0-hcd \
+        pi-bluetooth \
+        bluez5 \
     "
-    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch"
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
   identity: |
     hostname:pn-base-files = "reterminal-hifi"

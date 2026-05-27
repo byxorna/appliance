@@ -70,7 +70,17 @@ local_conf_header:
         openssh-sftp-server \
         wpa-supplicant \
         dhcpcd \
+        iproute2 \
         boot-diag \
     "
     IMAGE_FEATURES:append = " ssh-server-openssh"
     EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+
+  utilities: |
+    IMAGE_INSTALL:append = " \
+        vim \
+        git \
+        tmux \
+        zsh \
+        sudo \
+    "
