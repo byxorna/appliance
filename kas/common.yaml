@@ -84,3 +84,5 @@ local_conf_header:
         zsh \
         sudo \
     "
+    INHERIT += "extrausers"
+    EXTRA_USERS_PARAMS = "usermod -s /usr/bin/zsh root;"
