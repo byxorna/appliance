@@ -1,0 +1,12 @@
+[Unit]
+Description=Write boot diagnostics to /boot partition
+After=network-online.target sshd.socket sshdgenkeys.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/boot-diag.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
