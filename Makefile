@@ -12,6 +12,9 @@ ARTIFACT_PREFIX := $(BUILD)-$(IMAGE)-$(MACHINE)
 BUILDER_UID := $(shell id -u)
 BUILDER_GID := $(shell id -g)
 
+# Version from nearest git tag (e.g. "0.1.0-3-gbce1bc4-dirty")
+APPLIANCE_VERSION := $(shell git -C "$(CURDIR)" describe --tags --long --always --dirty 2>/dev/null | sed 's/^v//')
+
 CACHE_DIR := $(CURDIR)/.cache
 DOWNLOADS_DIR := $(CACHE_DIR)/downloads
 SSTATE_DIR := $(CACHE_DIR)/sstate
@@ -36,6 +39,7 @@ COMMON_RUN_FLAGS := \
 	-v "$(REPO_REF_DIR)":/workspace/repos:Z \
 	-v "$(TMPDIR_VOL)":/workspace/build/tmp:Z \
 	-e KAS_REPO_REF_DIR=/workspace/repos \
+	-e APPLIANCE_VERSION="$(APPLIANCE_VERSION)" \
 	$(IMAGE_NAME)
 
 .PHONY: image shell kas-shell check build status clean rpiboot

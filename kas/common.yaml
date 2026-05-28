@@ -8,6 +8,9 @@ header:
 distro: appliance-os
 target: core-image-minimal
 
+env:
+  APPLIANCE_VERSION: "0.0.0-unknown"
+
 repos:
   poky:
     url: "https://git.yoctoproject.org/poky"
@@ -71,6 +74,8 @@ repos:
     path: layers/meta-appliance-app-feishin
 
 local_conf_header:
+  version: |
+    DISTRO_VERSION = "${@os.environ.get('APPLIANCE_VERSION', '0.0.0-unknown')}"
   connectivity: |
     IMAGE_INSTALL:append = " \
         openssh-sshd \
