@@ -1,7 +1,7 @@
 # Optional kas include for development tools and container engines.
-# Usage: kas build kas/reterminal-hifi.yaml:kas/devtools.yaml
+# Uncomment in the build target's header.includes to enable.
 #
-# Adds podman, debugging utilities, and container-related tooling.
+# Adds podman and container runtime dependencies.
 # NOT part of the production image.
 
 header:
@@ -18,9 +18,6 @@ repos:
     layers:
       meta-filesystems:
 
-  meta-appliance-devtools:
-    path: layers/meta-appliance-devtools
-
 local_conf_header:
   devtools: |
     IMAGE_INSTALL:append = " \
@@ -30,12 +27,6 @@ local_conf_header:
         slirp4netns \
         fuse-overlayfs \
         cni \
-        kernel-modules \
         iptables \
         ca-certificates \
-        strace \
-        lsof \
-        tcpdump \
-        curl \
-        htop \
     "

@@ -5,9 +5,9 @@ header:
   version: 14
   includes:
     - kas/common.yaml
-    # Optional: uncomment to add development tools and container engines.
+    # Optional: uncomment to include in this build.
+    # - kas/debug.yaml
     # - kas/devtools.yaml
-    # - kas/test-tools.yaml
 
 machine: seeed-reterminal
 

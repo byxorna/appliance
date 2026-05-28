@@ -1,0 +1,29 @@
+# Optional kas include for debugging and hardware validation.
+# Uncomment in the build target's header.includes to enable.
+#
+# Adds boot-diag (offline-readable boot log), runtime debugging
+# tools, and hardware validation utilities for input, I2C, audio,
+# IR, and video subsystems.
+# NOT part of the production image.
+
+header:
+  version: 14
+
+repos:
+  meta-appliance-devtools:
+    path: layers/meta-appliance-devtools
+
+local_conf_header:
+  debug: |
+    IMAGE_INSTALL:append = " \
+        boot-diag \
+        strace \
+        lsof \
+        tcpdump \
+        evtest \
+        i2c-tools \
+        alsa-utils \
+        ir-keytable \
+        v4l-utils \
+        devmem2 \
+    "
