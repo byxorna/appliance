@@ -1,8 +1,5 @@
 FROM docker.io/library/ubuntu:22.04
 
-ARG BUILDER_UID=1000
-ARG BUILDER_GID=1000
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
@@ -27,6 +24,10 @@ RUN pip3 install --no-cache-dir --upgrade pip \
     && pip3 install --no-cache-dir kas==5.2
 
 # Non-root builder user with configurable UID/GID
+# ARGs declared here so UID/GID changes only invalidate this layer,
+# not the expensive apt-get/pip layers above.
+ARG BUILDER_UID=1000
+ARG BUILDER_GID=1000
 # Use -o to allow reusing an existing GID (e.g. macOS GID 20 = dialout in Ubuntu)
 RUN groupadd -o -g ${BUILDER_GID} builder \
     && useradd -m -o -u ${BUILDER_UID} -g ${BUILDER_GID} -s /bin/bash builder
