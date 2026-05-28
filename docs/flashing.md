@@ -2,15 +2,9 @@
 
 How to flash the built image to the reTerminal.
 
-## Extracting the image
+## Build output
 
-`make build` automatically copies the flashable image to `artifacts/` at the repo root after a successful build. The `.wic.bz2` file is the compressed disk image.
-
-Decompress it:
-
-```bash
-bunzip2 artifacts/core-image-minimal-seeed-reterminal.rootfs.wic.bz2
-```
+`make build` automatically copies the flashable image to `artifacts/` at the repo root after a successful build. The `.wic.bz2` file is the compressed disk image. The flash commands below stream directly from the compressed file via `bzcat`, so there is no need to decompress first.
 
 ## SD card vs eMMC
 
@@ -29,15 +23,19 @@ The CM4 must be put into USB mass storage mode so the host can write to the eMMC
 
 ### Prerequisites
 
-Install `rpiboot` on the host:
+macOS:
 
 ```bash
-# macOS
-brew install rpiboot
-
-# Linux (Debian/Ubuntu)
-sudo apt install rpiboot
+brew install libusb pkg-config bzip2
 ```
+
+Linux (Debian/Ubuntu):
+
+```bash
+sudo apt install libusb-1.0-0-dev pkg-config bzip2
+```
+
+`make rpiboot` will check for `libusb` and `pkg-config` and print an error if missing. `bzcat` (from `bzip2`) is needed to stream compressed images during flashing.
 
 ### Procedure
 
@@ -48,10 +46,10 @@ sudo apt install rpiboot
 5. **Run rpiboot:**
 
 ```bash
-sudo rpiboot
+make rpiboot
 ```
 
-Wait for `rpiboot` to complete. The CM4's eMMC will appear as a USB mass storage device.
+This clones, builds (if needed), and runs `rpiboot` automatically. The CM4's eMMC will appear as a USB mass storage device when it completes.
 
 6. **Identify the eMMC device:**
 
@@ -68,11 +66,13 @@ lsblk
 ```bash
 # macOS (replace N with the correct disk number)
 diskutil unmountDisk /dev/diskN
-sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/rdiskN bs=4m status=progress
+bzcat artifacts/reterminal-hifi-core-image-minimal-seeed-reterminal.wic.bz2 \
+  | sudo dd of=/dev/rdiskN bs=4m status=progress
 diskutil eject /dev/diskN
 
 # Linux (replace sdX with the correct device)
-sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/sdX bs=4M status=progress conv=fsync
+bzcat artifacts/reterminal-hifi-core-image-minimal-seeed-reterminal.wic.bz2 \
+  | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
 sync
 ```
 
@@ -88,7 +88,8 @@ Only applicable if you have a CM4 Lite variant with an SD card adapter. Write th
 ```bash
 diskutil list
 diskutil unmountDisk /dev/diskN
-sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/rdiskN bs=4m status=progress
+bzcat artifacts/reterminal-hifi-core-image-minimal-seeed-reterminal.wic.bz2 \
+  | sudo dd of=/dev/rdiskN bs=4m status=progress
 diskutil eject /dev/diskN
 ```
 
@@ -96,7 +97,8 @@ diskutil eject /dev/diskN
 
 ```bash
 lsblk
-sudo dd if=artifacts/core-image-minimal-seeed-reterminal.rootfs.wic of=/dev/sdX bs=4M status=progress conv=fsync
+bzcat artifacts/reterminal-hifi-core-image-minimal-seeed-reterminal.wic.bz2 \
+  | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
 sync
 ```
 

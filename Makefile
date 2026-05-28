@@ -38,7 +38,7 @@ COMMON_RUN_FLAGS := \
 	-e KAS_REPO_REF_DIR=/workspace/repos \
 	$(IMAGE_NAME)
 
-.PHONY: image shell kas-shell check build status clean
+.PHONY: image shell kas-shell check build status clean rpiboot
 
 $(EMPTY_AUTH):
 	@mkdir -p "$(dir $@)"
@@ -130,7 +130,26 @@ status:
 		done; \
 	fi
 
+# --- rpiboot ---
+USBBOOT_REPO   := https://github.com/raspberrypi/usbboot
+USBBOOT_COMMIT := 42ca50932f67f4571951a11da3c3161561cb49c2
+USBBOOT_DIR    := build/usbboot
+RPIBOOT        := $(USBBOOT_DIR)/rpiboot
+
+$(USBBOOT_DIR)/.git:
+	git clone --recurse-submodules --shallow-submodules \
+		$(USBBOOT_REPO) $(USBBOOT_DIR)
+	cd $(USBBOOT_DIR) && git checkout $(USBBOOT_COMMIT) && git submodule update --recursive
+
+$(RPIBOOT): $(USBBOOT_DIR)/.git
+	@command -v pkg-config >/dev/null || { echo "ERROR: pkg-config not found. Run: brew install pkg-config"; exit 1; }
+	@pkg-config --exists libusb-1.0 || { echo "ERROR: libusb not found. Run: brew install libusb"; exit 1; }
+	$(MAKE) -C $(USBBOOT_DIR)
+
+rpiboot: $(RPIBOOT)
+	sudo $(RPIBOOT) -d $(USBBOOT_DIR)/mass-storage-gadget64
+
 clean:
 	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || true
 	$(CONTAINER_ENGINE) volume rm $(TMPDIR_VOL) || true
-	rm -rf "$(CACHE_DIR)" "$(ARTIFACTS_DIR)" build/repos || :
+	rm -rf "$(CACHE_DIR)" "$(ARTIFACTS_DIR)" build/repos build/usbboot

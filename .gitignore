@@ -1,12 +1,6 @@
 # Yocto build artifacts (build/Dockerfile is tracked; ignore everything else under build/)
-build/conf/
-build/tmp/
-build/tmp-*/
-build/cache/
-build/downloads/
-build/sstate-cache/
-build/bitbake-cookerdaemon.log
-build/bitbake.lock
+build/*
+!build/Dockerfile
 build-*/
 tmp-*/
 sstate-cache/
@@ -20,10 +14,6 @@ sstate-cache/
 
 # kas state
 .kas-cache/
-
-# kas-managed upstream layer checkouts (cloned by kas into build/repos/)
-# Only our custom layers (under layers/) are tracked in this repo.
-/build/repos/
 
 # Podman / Docker
 *.tar
