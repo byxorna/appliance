@@ -1,0 +1,41 @@
+# Optional kas include for development tools and container engines.
+# Usage: kas build kas/reterminal-hifi.yaml:kas/devtools.yaml
+#
+# Adds podman, debugging utilities, and container-related tooling.
+# NOT part of the production image.
+
+header:
+  version: 14
+
+repos:
+  meta-virtualization:
+    url: "https://git.yoctoproject.org/meta-virtualization"
+    path: build/repos/meta-virtualization
+    branch: scarthgap
+    commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
+
+  meta-openembedded:
+    layers:
+      meta-filesystems:
+
+  meta-appliance-devtools:
+    path: layers/meta-appliance-devtools
+
+local_conf_header:
+  devtools: |
+    IMAGE_INSTALL:append = " \
+        podman \
+        podman-compose \
+        crun \
+        slirp4netns \
+        fuse-overlayfs \
+        cni \
+        kernel-modules \
+        iptables \
+        ca-certificates \
+        strace \
+        lsof \
+        tcpdump \
+        curl \
+        htop \
+    "
