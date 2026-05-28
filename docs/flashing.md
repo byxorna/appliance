@@ -118,3 +118,55 @@ Login as `root` with no password.
 | No video output on DSI panel | Display driver not loaded | Check `dmesg` via serial console for `mipi_dsi` errors. Expected for early bring-up. |
 | `dd` is very slow on macOS | Using `/dev/diskN` instead of `/dev/rdiskN` | Use the raw device (`rdiskN`) for unbuffered writes. |
 | Forgot to flip boot switch back up | CM4 won't boot from eMMC | Open the back cover and flip the switch UP. |
+
+## macOS gotchas
+
+### Unmount before writing
+
+macOS automounts FAT partitions immediately. If you `dd` while a
+partition is mounted, the write can silently corrupt the ext4 rootfs
+(FAT partition looks fine, rootfs is zeros). Always unmount first:
+
+```bash
+# Find the eMMC device
+diskutil list
+# Look for the ~29GB disk, e.g. /dev/disk4
+
+# Unmount all partitions on the disk
+diskutil unmountDisk /dev/disk4
+
+# Flash (use rdiskN for raw unbuffered writes)
+bzcat artifacts/reterminal-hifi-core-image-minimal-seeed-reterminal.wic.bz2 \
+  | sudo dd of=/dev/rdisk4 bs=4m status=progress
+
+# Eject
+diskutil eject /dev/disk4
+```
+
+### Use the raw device
+
+`/dev/diskN` goes through the macOS buffer cache and is extremely slow.
+Always use `/dev/rdiskN` instead — it's an order of magnitude faster.
+
+### `strings` doesn't work on raw block devices
+
+If you need to inspect a partition's contents (e.g. for debugging),
+extract it to a file first:
+
+```bash
+sudo dd if=/dev/rdisk4s2 of=/tmp/rootfs.img bs=4M status=progress
+strings /tmp/rootfs.img | grep something
+```
+
+## Verifying a flash
+
+The first 1024 bytes of an ext4 partition are always zeros (boot block),
+so a naive check of the partition start will look blank even on a good
+flash. Verify the ext4 superblock at offset +1024 — look for magic bytes
+`53ef` at +0x438:
+
+```bash
+sudo xxd -s 1024 -l 64 /dev/rdisk4s2 | grep 53ef
+```
+
+If this returns nothing, the rootfs partition wasn't written correctly.
