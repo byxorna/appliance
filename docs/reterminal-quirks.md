@@ -5,7 +5,7 @@ Seeed reTerminal (CM4 4GB, eMMC) with **meta-seeed-cm4** (commit `a2f9438`)
 and **meta-raspberrypi** (scarthgap branch). Kernel is **6.1.77-v8**
 (pinned by meta-seeed-cm4).
 
-All fixes live in `meta-appliance-bsp-reterminal/`.
+All fixes live in `layers/meta-appliance-bsp-reterminal/`.
 
 ---
 
@@ -191,5 +191,5 @@ LICENSE = "MIT-like"
 NO_GENERIC_LICENSE[MIT-like] = "LICENCE"
 ```
 
-(`meta-appliance-os/recipes-shells/zsh/zsh_%.bbappend` — this one lives
+(`layers/meta-appliance-os/recipes-shells/zsh/zsh_%.bbappend` — this one lives
 in the OS layer since it's not hardware-specific.)

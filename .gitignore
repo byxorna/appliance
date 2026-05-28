@@ -21,18 +21,9 @@ sstate-cache/
 # kas state
 .kas-cache/
 
-# kas-managed upstream layer checkouts (cloned by kas at build time)
-# Only our custom meta-appliance-* layers are tracked in this repo.
-/poky/
-/meta-openembedded/
-/meta-raspberrypi/
-/meta-seeed-cm4/
-/meta-clang/
-/meta-browser/
-/meta-rauc/
-/meta-rauc-community/
-/meta-lts-mixins-rust/
-/meta-lts-mixins-uboot/
+# kas-managed upstream layer checkouts (cloned by kas into build/repos/)
+# Only our custom layers (under layers/) are tracked in this repo.
+/build/repos/
 
 # Podman / Docker
 *.tar

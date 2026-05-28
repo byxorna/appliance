@@ -133,4 +133,4 @@ status:
 clean:
 	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || true
 	$(CONTAINER_ENGINE) volume rm $(TMPDIR_VOL) || true
-	rm -rf "$(CACHE_DIR)" "$(ARTIFACTS_DIR)"
+	rm -rf "$(CACHE_DIR)" "$(ARTIFACTS_DIR)" build/repos || :

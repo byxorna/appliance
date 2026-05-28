@@ -11,6 +11,7 @@ target: core-image-minimal
 repos:
   poky:
     url: "https://git.yoctoproject.org/poky"
+    path: build/repos/poky
     branch: scarthgap
     commit: d4576e3c081a7ee7b57d48421c4c4f491cb4defe
     layers:
@@ -19,6 +20,7 @@ repos:
 
   meta-openembedded:
     url: "https://git.openembedded.org/meta-openembedded"
+    path: build/repos/meta-openembedded
     branch: scarthgap
     commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
     layers:
@@ -29,11 +31,13 @@ repos:
 
   meta-clang:
     url: "https://github.com/kraj/meta-clang.git"
+    path: build/repos/meta-clang
     branch: scarthgap
     commit: 5bce7e26a38a58bb52242494e54ab2af40009574
 
   meta-browser:
     url: "https://github.com/OSSystems/meta-browser.git"
+    path: build/repos/meta-browser
     branch: scarthgap
     commit: 85eeb6b50883d22c977396f5e8fe211a7961cf2e
     layers:
@@ -41,6 +45,7 @@ repos:
 
   meta-rauc:
     url: "https://github.com/rauc/meta-rauc.git"
+    path: build/repos/meta-rauc
     branch: scarthgap
     commit: d63878f20eba7a85ecf53566e7a3377e78bb46ac
 
@@ -48,20 +53,22 @@ repos:
   # Both come from meta-lts-mixins but use different branches.
   meta-lts-mixins-rust:
     url: "https://git.yoctoproject.org/meta-lts-mixins"
+    path: build/repos/meta-lts-mixins-rust
     branch: scarthgap/rust
     commit: c19b6da5a3afd3c892b3b1b44983e993ac6d5308
 
   meta-lts-mixins-uboot:
     url: "https://git.yoctoproject.org/meta-lts-mixins"
+    path: build/repos/meta-lts-mixins-uboot
     branch: scarthgap/u-boot
     commit: a44882db02a0ed0f149371831bfbe067665eb42b
 
   # Local layers (paths relative to repo root)
   meta-appliance-os:
-    path: meta-appliance-os
+    path: layers/meta-appliance-os
 
   meta-appliance-app-feishin:
-    path: meta-appliance-app-feishin
+    path: layers/meta-appliance-app-feishin
 
 local_conf_header:
   connectivity: |

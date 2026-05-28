@@ -23,7 +23,7 @@ Full commit hashes are in `kas/common.yaml` and `kas/reterminal-hifi.yaml`.
 
 This project is pinned to **Yocto scarthgap (5.0 LTS)**, supported through **April 2028**.
 
-The binding constraint is **meta-seeed-cm4**. This layer provides the `seeed-reterminal` machine — the BSP for the reTerminal's DSI display, touchscreen, buttons, and light sensor. Our build uses `MACHINE=seeed-reterminal` directly; DT overlays incompatible with the pinned 6.1 kernel are removed via `KERNEL_DEVICETREE:remove` in `meta-appliance-bsp-reterminal/conf/layer.conf`. meta-seeed-cm4 is maintained by Seeed (the hardware vendor), has no Yocto release branches (only `main`), and declares:
+The binding constraint is **meta-seeed-cm4**. This layer provides the `seeed-reterminal` machine — the BSP for the reTerminal's DSI display, touchscreen, buttons, and light sensor. Our build uses `MACHINE=seeed-reterminal` directly; DT overlays incompatible with the pinned 6.1 kernel are removed via `KERNEL_DEVICETREE:remove` in `layers/meta-appliance-bsp-reterminal/conf/layer.conf`. meta-seeed-cm4 is maintained by Seeed (the hardware vendor), has no Yocto release branches (only `main`), and declares:
 
 ```
 LAYERSERIES_COMPAT_meta-reterminal = "scarthgap"

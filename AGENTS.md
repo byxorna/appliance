@@ -18,7 +18,7 @@ Before starting work: read the relevant plan, or write one if none exists. After
 
 ## Conventions
 
-- **Machine:** `seeed-reterminal` (upstream BSP from meta-seeed-cm4; 6.1-incompatible DT overlays removed in `meta-appliance-bsp-reterminal/conf/layer.conf`)
+- **Machine:** `seeed-reterminal` (upstream BSP from meta-seeed-cm4; 6.1-incompatible DT overlays removed in `layers/meta-appliance-bsp-reterminal/conf/layer.conf`)
 - **Distro:** `appliance-os` (thin wrapper around poky; systemd init)
 - **Image:** `core-image-minimal` (temporary; `appliance-os-image` will be the final image recipe)
 - **App manifest:** Apps ship `app.json` (name, port, capabilities, config_dir). Ports must be unique. Apps inherit `appliance-app.bbclass`.
@@ -40,7 +40,7 @@ Before starting work: read the relevant plan, or write one if none exists. After
 - **eMMC boot requires `rootwait`.** No boot0/boot1 — BCM2711 EEPROM boots from `mmcblk0` user partition only.
 - **RPi firmware watchdog is 16s.** U-Boot must pet or disable it in time.
 - **TMPDIR on named volume:** macOS is case-insensitive; TMPDIR lives on a Podman named volume (VM ext4).
-- **BBMASK in BSP layer.conf:** `meta-seeed-cm4`'s `rpi-bootfiles.bbappend` wget is 404. Masked via `BBMASK +=` in `meta-appliance-bsp-reterminal/conf/layer.conf`.
+- **BBMASK in BSP layer.conf:** `meta-seeed-cm4`'s `rpi-bootfiles.bbappend` wget is 404. Masked via `BBMASK +=` in `layers/meta-appliance-bsp-reterminal/conf/layer.conf`.
 - **`:append` can't be un-appended:** Redefining a shell function in a bbappend does NOT cancel `:append` fragments from other layers. Use `BBMASK` to mask the offending bbappend.
 - **Recipe bbappend scope != machine conf scope:** `KERNEL_DEVICETREE:remove` in a kernel bbappend only affects the kernel recipe's datastore, not `IMAGE_BOOT_FILES` in image recipes. Machine-level variable overrides must go in machine conf.
 - **Chromium link needs ~16GB RAM.** CI runners need 16+ vCPU, 32+ GB.
