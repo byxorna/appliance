@@ -11,6 +11,8 @@ target: core-image-minimal
 env:
   APPLIANCE_VERSION: "0.0.0-unknown"
   APPLIANCE_VARIANT: "unknown"
+  APPLIANCE_HOME_URL: ""
+  APPLIANCE_BUG_REPORT_URL: ""
 
 repos:
   poky:
@@ -75,9 +77,6 @@ repos:
     path: layers/meta-appliance-app-feishin
 
 local_conf_header:
-  version: |
-    DISTRO_VERSION = "${@os.environ.get('APPLIANCE_VERSION', '0.0.0-unknown')}"
-    APPLIANCE_VARIANT = "${@os.environ.get('APPLIANCE_VARIANT', 'unknown')}"
   rauc: |
     IMAGE_INSTALL:append = " rauc rauc-grow-data-part appliance-mark-good etc-overlay"
     IMAGE_FSTYPES:append = " ext4"
