@@ -1,0 +1,13 @@
+[Unit]
+Description=Create /etc overlay backing directories
+DefaultDependencies=no
+RequiresMountsFor=/data
+Before=etc.mount
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/mkdir -p /data/platform/etc-overlay/upper /data/platform/etc-overlay/work
+
+[Install]
+WantedBy=etc.mount

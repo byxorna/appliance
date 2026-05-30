@@ -1,0 +1,15 @@
+[Unit]
+Description=Overlay /etc with persistent writable layer
+DefaultDependencies=no
+After=etc-overlay-setup.service data.mount
+Requires=etc-overlay-setup.service
+Before=sysinit.target
+
+[Mount]
+What=overlay
+Where=/etc
+Type=overlay
+Options=lowerdir=/etc,upperdir=/data/platform/etc-overlay/upper,workdir=/data/platform/etc-overlay/work
+
+[Install]
+WantedBy=local-fs.target
