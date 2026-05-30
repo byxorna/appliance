@@ -49,7 +49,7 @@ COMMON_RUN_FLAGS := \
 	-e APPLIANCE_BUG_REPORT_URL="$(APPLIANCE_BUG_REPORT_URL)" \
 	$(IMAGE_NAME)
 
-.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean rpiboot _build-info
+.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache rpiboot _build-info
 
 # Known artifact extensions produced by build and build-update targets.
 # Only these are checksummed in the build-info sidecar.
@@ -199,7 +199,10 @@ $(RPIBOOT): $(USBBOOT_DIR)/.git
 rpiboot: $(RPIBOOT) ## Put the CM4 eMMC into USB mass storage mode via rpiboot
 	sudo $(RPIBOOT) -d $(USBBOOT_DIR)/mass-storage-gadget64
 
-clean: ## Remove container image, build volumes, and all caches
-	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || true
-	$(CONTAINER_ENGINE) volume rm $(TMPDIR_VOL) || true
-	rm -rf "$(CACHE_DIR)" "$(ARTIFACTS_DIR)" build/repos build/usbboot
+clean-cache: ## Reset build state (TMPDIR volume + sstate) to fix pseudo/inode errors
+	$(CONTAINER_ENGINE) volume rm $(TMPDIR_VOL) || :
+	rm -rf "$(SSTATE_DIR)" || :
+
+clean: clean-cache ## Remove container image, build volumes, and all caches
+	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || :
+	rm -rf "$(CACHE_DIR)" "$(ARTIFACTS_DIR)" build/repos build/usbboot || :

@@ -121,7 +121,7 @@ rm -rf .cache
 Pseudo's fakeroot database can go stale with long-lived TMPDIR volumes, particularly on Podman/macOS. If `do_rootfs` fails with `path mismatch` or `inode mismatch` errors, reset the build state:
 
 ```bash
-make clean
+make clean-build
 make build
 ```
 
