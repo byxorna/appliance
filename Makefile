@@ -1,6 +1,7 @@
 VARIANT ?= reterminal-hifi
 VARIANTS := $(patsubst kas/variant-%.yaml,%,$(wildcard kas/variant-*.yaml))
 KAS_CONFIG := kas/variant-$(VARIANT).yaml
+KAS_DEPENDENCIES := build-image
 
 IMAGE_NAME := appliance-builder:latest
 # Override with `make CONTAINER_ENGINE=docker <target>` to use Docker
@@ -48,17 +49,23 @@ COMMON_RUN_FLAGS := \
 	-e APPLIANCE_BUG_REPORT_URL="$(APPLIANCE_BUG_REPORT_URL)" \
 	$(IMAGE_NAME)
 
-.PHONY: image shell kas-shell check build build-update build-all status clean rpiboot _build-info
+.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean rpiboot _build-info
 
 # Known artifact extensions produced by build and build-update targets.
 # Only these are checksummed in the build-info sidecar.
 ARTIFACT_EXTS := .wic.bz2 .wic .manifest .raucb
 
+build: check build-firmware build-update ## Full build: parse-check, firmware image, and RAUC update bundle
+
+.PHONY: help
+help: ## Display this help.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
 $(EMPTY_AUTH):
 	@mkdir -p "$(dir $@)"
 	@echo '{}' > "$@"
 
-image: $(EMPTY_AUTH)
+build-image: $(EMPTY_AUTH) ## Build the OCI builder container image
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) build \
 		--authfile "$(EMPTY_AUTH)" \
@@ -66,19 +73,19 @@ image: $(EMPTY_AUTH)
 		--build-arg BUILDER_GID=$(BUILDER_GID) \
 		-t $(IMAGE_NAME) build/
 
-shell: $(EMPTY_AUTH)
+shell: $(EMPTY_AUTH) ## Interactive bash shell in the build container
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) /bin/bash
 
-kas-shell: $(EMPTY_AUTH) image
+kas-shell: $(EMPTY_AUTH) $(KAS_DEPENDENCIES) ## Interactive kas shell with the project config loaded
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG)
 
-check: $(EMPTY_AUTH) image
+check: $(EMPTY_AUTH) $(KAS_DEPENDENCIES) ## Parse-validate all layers and configs (no build)
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG) -c 'bitbake -p'
 
-build: check
+build-firmware: $(KAS_DEPENDENCIES) ## Build the WIC disk image and copy artifacts
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(eval BUILD_START := $(shell date +%s))
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG) -c 'bitbake -c build $(IMAGE)'
@@ -105,7 +112,7 @@ build: check
 	done
 	@$(MAKE) --no-print-directory _build-info
 
-build-update: check
+build-update: check ## Build the RAUC update bundle (.raucb)
 	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
 	$(eval BUILD_START := $(shell date +%s))
 	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG) -c 'bitbake update-bundle'
@@ -145,13 +152,13 @@ _build-info:
 	} > "$$INFO"; \
 	echo ""; cat "$$INFO"; echo ""
 
-build-all:
+build-all: ## Build all variants sequentially
 	@for v in $(VARIANTS); do \
 		echo "=== Building variant: $$v ==="; \
 		$(MAKE) VARIANT=$$v build || exit 1; \
 	done
 
-status:
+status: ## Show bitbake progress from running build containers
 	@CIDS=$$($(CONTAINER_ENGINE) ps -q --filter ancestor=$(IMAGE_NAME)); \
 	if [ -z "$$CIDS" ]; then \
 		echo "No build container running."; \
@@ -189,10 +196,10 @@ $(RPIBOOT): $(USBBOOT_DIR)/.git
 	@pkg-config --exists libusb-1.0 || { echo "ERROR: libusb not found. Run: brew install libusb"; exit 1; }
 	$(MAKE) -C $(USBBOOT_DIR)
 
-rpiboot: $(RPIBOOT)
+rpiboot: $(RPIBOOT) ## Put the CM4 eMMC into USB mass storage mode via rpiboot
 	sudo $(RPIBOOT) -d $(USBBOOT_DIR)/mass-storage-gadget64
 
-clean:
+clean: ## Remove container image, build volumes, and all caches
 	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || true
 	$(CONTAINER_ENGINE) volume rm $(TMPDIR_VOL) || true
 	rm -rf "$(CACHE_DIR)" "$(ARTIFACTS_DIR)" build/repos build/usbboot
