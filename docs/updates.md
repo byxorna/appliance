@@ -67,10 +67,10 @@ Before shipping to real devices, generate a production keypair and override `RAU
 
 ## Installing an update
 
-Copy the `.raucb` file to the target device (e.g. via `scp` to `/tmp`), then install it:
+Copy the `.raucb` file to the target device (e.g. via `scp artifacts/<target>.raucb root@reterminal-hifi:/tmp/`), then install it:
 
 ```bash
-rauc install /tmp/update-bundle-seeed-reterminal.raucb
+rauc install /tmp/reterminal-hifi-core-image-minimal-seeed-reterminal.raucb
 ```
 
 RAUC writes the rootfs image to the inactive slot, updates U-Boot's environment to boot from it, and sets the attempt counter. The active (running) slot is never modified.
