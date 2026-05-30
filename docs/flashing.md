@@ -110,6 +110,10 @@ Default serial console settings: **115200 8N1** on the debug UART (GPIO 14/15 vi
 
 Login as `root` with no password.
 
+## Updating
+
+After initial flash, subsequent updates are applied over-the-air via RAUC A/B slot switching — no reflashing required. See [OTA Updates](updates.md) for how to build and install update bundles.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

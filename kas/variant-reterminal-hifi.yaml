@@ -6,8 +6,8 @@ header:
   includes:
     - kas/common.yaml
     # Optional: uncomment to include in this build.
-    # - kas/debug.yaml
-    # - kas/devtools.yaml
+    - kas/debug.yaml
+    - kas/devtools.yaml
 
 machine: seeed-reterminal
 
@@ -46,5 +46,9 @@ local_conf_header:
         bluez5 \
     "
     LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
+  # Named rauc-bsp to avoid colliding with the rauc key in common.yaml
+  rauc-bsp: |
+    RPI_USE_U_BOOT = "1"
+    WKS_FILE = "appliance-dual-rootfs.wks.in"
   identity: |
     hostname:pn-base-files = "reterminal-hifi"

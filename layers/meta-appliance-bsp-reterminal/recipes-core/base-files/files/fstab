@@ -1,9 +1,11 @@
-# fstab for reTerminal (2-partition layout: boot + rootfs)
+# fstab for reTerminal (5-partition A/B layout: boot + rootfsA + rootfsB + data + home)
 
-/dev/root            /                    auto       defaults              1  1
+/dev/root            /                    auto       ro                    1  1
 proc                 /proc                proc       defaults              0  0
 devpts               /dev/pts             devpts     mode=0620,ptmxmode=0666,gid=5      0  0
 tmpfs                /run                 tmpfs      mode=0755,nodev,nosuid,strictatime 0  0
 tmpfs                /var/volatile        tmpfs      defaults              0  0
 
-/dev/mmcblk0p1  /boot   vfat    defaults,nofail  0  0
+/dev/mmcblk0p1       /boot                vfat       defaults,nofail       0  0
+/dev/mmcblk0p5       /data                ext4       defaults,nofail       0  0
+/dev/mmcblk0p6       /home                ext4       x-systemd.growfs      0  0

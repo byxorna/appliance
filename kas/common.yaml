@@ -10,6 +10,7 @@ target: core-image-minimal
 
 env:
   APPLIANCE_VERSION: "0.0.0-unknown"
+  APPLIANCE_VARIANT: "unknown"
 
 repos:
   poky:
@@ -76,6 +77,10 @@ repos:
 local_conf_header:
   version: |
     DISTRO_VERSION = "${@os.environ.get('APPLIANCE_VERSION', '0.0.0-unknown')}"
+    APPLIANCE_VARIANT = "${@os.environ.get('APPLIANCE_VARIANT', 'unknown')}"
+  rauc: |
+    IMAGE_INSTALL:append = " rauc rauc-grow-data-part appliance-mark-good"
+    IMAGE_FSTYPES:append = " ext4"
   connectivity: |
     IMAGE_INSTALL:append = " \
         openssh-sshd \

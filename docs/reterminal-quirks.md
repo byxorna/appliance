@@ -9,21 +9,22 @@ All fixes live in `layers/meta-appliance-bsp-reterminal/`.
 
 ---
 
-## 1. Boot stall from RAUC fstab (partitions p5/p6 don't exist)
+## 1. Custom fstab for 5-partition A/B layout
 
-**Symptom:** System hangs at boot. SSH returns "connection refused". No
-services start — not sshd, not dhcpcd, nothing.
+**Context:** The image uses a 5-partition MBR layout for RAUC A/B
+updates: p1=boot (FAT), p2=rootfs_A (ext4), p3=rootfs_B (ext4),
+p5=/data (ext4), p6=/home (ext4). Partitions 4+ are logical partitions
+inside an MBR extended container, so the 4th and 5th WKS entries map to
+`mmcblk0p5` and `mmcblk0p6`.
 
-**Root cause:** `meta-rauc-raspberrypi` (included for future A/B update
-support) ships a `base-files` bbappend with an fstab designed for RAUC's
-6-partition layout. It mounts `/dev/mmcblk0p5` and `/dev/mmcblk0p6`
-without `nofail`. Our image has only 2 partitions (p1=boot, p2=rootfs).
-systemd blocks at `local-fs.target` waiting for devices that will never
-appear, so nothing downstream ever starts.
-
-**Fix:** Override the fstab with our own 2-partition version via a
-higher-priority `base-files` bbappend. The critical detail is `nofail`
-on the `/boot` vfat mount so boot continues even if it fails.
+**Why a custom fstab:** `meta-rauc-raspberrypi` (priority 6) ships an
+fstab via `base-files` bbappend with partition sizing appropriate for its
+reference image. Our BSP layer (priority 10) overrides the fstab to
+match our WKS layout: larger boot partition (128M vs 100M), larger data
+partition (1G vs 100M), and read-only rootfs mount. The `/home` mount
+uses `x-systemd.growfs` so the filesystem expands to fill remaining
+eMMC space at first boot (after `rauc-grow-data-part` resizes the
+extended container and partition 6).
 
 **Files:**
 - `recipes-core/base-files/base-files_%.bbappend`

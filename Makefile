@@ -1,5 +1,6 @@
-BUILD := reterminal-hifi
-KAS_CONFIG := kas/$(BUILD).yaml
+VARIANT ?= reterminal-hifi
+VARIANTS := $(patsubst kas/variant-%.yaml,%,$(wildcard kas/variant-*.yaml))
+KAS_CONFIG := kas/variant-$(VARIANT).yaml
 
 IMAGE_NAME := appliance-builder:latest
 # Override with `make CONTAINER_ENGINE=docker <target>` to use Docker
@@ -7,7 +8,7 @@ CONTAINER_ENGINE := podman
 MACHINE := $(shell awk '/^machine:/ {print $$2}' $(KAS_CONFIG))
 IMAGE := $(shell awk '/^target:/ {print $$2}' $(KAS_CONFIG) kas/common.yaml | head -1)
 ARTIFACTS_DIR := $(CURDIR)/artifacts
-ARTIFACT_PREFIX := $(BUILD)-$(IMAGE)-$(MACHINE)
+ARTIFACT_PREFIX := $(VARIANT)-$(IMAGE)-$(MACHINE)
 
 BUILDER_UID := $(shell id -u)
 BUILDER_GID := $(shell id -g)
@@ -19,7 +20,7 @@ CACHE_DIR := $(CURDIR)/.cache
 DOWNLOADS_DIR := $(CACHE_DIR)/downloads
 SSTATE_DIR := $(CACHE_DIR)/sstate
 REPO_REF_DIR := $(CACHE_DIR)/repos
-TMPDIR_VOL := appliance-$(BUILD)-tmpdir
+TMPDIR_VOL := appliance-$(VARIANT)-tmpdir
 
 # Podman inherits ~/.docker/config.json credHelpers, which may reference
 # helpers not installed on this host (e.g. ecr-login).  An empty auth file
@@ -40,9 +41,10 @@ COMMON_RUN_FLAGS := \
 	-v "$(TMPDIR_VOL)":/workspace/build/tmp:Z \
 	-e KAS_REPO_REF_DIR=/workspace/repos \
 	-e APPLIANCE_VERSION="$(APPLIANCE_VERSION)" \
+	-e APPLIANCE_VARIANT="$(VARIANT)" \
 	$(IMAGE_NAME)
 
-.PHONY: image shell kas-shell check build status clean rpiboot
+.PHONY: image shell kas-shell check build build-all status clean rpiboot
 
 $(EMPTY_AUTH):
 	@mkdir -p "$(dir $@)"
@@ -98,7 +100,7 @@ build: check
 	GIT_BRANCH=$$(git -C "$(CURDIR)" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"); \
 	INFO="$(ARTIFACTS_DIR)/$(ARTIFACT_PREFIX).build-info"; \
 	{ \
-		echo "build:    $(BUILD)"; \
+		echo "variant:  $(VARIANT)"; \
 		echo "image:    $(IMAGE)"; \
 		echo "machine:  $(MACHINE)"; \
 		echo "config:   $(KAS_CONFIG)"; \
@@ -111,6 +113,12 @@ build: check
 		done; \
 	} > "$$INFO"; \
 	echo ""; cat "$$INFO"; echo ""
+
+build-all:
+	@for v in $(VARIANTS); do \
+		echo "=== Building variant: $$v ==="; \
+		$(MAKE) VARIANT=$$v build || exit 1; \
+	done
 
 status:
 	@CIDS=$$($(CONTAINER_ENGINE) ps -q --filter ancestor=$(IMAGE_NAME)); \

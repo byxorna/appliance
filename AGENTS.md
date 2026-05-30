@@ -6,7 +6,7 @@ Read this file completely before taking any action in this repository.
 
 Yocto-based appliance OS for the Seeed reTerminal (CM4). Boots into a fullscreen application shell hosting web apps via iframes. First app: Feishin (Navidrome/Jellyfin frontend). Immutable rootfs with RAUC A/B updates.
 
-See `docs/` for build instructions, layer details, and dependency info. See `kas/common.yaml` for shared upstream layers and `kas/reterminal-hifi.yaml` for the reTerminal build config. See `Makefile` for available build targets (`make BUILD=<target> build`).
+See `docs/` for build instructions, layer details, and dependency info. See `kas/common.yaml` for shared upstream layers and `kas/variant-reterminal-hifi.yaml` for the reTerminal build config. See `Makefile` for available build targets (`make VARIANT=<name> build`).
 
 ## Plans
 

@@ -3,6 +3,8 @@ FROM docker.io/library/ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
+# kas uses $SHELL, ensure it is set
+ENV SHELL=/usr/bin/bash
 
 # Yocto scarthgap host dependencies
 # https://docs.yoctoproject.org/ref-manual/system-requirements.html#required-packages-for-the-build-host
