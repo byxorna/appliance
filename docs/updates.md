@@ -21,21 +21,33 @@ This shows which slot is active (booted), whether it is marked good, and the ver
 
 ## Building an update bundle
 
-The update bundle is a signed `.raucb` file containing an ext4 rootfs image. Build it from the host:
+The update bundle is a signed `.raucb` file containing an ext4 rootfs image.
+
+### From the host
 
 ```bash
-make kas-shell
-# inside the kas shell:
+make VARIANT=reterminal-hifi build-update
+```
+
+This builds the bundle and copies it to `artifacts/`. The image must already be built (`make build`) since the bundle embeds the rootfs ext4.
+
+### From a kas shell
+
+If you're already inside `make kas-shell`:
+
+```bash
 bitbake update-bundle
 ```
+
+### Output
 
 The bundle appears at:
 
 ```
-build/tmp/deploy/images/<machine>/update-bundle-<machine>.raucb
+artifacts/<variant>-<image>-<machine>.raucb
 ```
 
-For the reTerminal, `<machine>` is `seeed-reterminal`.
+Inside the container, the raw artifact is at `build/tmp/deploy/images/<machine>/update-bundle-<machine>.raucb`. For the reTerminal, `<machine>` is `seeed-reterminal`.
 
 ### Bundle metadata
 

@@ -44,7 +44,11 @@ COMMON_RUN_FLAGS := \
 	-e APPLIANCE_VARIANT="$(VARIANT)" \
 	$(IMAGE_NAME)
 
-.PHONY: image shell kas-shell check build build-all status clean rpiboot
+.PHONY: image shell kas-shell check build build-update build-all status clean rpiboot _build-info
+
+# Known artifact extensions produced by build and build-update targets.
+# Only these are checksummed in the build-info sidecar.
+ARTIFACT_EXTS := .wic.bz2 .wic .manifest .raucb
 
 $(EMPTY_AUTH):
 	@mkdir -p "$(dir $@)"
@@ -81,7 +85,8 @@ build: check
 		cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.wic.bz2 "$$DST/$(ARTIFACT_PREFIX).wic.bz2" 2>/dev/null \
 			|| cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.wic "$$DST/$(ARTIFACT_PREFIX).wic" 2>/dev/null \
 			|| { echo "ERROR: No .wic or .wic.bz2 image found in $$SRC"; exit 1; }; \
-		cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.manifest "$$DST/$(ARTIFACT_PREFIX).manifest" 2>/dev/null || true'
+		cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.manifest "$$DST/$(ARTIFACT_PREFIX).manifest" 2>/dev/null || true; \
+		cp -vL "$$SRC"/update-bundle-$(MACHINE).raucb "$$DST/$(ARTIFACT_PREFIX).raucb" 2>/dev/null || true'
 	@# Sanity check: image mtime must be later than build start
 	@for f in "$(ARTIFACTS_DIR)"/$(ARTIFACT_PREFIX).wic.bz2 \
 	          "$(ARTIFACTS_DIR)"/$(ARTIFACT_PREFIX).wic; do \
@@ -94,7 +99,28 @@ build: check
 			break; \
 		fi; \
 	done
-	@# Generate build-info sidecar
+	@$(MAKE) --no-print-directory _build-info
+
+build-update: check
+	@mkdir -p "$(DOWNLOADS_DIR)" "$(SSTATE_DIR)" "$(REPO_REF_DIR)"
+	$(eval BUILD_START := $(shell date +%s))
+	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) kas shell $(KAS_CONFIG) -c 'bitbake update-bundle'
+	@mkdir -p "$(ARTIFACTS_DIR)"
+	$(CONTAINER_ENGINE) run $(COMMON_RUN_FLAGS) bash -c '\
+		SRC=/workspace/build/tmp/deploy/images/$(MACHINE); \
+		DST=/workspace/artifacts; \
+		cp -vL "$$SRC"/update-bundle-$(MACHINE).raucb "$$DST/$(ARTIFACT_PREFIX).raucb" \
+			|| { echo "ERROR: No .raucb bundle found in $$SRC"; exit 1; }'
+	@# Sanity check: bundle mtime must be later than build start
+	@f="$(ARTIFACTS_DIR)/$(ARTIFACT_PREFIX).raucb"; \
+	MTIME=$$(stat -f %m "$$f" 2>/dev/null || stat -c %Y "$$f" 2>/dev/null); \
+	if [ "$$MTIME" -lt "$(BUILD_START)" ]; then \
+		echo "ERROR: $$f is stale (mtime $$MTIME < build start $(BUILD_START))"; \
+		exit 1; \
+	fi
+	@$(MAKE) --no-print-directory _build-info
+
+_build-info:
 	@GIT_SHA=$$(git -C "$(CURDIR)" rev-parse --short HEAD 2>/dev/null || echo "unknown"); \
 	GIT_DIRTY=$$(git -C "$(CURDIR)" diff --quiet 2>/dev/null && echo "" || echo " (dirty)"); \
 	GIT_BRANCH=$$(git -C "$(CURDIR)" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"); \
@@ -108,8 +134,9 @@ build: check
 		echo "commit:   $${GIT_SHA}$${GIT_DIRTY}"; \
 		echo "date:     $$(date -Iseconds)"; \
 		echo ""; \
-		for f in "$(ARTIFACTS_DIR)"/$(ARTIFACT_PREFIX).*; do \
-			[ -f "$$f" ] && [ "$$f" != "$$INFO" ] && shasum -a 256 "$$f"; \
+		for ext in $(ARTIFACT_EXTS); do \
+			f="$(ARTIFACTS_DIR)/$(ARTIFACT_PREFIX)$$ext"; \
+			[ -f "$$f" ] && shasum -a 256 "$$f"; \
 		done; \
 	} > "$$INFO"; \
 	echo ""; cat "$$INFO"; echo ""
