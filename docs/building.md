@@ -113,3 +113,16 @@ To remove only the caches without deleting the container image:
 ```bash
 rm -rf .cache
 ```
+
+## Troubleshooting
+
+### Pseudo inode/path mismatch during `do_rootfs`
+
+Pseudo's fakeroot database can go stale with long-lived TMPDIR volumes, particularly on Podman/macOS. If `do_rootfs` fails with `path mismatch` or `inode mismatch` errors, reset the build state:
+
+```bash
+make clean
+make build
+```
+
+
