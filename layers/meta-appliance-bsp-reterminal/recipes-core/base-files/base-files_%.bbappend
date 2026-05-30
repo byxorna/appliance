@@ -5,4 +5,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 do_install:append () {
     rmdir ${D}/root || rm -rf ${D}/root
     ln -sf /home/root ${D}/root
+
+    install -d -m 0700 ${D}/home/root
+    chown root:root ${D}/home/root
 }

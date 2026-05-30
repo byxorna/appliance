@@ -1,0 +1,15 @@
+[Unit]
+Description=Bind mount persistent dhcpcd lease storage
+DefaultDependencies=no
+After=dhcpcd-persistence-setup.service data.mount
+Requires=dhcpcd-persistence-setup.service
+Before=dhcpcd.service
+
+[Mount]
+What=/data/platform/dhcpcd
+Where=/var/lib/dhcpcd
+Type=none
+Options=bind
+
+[Install]
+WantedBy=local-fs.target

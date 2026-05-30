@@ -86,6 +86,7 @@ local_conf_header:
         openssh-sftp-server \
         wpa-supplicant \
         dhcpcd \
+        dhcpcd-persistence \
         iproute2 \
         kernel-modules \
     "

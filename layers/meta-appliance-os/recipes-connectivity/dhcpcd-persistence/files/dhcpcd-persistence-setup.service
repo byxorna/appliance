@@ -1,0 +1,15 @@
+[Unit]
+Description=Create persistent dhcpcd lease directory
+DefaultDependencies=no
+RequiresMountsFor=/data
+Before=var-lib-dhcpcd.mount
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/mkdir -p /data/platform/dhcpcd
+ExecStart=/bin/chown dhcpcd:dhcpcd /data/platform/dhcpcd
+ExecStart=/bin/chmod 700 /data/platform/dhcpcd
+
+[Install]
+WantedBy=var-lib-dhcpcd.mount
