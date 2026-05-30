@@ -111,3 +111,6 @@ local_conf_header:
     IMAGE_INSTALL:append = " weston weston-init"
     SYSTEMD_DEFAULT_TARGET = "graphical.target"
     EXTRA_USERS_PARAMS += "useradd -m -d /home/kiosk -s /usr/bin/zsh -G video,input,wayland kiosk;"
+
+  docs: |
+    IMAGE_INSTALL:append = " appliance-docs"
