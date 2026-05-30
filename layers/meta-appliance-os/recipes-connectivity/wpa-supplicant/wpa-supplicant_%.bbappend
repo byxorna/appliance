@@ -12,12 +12,13 @@ SRC_URI += "file://wpa_supplicant.conf-default"
 WPA_CONF_FILE = "wpa_supplicant.conf-default"
 python () {
     import os
-    recipe_dir = d.getVar('THISDIR')
-    repo_root = os.path.normpath(os.path.join(recipe_dir, '..', '..', '..', '..'))
-    user_conf = os.path.join(repo_root, 'local', 'wpa_supplicant.conf')
+    repo_root = d.getVar('REPO_ROOT')
+    local_dir = os.path.join(repo_root, 'local')
+    user_conf = os.path.join(local_dir, 'wpa_supplicant.conf')
     if os.path.isfile(user_conf):
-        d.appendVar('SRC_URI', ' file://%s' % user_conf)
-        d.setVar('WPA_CONF_FILE', os.path.basename(user_conf))
+        d.prependVar('FILESEXTRAPATHS', local_dir + ':')
+        d.appendVar('SRC_URI', ' file://wpa_supplicant.conf')
+        d.setVar('WPA_CONF_FILE', 'wpa_supplicant.conf')
         bb.note("wpa-supplicant: using user-supplied config from %s" % user_conf)
     else:
         bb.note("wpa-supplicant: no local/wpa_supplicant.conf found, using default stub")
