@@ -1,8 +1,14 @@
 # Appliance OS
 
-A minimal, single-purpose Linux distribution for dedicated hardware appliances. Boots into a fullscreen application shell hosting pluggable web applications. Built with [Yocto](https://www.yoctoproject.org/) scarthgap (5.0 LTS). Immutable rootfs with RAUC A/B atomic updates.
+A minimal, single-purpose Linux distribution for dedicated hardware appliances. Boots into a fullscreen application shell hosting pluggable web applications. Built with [Yocto](https://www.yoctoproject.org/) scarthgap (5.0 LTS).
 
-The architecture separates hardware support (BSP layers) from the base OS and application layers, so adding support for new devices means adding a BSP layer and a kas config — the OS and app layers are shared.
+## Design principles
+
+The appliance is self-replicating. Everything needed to understand, rebuild, reflash, and maintain the system ships on the device as manpages. Run `man appliance` on the device for an overview, or `man -k appliance` to list all topics. Source docs live in `docs/` as Markdown.
+
+The root filesystem is read-only. Persistent state lives on separate partitions (`/data`, `/home`) that survive updates. RAUC A/B slot switching means updates either fully succeed or the system rolls back automatically.
+
+Hardware support is separated from the OS and application layers. Adding a new device means adding a BSP layer and a kas config; the OS and apps are shared.
 
 ## Supported hardware
 
