@@ -47,7 +47,7 @@ The bundle appears at:
 artifacts/<variant>-<image>-<machine>.raucb
 ```
 
-Inside the container, the raw artifact is at `build/tmp/deploy/images/<machine>/update-bundle-<machine>.raucb`. For the reTerminal, `<machine>` is `seeed-reterminal`.
+Inside the container, the raw artifact is at `build/tmp/deploy/images/<machine>/update-bundle-<machine>.raucb`.
 
 ### Bundle metadata
 
@@ -104,6 +104,27 @@ To manually force a rollback without waiting for three failed boots:
 rauc status mark-bad
 reboot
 ```
+
+## Self-update from source (Auto-Propagation)
+
+The `appliance-selfupdate` script, available in the image, clones the appliance repo and builds a RAUC update bundle. The repo URL and build variant are read from `/etc/os-release` (`HOME_URL` and `VARIANT_ID`), so the script knows where it came from and what to build. Be warned, this is likely to fail on resource constrained devices and is provided as-is. Good luck!
+
+```bash
+# Build an update bundle from the latest main branch
+appliance-selfupdate
+
+# Build from a specific tag or branch
+appliance-selfupdate v0.2.0
+```
+
+The bundle is written to `/tmp/appliance-selfupdate/artifacts/`. Install it the usual way:
+
+```bash
+rauc install /tmp/appliance-selfupdate/artifacts/*.raucb
+reboot
+```
+
+If the clone already exists in `/tmp/appliance-selfupdate`, the script fetches and checks out the requested ref instead of re-cloning.
 
 ## Partition layout reference
 

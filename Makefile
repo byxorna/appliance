@@ -96,8 +96,7 @@ build-firmware: $(KAS_DEPENDENCIES) ## Build the WIC disk image and copy artifac
 		cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.wic.bz2 "$$DST/$(ARTIFACT_PREFIX).wic.bz2" 2>/dev/null \
 			|| cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.wic "$$DST/$(ARTIFACT_PREFIX).wic" 2>/dev/null \
 			|| { echo "ERROR: No .wic or .wic.bz2 image found in $$SRC"; exit 1; }; \
-		cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.manifest "$$DST/$(ARTIFACT_PREFIX).manifest" 2>/dev/null || true; \
-		cp -vL "$$SRC"/update-bundle-$(MACHINE).raucb "$$DST/$(ARTIFACT_PREFIX).raucb" 2>/dev/null || true'
+		cp -vL "$$SRC"/$(IMAGE)-$(MACHINE).rootfs.manifest "$$DST/$(ARTIFACT_PREFIX).manifest" 2>/dev/null || true'
 	@# Sanity check: image mtime must be later than build start
 	@for f in "$(ARTIFACTS_DIR)"/$(ARTIFACT_PREFIX).wic.bz2 \
 	          "$(ARTIFACTS_DIR)"/$(ARTIFACT_PREFIX).wic; do \

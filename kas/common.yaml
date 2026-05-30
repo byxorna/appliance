@@ -100,6 +100,7 @@ local_conf_header:
         htop \
         curl \
         git \
+        make \
         tmux \
         zsh \
         sudo \
@@ -113,4 +114,4 @@ local_conf_header:
     EXTRA_USERS_PARAMS += "useradd -m -d /home/kiosk -s /usr/bin/zsh -G video,input,wayland kiosk;"
 
   docs: |
-    IMAGE_INSTALL:append = " appliance-docs"
+    IMAGE_INSTALL:append = " appliance-docs appliance-selfupdate"

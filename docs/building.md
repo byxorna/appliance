@@ -43,11 +43,13 @@ When you run `make shell` or `make kas-shell`, the Makefile bind-mounts:
 
 | Host path | Container path | Purpose |
 |---|---|---|
-| Repo root (`.`) | `/workspace` | Source tree, kas configs, layers |
-| `.cache/downloads` | `/workspace/downloads` | Yocto `DL_DIR` — fetched source tarballs |
-| `.cache/sstate` | `/workspace/sstate-cache` | Yocto `SSTATE_DIR` — shared state cache |
-| `.cache/repos` | `/workspace/repos` | `KAS_REPO_REF_DIR` — git reference clones for upstream layers |
-| Named volume `appliance-<VARIANT>-tmpdir` | `/workspace/build/tmp` | Yocto `TMPDIR` — case-sensitive filesystem for build artifacts |
+| Repo root (`.`) | `$W` | Source tree, kas configs, layers |
+| `.cache/downloads` | `$W/downloads` | Yocto `DL_DIR` — fetched source tarballs |
+| `.cache/sstate` | `$W/sstate-cache` | Yocto `SSTATE_DIR` — shared state cache |
+| `.cache/repos` | `$W/repos` | `KAS_REPO_REF_DIR` — git reference clones for upstream layers |
+| Named volume `appliance-<VARIANT>-tmpdir` | `$W/build/tmp` | Yocto `TMPDIR` — case-sensitive filesystem for build artifacts |
+
+`$W` is the container workspace root (currently `/workspace`).
 
 All cache directories are created automatically. They persist across container runs so you don't re-fetch or re-compile unchanged packages.
 
@@ -78,22 +80,22 @@ kas build kas/variant-reterminal-hifi.yaml:kas/test-tools.yaml
 
 ## Inspecting build output
 
-The build's `TMPDIR` lives on a Podman named volume, so it's not directly accessible from macOS. To inspect files inside the build tree, use `make shell` and browse from there:
+The build's `TMPDIR` lives on a Podman named volume, so it's not directly accessible from macOS. To inspect files inside the build tree, use `make shell` and browse from there. Paths below use `$W` for the container workspace root:
 
 ```bash
 make shell
 
 # View the generated config.txt
-cat /workspace/build/tmp/deploy/images/seeed-reterminal/bootfiles/config.txt
+cat $W/build/tmp/deploy/images/seeed-reterminal/bootfiles/config.txt
 
 # List deployed images
-ls -lh /workspace/build/tmp/deploy/images/seeed-reterminal/
+ls -lh $W/build/tmp/deploy/images/seeed-reterminal/
 
 # Check the rootfs manifest
-cat /workspace/build/tmp/deploy/images/seeed-reterminal/core-image-minimal-seeed-reterminal.rootfs.manifest
+cat $W/build/tmp/deploy/images/seeed-reterminal/core-image-minimal-seeed-reterminal.rootfs.manifest
 
 # Check build logs for a recipe
-cat /workspace/build/tmp/work/seeed_reterminal-poky-linux/seeed-linux-dtoverlays/1.0/temp/log.do_compile
+cat $W/build/tmp/work/seeed_reterminal-poky-linux/seeed-linux-dtoverlays/1.0/temp/log.do_compile
 ```
 
 ## Cache management

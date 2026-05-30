@@ -96,6 +96,17 @@ def convert(markdown, title, section="7", source="Appliance OS"):
     today = date.today().strftime("%Y-%m-%d")
     out.append(f'.TH "{title.upper()}" "{section}" "{today}" "{source}"')
 
+    # NAME section — required by mandb for whatis/apropos indexing.
+    # Use the first heading's text as the short description.
+    first_heading = title
+    for raw_line in lines:
+        hm = re.match(r"^#{1,2}\s+(.*)", raw_line.strip())
+        if hm:
+            first_heading = hm.group(1).strip()
+            break
+    out.append(".SH NAME")
+    out.append(f"{title} \\- {first_heading}")
+
     i = 0
     in_code = False
     in_list = False

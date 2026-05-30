@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+WORKDIR=/tmp/appliance-selfupdate
+
+. /etc/os-release
+
+REPO_URL="${HOME_URL:?HOME_URL not set in /etc/os-release}"
+VARIANT="${VARIANT_ID:?VARIANT_ID not set in /etc/os-release}"
+REF="${1:-}"
+
+if [ -d "$WORKDIR/.git" ]; then
+    cd "$WORKDIR"
+    git fetch origin
+    if [ -n "$REF" ]; then
+        git checkout "$REF"
+    fi
+    # pull if on a branch (detached HEAD returns HEAD)
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$BRANCH" != "HEAD" ]; then
+        git pull
+    fi
+else
+    if [ -n "$REF" ]; then
+        git clone --depth 1 --branch "$REF" "$REPO_URL" "$WORKDIR"
+    else
+        git clone --depth 1 "$REPO_URL" "$WORKDIR"
+    fi
+    cd "$WORKDIR"
+fi
+
+echo "repo:    $REPO_URL"
+echo "ref:     $(git describe --tags --long --always --dirty 2>/dev/null || git rev-parse --short HEAD)"
+echo "variant: $VARIANT"
+echo ""
+
+make VARIANT="$VARIANT" build-update
+
+echo ""
+echo "bundle: $WORKDIR/artifacts/*.raucb"
+ls -lh "$WORKDIR"/artifacts/*.raucb 2>/dev/null
