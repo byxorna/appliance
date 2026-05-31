@@ -1,10 +1,7 @@
-auth      required  pam_nologin.so
 auth      sufficient pam_permit.so
 
-account   required  pam_nologin.so
 account   sufficient pam_permit.so
 
 session   required  pam_env.so
-session   optional  pam_unix.so
 session   required  pam_systemd.so type=wayland class=user desktop=weston
 -session  optional  pam_loginuid.so

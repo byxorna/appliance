@@ -1,0 +1,10 @@
+{
+    "userName": "weston",
+    "uid": 800,
+    "gid": 800,
+    "realName": "Weston compositor",
+    "homeDirectory": "/home/weston",
+    "shell": "/bin/sh",
+    "disposition": "regular",
+    "memberOf": ["video", "input", "render", "wayland", "seat"]
+}

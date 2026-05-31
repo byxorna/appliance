@@ -63,10 +63,31 @@ The reTerminal has a 720×1280 portrait DSI panel. For landscape mode we need:
 - No custom systemd service — `weston-init` provides one.
 - No PAM config changes — `weston-init` includes `weston-autologin`.
 
+### systemd 255 pam_systemd / userdb ENOMEDIUM Bug
+
+Weston service fails with `PAM failed: User not known` (exit 224/PAM) because
+`pam_systemd.so` resolves users via systemd's userdb Multiplexer. When the
+Multiplexer connects, it sets `nss_covered=true` on the client iterator,
+disabling the client-side NSS fallback entirely. The request is dispatched to
+a `systemd-userwork` worker process, which attempts NSS resolution internally.
+The worker's `getpwnam_r("weston")` succeeds, but the subsequent conversion
+in `build_user_json()` (or `user_record_load()`) leaks `-ENOMEDIUM` (errno
+123) — a sentinel from `synthesize_user_creds()` meaning "not root/nobody,
+fall through." This raw negative errno propagates as a varlink error back to
+the client, which cannot fall back to client-side NSS because `nss_covered`
+is already set.
+
+**Fix:** Install userdb JSON dropin files (`/usr/lib/userdb/weston.user` and
+`weston.group`) which the worker checks *before* the buggy NSS path. When the
+dropin is found, the worker returns the dropin record and never enters the
+NSS→build_user_json code path. UIDs are pinned via `useradd-staticids` so
+the dropin matches `/etc/passwd`.
+
 ## Task List
 
 - [x] Add `weston weston-init` to IMAGE_INSTALL in kas/common.yaml
 - [x] Create weston-init bbappend with kiosk-shell weston.ini + DSI output rotation
 - [x] Set graphical.target as the default systemd target
+- [x] Fix pam_systemd ENOMEDIUM: userdb dropin + static UID (weston:800)
 - [ ] Build and validate on hardware
 - [ ] Verify VT switching (Ctrl-Alt-F1 / Ctrl-Alt-F7)

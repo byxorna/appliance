@@ -1,0 +1,24 @@
+# Static GID assignments for appliance-os
+# Format: groupname:password:gid:members
+#
+# GIDs must be stable across builds so that file ownership on the
+# persistent /data partition remains correct after A/B rootfs updates.
+#
+# Range 800-899: appliance-os application groups
+# Range 900-949: system daemon groups
+
+# --- appliance groups (800-899) ----------------------------------------------
+weston:x:800:
+wayland:x:801:
+render:x:802:
+seat:x:803:
+weston-launch:x:804:
+
+# --- system daemon groups (900-949) ------------------------------------------
+systemd-network:x:900:
+systemd-resolve:x:901:
+systemd-timesync:x:902:
+systemd-journal:x:910:
+messagebus:x:903:
+sshd:x:904:
+dhcpcd:x:905:
