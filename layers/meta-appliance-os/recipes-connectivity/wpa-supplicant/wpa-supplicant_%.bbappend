@@ -10,6 +10,10 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI += "file://wpa_supplicant.conf-default"
 
 WPA_CONF_FILE = "wpa_supplicant.conf-default"
+
+# Invalidate sstate when the optional user-supplied config appears or changes.
+do_fetch[file-checksums] += "${REPO_ROOT}/local/wpa_supplicant.conf:True"
+
 python () {
     import os
     repo_root = d.getVar('REPO_ROOT')
