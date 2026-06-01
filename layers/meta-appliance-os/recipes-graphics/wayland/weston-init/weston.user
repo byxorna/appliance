@@ -6,5 +6,6 @@
     "homeDirectory": "/home/weston",
     "shell": "/bin/sh",
     "disposition": "regular",
+    "service": "io.systemd.DropIn",
     "memberOf": ["video", "input", "render", "wayland", "seat"]
 }

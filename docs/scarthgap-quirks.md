@@ -16,16 +16,20 @@ the underlying authentication module` / exit code 224. Only affects
 services with `PAMName=` in their unit file.
 
 **Root cause:** When `pam_systemd.so` resolves a user through systemd's
-userdb varlink Multiplexer, the Multiplexer sets `nss_covered=true`
-on the client side (disabling client-side NSS fallback). The
-`systemd-userwork` worker then attempts NSS lookup, which succeeds,
-but `build_user_json()` leaks `-ENOMEDIUM` (errno 123, a sentinel
-from `synthesize_user_creds()`) as the varlink return value. The
-client receives an error and has no fallback.
+userdb varlink Multiplexer, the `systemd-userwork` worker finds the
+user record (via NSS or dropin) but then calls `build_user_json()`
+to serialize the response. `build_user_json()` calls `add_nss_service()`,
+which unconditionally reads `/etc/machine-id` via `sd_id128_get_machine()`
+for any record that lacks a `"service"` JSON field. On a read-only rootfs
+where `/etc/machine-id` hasn't been committed yet (empty or contains
+"uninitialized"), this returns `-ENOMEDIUM` (errno 123), which propagates
+as an `io.systemd.System` varlink error. The same issue affects
+`build_group_json()`.
 
 **Fix:** Ship userdb JSON dropin files (`weston.user`, `weston.group`)
-in `/usr/lib/userdb/`. The worker finds these before reaching the
-buggy NSS path.
+in `/usr/lib/userdb/` with a `"service": "io.systemd.DropIn"` field.
+The presence of the `"service"` field causes `add_nss_service()` to
+return immediately without reading `/etc/machine-id`.
 
 **Files:**
 - `layers/meta-appliance-os/recipes-graphics/wayland/weston-init.bbappend`
@@ -33,9 +37,9 @@ buggy NSS path.
 - `layers/meta-appliance-os/recipes-graphics/wayland/weston-init/weston.group`
 
 **On upgrade:** If systemd >=256 fixes the ENOMEDIUM leak in
-`build_user_json()`, the dropin files become redundant (but harmless).
-Test by removing them and checking `systemctl status weston` and
-`userdbctl user weston`.
+`build_user_json()` / `add_nss_service()`, the dropin files become
+redundant (but harmless). Test by removing them and checking
+`systemctl status weston` and `userdbctl user weston`.
 
 ---
 

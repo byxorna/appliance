@@ -1,4 +1,5 @@
 {
     "groupName": "weston",
-    "gid": 800
+    "gid": 800,
+    "service": "io.systemd.DropIn"
 }

@@ -15,9 +15,10 @@ do_install:append() {
     install -d ${D}${nonarch_libdir}/tmpfiles.d
     install -m 0644 ${WORKDIR}/weston-homedir.conf ${D}${nonarch_libdir}/tmpfiles.d/
 
-    # userdb dropin: provide weston's user/group record to systemd-userwork
-    # so pam_systemd can resolve the user without hitting a systemd 255 bug
-    # where the NSS-to-varlink path leaks ENOMEDIUM through build_user_json.
+    # userdb dropin: provide weston's user/group record to systemd-userwork.
+    # Works around a systemd 255 bug where add_nss_service() in the worker
+    # reads /etc/machine-id (empty on RO rootfs) and returns ENOMEDIUM.
+    # The "service" field in the JSON prevents add_nss_service() from running.
     install -d ${D}${nonarch_libdir}/userdb
     install -m 0644 ${WORKDIR}/weston.user ${D}${nonarch_libdir}/userdb/
     install -m 0644 ${WORKDIR}/weston.group ${D}${nonarch_libdir}/userdb/
