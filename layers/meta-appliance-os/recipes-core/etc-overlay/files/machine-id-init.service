@@ -1,0 +1,31 @@
+[Unit]
+Description=Initialize /etc/machine-id after /etc overlay is mounted
+DefaultDependencies=no
+
+# Must run after the /etc overlay is up so machine-id is writable.
+# Must run before anything that reads machine-id (logind, journald, etc).
+After=etc.mount
+Before=systemd-logind.service systemd-journald.service sysinit.target
+Requires=etc.mount
+
+# Only needed if machine-id is still empty after the overlay mount.
+ConditionPathIsReadWrite=/etc
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+# systemd PID 1 bind-mounts a tmpfs over /etc/machine-id on read-only rootfs
+# images. After the /etc overlay mounts, this tmpfs is stacked on top, hiding
+# the writable overlay beneath. Unmount it so systemd-machine-id-setup can
+# write through the overlay.
+ExecStart=/bin/sh -c '\
+  if mountpoint -q /etc/machine-id; then \
+    umount /etc/machine-id; \
+  fi; \
+  if [ ! -s /etc/machine-id ]; then \
+    systemd-machine-id-setup; \
+  fi'
+
+[Install]
+WantedBy=sysinit.target

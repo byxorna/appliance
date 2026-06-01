@@ -11,6 +11,7 @@ inherit systemd
 SRC_URI = " \
     file://etc-overlay-setup.service \
     file://etc.mount \
+    file://machine-id-init.service \
 "
 
 S = "${WORKDIR}"
@@ -19,8 +20,9 @@ do_install() {
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${S}/etc-overlay-setup.service ${D}${systemd_system_unitdir}/
     install -m 0644 ${S}/etc.mount ${D}${systemd_system_unitdir}/
+    install -m 0644 ${S}/machine-id-init.service ${D}${systemd_system_unitdir}/
 }
 
-SYSTEMD_SERVICE:${PN} = "etc-overlay-setup.service etc.mount"
+SYSTEMD_SERVICE:${PN} = "etc-overlay-setup.service etc.mount machine-id-init.service"
 
 RDEPENDS:${PN} = "util-linux-mount"

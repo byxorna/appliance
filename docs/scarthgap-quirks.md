@@ -43,7 +43,50 @@ redundant (but harmless). Test by removing them and checking
 
 ---
 
-## 2. GCC 13 parallel build race (aarch64 cross-compiler)
+## 2. Empty /etc/machine-id on read-only rootfs with /etc overlay
+
+**Versions:** systemd 255.x (scarthgap ships 255.21)
+
+**Symptom:** `pam_systemd.so` returns `PAM_SESSION_ERR` ("Cannot
+make/remove an entry for the specified session"), blocking any
+`PAMName=` service. logind is running but `/run/user/<uid>` is never
+created. `/etc/machine-id` is 0 bytes.
+
+**Root cause:** On a read-only rootfs, systemd PID 1 detects the empty
+`/etc/machine-id` very early and bind-mounts a tmpfs over it to hold a
+transient ID. Because the rootfs is read-only at that point, the tmpfs
+inherits a read-only mount and PID 1 silently fails to write a transient
+ID. Later, `etc.mount` overlays `/etc` with a writable overlayfs, but
+the tmpfs on `/etc/machine-id` is stacked *above* the overlay:
+
+```
+/etc/machine-id  ←  tmpfs (ro, 0 bytes)  ←  VISIBLE
+/etc             ←  overlay (rw)          ←  HIDDEN under tmpfs
+```
+
+`systemd-machine-id-commit.service` cannot help because the transient
+ID was never generated. The machine-id stays empty forever, breaking
+logind sessions, journald persistent logs, and the userdb
+`add_nss_service()` code path (quirk #1).
+
+**Fix:** A `machine-id-init.service` oneshot runs `After=etc.mount`. It
+unmounts the stale tmpfs from `/etc/machine-id` (exposing the writable
+overlay beneath), then calls `systemd-machine-id-setup` to generate and
+persist a machine-id. The ID is written to the overlay upper dir, so it
+survives reboots and is not overwritten by OTA rootfs updates.
+
+**Files:**
+- `layers/meta-appliance-os/recipes-core/etc-overlay/files/machine-id-init.service`
+- `layers/meta-appliance-os/recipes-core/etc-overlay/etc-overlay_1.0.bb`
+
+**On upgrade:** systemd 256+ changes the transient machine-id behavior
+on read-only rootfs images. Re-evaluate whether PID 1 correctly handles
+the case where an overlay makes `/etc` writable after initial mount. If
+so, the service can be dropped.
+
+---
+
+## 3. GCC 13 parallel build race (aarch64 cross-compiler)
 
 **Versions:** GCC 13.x (scarthgap ships 13.3)
 
@@ -69,7 +112,7 @@ building with full parallelism. If it builds cleanly 3+ times, drop it.
 
 ---
 
-## 3. meta-raspberrypi DT overlays missing from kernel 6.1
+## 4. meta-raspberrypi DT overlays missing from kernel 6.1
 
 **Versions:** meta-raspberrypi scarthgap branch + meta-seeed-cm4
 (pins kernel to 6.1.y)
@@ -101,7 +144,7 @@ grepping the kernel tree for each `.dts` filename.
 
 ---
 
-## 4. zsh license SPDX generation failure
+## 5. zsh license SPDX generation failure
 
 **Versions:** meta-oe scarthgap (zsh recipe declares `LICENSE = "zsh"`)
 
@@ -128,7 +171,7 @@ entry). If so, drop the bbappend.
 
 ---
 
-## 5. meta-seeed-cm4 broken rpi-bootfiles download (404)
+## 6. meta-seeed-cm4 broken rpi-bootfiles download (404)
 
 **Versions:** meta-seeed-cm4 (commit `a2f9438`)
 
@@ -154,7 +197,7 @@ drop the BBMASK line.
 
 ---
 
-## 6. meta-seeed-cm4 image bbappends override appliance config
+## 7. meta-seeed-cm4 image bbappends override appliance config
 
 **Versions:** meta-seeed-cm4 (commit `a2f9438`)
 
@@ -178,7 +221,7 @@ custom image recipe (at which point the bbappends won't match).
 
 ---
 
-## 7. seeed-linux-dtoverlays AUTOREV
+## 8. seeed-linux-dtoverlays AUTOREV
 
 **Versions:** meta-seeed-cm4 (commit `a2f9438`)
 
