@@ -15,6 +15,9 @@ S = "${WORKDIR}"
 # Source docs keyed by manpage name.  TODO-*.md are excluded (dev-only).
 DOCS_DIR = "${REPO_ROOT}/docs"
 
+# Tell BitBake to re-run do_compile when any doc source changes.
+do_compile[file-checksums] += "${DOCS_DIR}/*:True ${REPO_ROOT}/README.md:True"
+
 python do_compile() {
     import subprocess, glob, os
 
