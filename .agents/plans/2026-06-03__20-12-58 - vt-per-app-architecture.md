@@ -327,9 +327,12 @@ or a now-playing daemon in a future phase.
 - [x] Write `weston@.service` systemd template unit for multi-VT Weston instances
 - [x] Write `appliance-app.bbclass` (simplified: installs app metadata, generates per-app systemd service from manifest)
 - [x] Write `appliance-init` service (bind-mount wiring for `/data/platform/` and `/data/apps/*/`, VT default selection via `chvt`)
-- [ ] Verify Weston kiosk-shell works on multiple VTs simultaneously (start `weston@2` and `weston@7`, switch with `chvt`)
 - [x] Configure default boot to VT 2 (Feishin VT)
 - [x] Add `kiosk` user (uid 810) with userdb dropins, tmpfiles.d, static passwd/group entries
+- [x] Fix `kiosk-user` useradd sysroot failure: use `--user-group` so staticids auto-injects primary group; add `-r wayland` to `GROUPADD_PARAM` so supplementary groups exist in sysroot
+- [x] Fix Weston SIGHUP on startup: add `Conflicts=getty@tty%i.service` to `weston@.service`, set `TTYVHangup=no` and `TTYVTDisallocate=no`, disable logind autovt (`NAutoVTs=0`, `ReserveVT=0`)
+- [x] Verify Weston kiosk-shell starts on VT 2 (DRM+GL init, DSI-1 output, kiosk-shell loaded — confirmed on hardware)
+- [ ] Verify multi-VT Weston (start `weston@2` and `weston@7` simultaneously, switch with `chvt`)
 
 ### Phase 4r: Button daemon (revised)
 - [ ] Write `kiosk-buttond` recipe: evdev reader for reTerminal buttons + IR receiver
