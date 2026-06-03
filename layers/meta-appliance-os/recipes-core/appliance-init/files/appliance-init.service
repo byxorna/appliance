@@ -1,0 +1,16 @@
+[Unit]
+Description=Initialize appliance persistent data directories
+DefaultDependencies=no
+RequiresMountsFor=/data
+Before=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+# Platform-level persistent directories
+ExecStart=/bin/mkdir -p /data/platform
+ExecStart=/bin/mkdir -p /data/apps
+
+[Install]
+WantedBy=local-fs.target

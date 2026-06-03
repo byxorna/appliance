@@ -109,9 +109,8 @@ local_conf_header:
     EXTRA_USERS_PARAMS = "usermod -s /usr/bin/zsh root;"
 
   kiosk: |
-    IMAGE_INSTALL:append = " weston weston-init"
+    IMAGE_INSTALL:append = " weston weston-init kiosk-user appliance-init"
     SYSTEMD_DEFAULT_TARGET = "graphical.target"
-    EXTRA_USERS_PARAMS += "useradd -m -d /home/kiosk -s /usr/bin/zsh -G video,input,wayland kiosk;"
 
   docs: |
     IMAGE_INSTALL:append = " appliance-docs appliance-selfupdate"

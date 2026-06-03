@@ -89,5 +89,5 @@ the dropin matches `/etc/passwd`.
 - [x] Create weston-init bbappend with kiosk-shell weston.ini + DSI output rotation
 - [x] Set graphical.target as the default systemd target
 - [x] Fix pam_systemd ENOMEDIUM: userdb dropin + static UID (weston:800)
-- [ ] Build and validate on hardware
-- [ ] Verify VT switching (Ctrl-Alt-F1 / Ctrl-Alt-F7)
+- [~] Build and validate on hardware — **superseded by VT-per-app architecture** (see `2026-06-03__20-12-58`)
+- [~] Verify VT switching — **superseded by VT-per-app architecture** (multi-VT verification tracked there)

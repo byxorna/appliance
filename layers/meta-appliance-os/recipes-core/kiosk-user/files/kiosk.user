@@ -1,0 +1,11 @@
+{
+    "userName": "kiosk",
+    "uid": 810,
+    "gid": 810,
+    "realName": "Appliance kiosk app user",
+    "homeDirectory": "/home/kiosk",
+    "shell": "/usr/sbin/nologin",
+    "disposition": "regular",
+    "service": "io.systemd.DropIn",
+    "memberOf": ["wayland", "audio", "video"]
+}

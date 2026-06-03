@@ -1,0 +1,5 @@
+{
+    "groupName": "kiosk",
+    "gid": 810,
+    "service": "io.systemd.DropIn"
+}

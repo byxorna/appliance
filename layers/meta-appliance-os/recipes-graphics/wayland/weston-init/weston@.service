@@ -1,0 +1,58 @@
+# Weston per-VT template service
+#
+# Runs a Weston kiosk-shell instance on a specific VT.
+# Instantiate with the VT number: systemctl start weston@2
+#
+# Each instance gets its own Wayland socket (wayland-%i) under
+# $XDG_RUNTIME_DIR (/run/user/800/).  App services run as the
+# unprivileged `kiosk` user (member of group `wayland`) and connect
+# via WAYLAND_DISPLAY=wayland-%i.  ExecStartPost fixes the socket
+# permissions so the kiosk user can connect.
+
+[Unit]
+Description=Weston kiosk compositor on VT %i
+Documentation=man:weston(1) man:weston.ini(5)
+
+Requires=systemd-user-sessions.service
+After=systemd-user-sessions.service
+
+Wants=dbus.socket
+After=dbus.socket
+
+# Stop the getty on this VT before we take it over
+Conflicts=getty@tty%i.service
+After=getty@tty%i.service
+
+Before=graphical.target
+
+ConditionPathExists=/dev/tty0
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/weston --modules=systemd-notify.so --socket=wayland-%i
+ExecStartPost=/bin/chgrp wayland /run/user/800/wayland-%i
+ExecStartPost=/bin/chmod g+rw /run/user/800/wayland-%i
+
+User=weston
+Group=weston
+WorkingDirectory=/home/weston
+
+PAMName=weston-autologin
+
+TTYPath=/dev/tty%i
+TTYReset=yes
+TTYVHangup=no
+TTYVTDisallocate=no
+
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+
+UtmpIdentifier=tty%i
+UtmpMode=user
+
+Restart=on-failure
+RestartSec=2s
+
+[Install]
+WantedBy=graphical.target

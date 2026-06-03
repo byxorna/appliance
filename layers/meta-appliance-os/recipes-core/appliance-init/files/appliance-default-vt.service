@@ -1,0 +1,16 @@
+[Unit]
+Description=Switch to the default appliance app VT
+After=graphical.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+# Switch to VT 2 (the default app VT) once the graphical
+# target is reached.  Without this the kernel leaves the
+# console on VT 1, which shows a login prompt instead of
+# the app.
+ExecStart=/usr/bin/chvt 2
+
+[Install]
+WantedBy=graphical.target
