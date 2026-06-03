@@ -1,6 +1,7 @@
-# Pick up our custom weston.ini (kiosk-shell + DSI rotation) and
+# Pick up our custom weston.ini (kiosk-shell base config, no rotation) and
 # weston-autologin (pam_systemd required, not optional) via FILESEXTRAPATHS.
 # Both exist in upstream SRC_URI — our versions override by search order.
+# Display rotation is hardware-specific and belongs in BSP layer bbappends.
 FILESEXTRAPATHS:prepend := "${THISDIR}/weston-init:"
 
 # weston-homedir.conf is new (not in upstream SRC_URI), and so are the
