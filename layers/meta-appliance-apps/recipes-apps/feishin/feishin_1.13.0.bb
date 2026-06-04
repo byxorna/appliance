@@ -5,7 +5,7 @@ native Wayland app under the appliance kiosk compositor."
 HOMEPAGE = "https://github.com/jeffvli/feishin"
 
 LICENSE = "GPL-3.0-only"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-3.0-only;md5=c84c1a1bfc0863b1019ec3d5bcf4f1ca"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-3.0-only;md5=c79ff39f19dfec6d293b95dea7b07891"
 
 inherit appliance-app
 
@@ -96,7 +96,6 @@ RDEPENDS:${PN} += " \
     gdk-pixbuf \
     glib-2.0 \
     dbus \
-    playerctl \
 "
 
 SYSTEMD_SERVICE:${PN}:append = " home-kiosk-.config-feishin.mount"

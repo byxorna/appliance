@@ -24,3 +24,5 @@ messagebus:x:903:
 sshd:x:904:
 dhcpcd:x:905:
 pipewire:x:906:
+avahi:x:907:
+avahi-autoipd:x:908:
