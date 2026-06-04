@@ -23,3 +23,4 @@ systemd-journal:x:910:
 messagebus:x:903:
 sshd:x:904:
 dhcpcd:x:905:
+pipewire:x:906:

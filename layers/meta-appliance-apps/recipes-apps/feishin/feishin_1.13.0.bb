@@ -75,31 +75,27 @@ do_install() {
 
 DEPENDS += "squashfs-tools-native"
 
-# Runtime dependencies: Wayland libs the bundled Electron needs from the
-# system, plus PipeWire/ALSA for audio output.
+# Runtime dependencies: Wayland/GL libs the bundled Electron needs from
+# the system, plus PipeWire/ALSA for audio output.
+# The AppImage bundles its own X11/Xwayland client libs (libX11, libXfixes,
+# etc.) so we do NOT pull system X11 packages — our distro has no x11
+# feature and those recipes are unbuildable.
 RDEPENDS:${PN} += " \
     wayland \
     libxkbcommon \
     mesa \
+    libdrm \
     pipewire \
     wireplumber \
     alsa-lib \
     nss \
     nspr \
-    libdrm \
     at-spi2-core \
-    gtk+3 \
     pango \
     cairo \
     gdk-pixbuf \
     glib-2.0 \
     dbus \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxext \
-    libxfixes \
-    libxrandr \
     playerctl \
 "
 
