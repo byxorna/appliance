@@ -1,0 +1,6 @@
+{
+  "name": "feishin",
+  "display_name": "Feishin",
+  "vt": 2,
+  "exec": "/opt/feishin/feishin-wrapper"
+}

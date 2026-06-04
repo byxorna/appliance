@@ -347,8 +347,8 @@ No `meta-seeed-cm4` dependency. The Mark II BSP is self-contained.
 - [ ] Wire systemd ordering: sj201-init.service Before=sound.target
 
 ### Phase 5: Weston refactor
-- [ ] Move reTerminal rotation from meta-appliance-os weston-init bbappend to meta-appliance-bsp-reterminal
-- [ ] Verify reTerminal build still works after refactor
+- [x] Move reTerminal rotation from meta-appliance-os weston-init bbappend to meta-appliance-bsp-reterminal
+- [x] Verify reTerminal build still works after refactor (bitbake -p passes; only pre-existing feishin-wrapper error)
 - [ ] Verify Mark II build gets rotation-free weston.ini
 
 ### Phase 6: Build and validate

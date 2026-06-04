@@ -73,8 +73,8 @@ repos:
   meta-appliance-os:
     path: layers/meta-appliance-os
 
-  meta-appliance-app-feishin:
-    path: layers/meta-appliance-app-feishin
+  meta-appliance-apps:
+    path: layers/meta-appliance-apps
 
 local_conf_header:
   rauc: |
@@ -109,7 +109,7 @@ local_conf_header:
     EXTRA_USERS_PARAMS = "usermod -s /usr/bin/zsh root;"
 
   kiosk: |
-    IMAGE_INSTALL:append = " weston weston-init kiosk-user appliance-init"
+    IMAGE_INSTALL:append = " weston weston-init kiosk-user appliance-init feishin"
     SYSTEMD_DEFAULT_TARGET = "graphical.target"
 
   docs: |
