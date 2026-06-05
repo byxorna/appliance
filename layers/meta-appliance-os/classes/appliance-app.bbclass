@@ -39,15 +39,50 @@ APPLIANCE_APP_UID  ?= "810"
 python () {
     import json, os
 
-    # Locate app.json in the recipe's file search path.
-    # It must be listed in SRC_URI so BitBake fetches it.
     src_uri = d.getVar('SRC_URI') or ''
     if 'file://app.json' not in src_uri:
         bb.fatal('appliance-app.bbclass: SRC_URI must include file://app.json')
 
-    # We cannot parse the file during anonymous python (the fetch hasn't
-    # happened yet), so we just verify it's declared.  Actual parsing
-    # happens in do_install via shell + python helpers.
+    # Parse app.json at parse time so SYSTEMD_SERVICE and FILES are set
+    # early enough for the systemd bbclass to create enable symlinks.
+    # file:// URIs for local files resolve to the recipe's FILESDIR search
+    # path, so we can find app.json in the recipe's files/ directory.
+    filesdir = d.getVar('FILE_DIRNAME')
+    manifest = None
+    for subdir in ['files', '.', d.getVar('BPN'), '%s-%s' % (d.getVar('BPN'), d.getVar('PV'))]:
+        candidate = os.path.join(filesdir, subdir, 'app.json')
+        if os.path.exists(candidate):
+            manifest = candidate
+            break
+
+    if not manifest:
+        bb.fatal('appliance-app.bbclass: app.json not found in recipe file search path')
+
+    with open(manifest) as f:
+        app = json.load(f)
+
+    name = app.get('name', '')
+    vt = str(app.get('vt', ''))
+    if not name or not vt:
+        bb.fatal('appliance-app.bbclass: app.json must have name and vt fields')
+
+    svc = 'appliance-app-%s.service' % name
+    pn = d.getVar('PN')
+    unitdir = d.getVar('systemd_system_unitdir')
+    libdir = d.getVar('nonarch_libdir')
+
+    # Set SYSTEMD_SERVICE early so the systemd class creates enable symlinks
+    cur = d.getVar('SYSTEMD_SERVICE:%s' % pn) or ''
+    if svc not in cur:
+        d.setVar('SYSTEMD_SERVICE:%s' % pn, (cur + ' ' + svc).strip())
+
+    # Set FILES early so packaging finds all generated outputs
+    files = (d.getVar('FILES:%s' % pn) or '')
+    files += ' /opt/%s/' % name
+    files += ' %s/%s' % (unitdir, svc)
+    files += ' %s/graphical.target.wants/weston@%s.service' % (unitdir, vt)
+    files += ' %s/tmpfiles.d/appliance-app-%s.conf' % (libdir, name)
+    d.setVar('FILES:%s' % pn, files)
 }
 
 # Shell helper: read a key from the JSON manifest.
@@ -125,39 +160,6 @@ EOF
 # Persistent data directory for ${app_display}
 d /data/apps/${app_name} 0750 ${APPLIANCE_APP_USER} ${APPLIANCE_APP_USER} -
 EOF
-}
-
-# Dynamically set FILES and SYSTEMD_SERVICE based on app.json.
-# This runs after the recipe is parsed but before packaging.
-python populate_packages:prepend() {
-    import json, os
-
-    workdir = d.getVar('WORKDIR')
-    manifest = os.path.join(workdir, 'app.json')
-    if not os.path.exists(manifest):
-        return
-
-    with open(manifest) as f:
-        app = json.load(f)
-
-    name = app['name']
-    svc = 'appliance-app-%s.service' % name
-    pn = d.getVar('PN')
-    unitdir = d.getVar('systemd_system_unitdir')
-    libdir = d.getVar('nonarch_libdir')
-
-    # Append to FILES
-    files = (d.getVar('FILES:%s' % pn) or '')
-    files += ' /opt/%s/' % name
-    files += ' %s/%s' % (unitdir, svc)
-    files += ' %s/graphical.target.wants/weston@%s.service' % (unitdir, app['vt'])
-    files += ' %s/tmpfiles.d/appliance-app-%s.conf' % (libdir, name)
-    d.setVar('FILES:%s' % pn, files)
-
-    # Tell the systemd class about our generated unit
-    cur = d.getVar('SYSTEMD_SERVICE:%s' % pn) or ''
-    if svc not in cur:
-        d.setVar('SYSTEMD_SERVICE:%s' % pn, (cur + ' ' + svc).strip())
 }
 
 # All app recipes depend on the kiosk user infrastructure and weston
