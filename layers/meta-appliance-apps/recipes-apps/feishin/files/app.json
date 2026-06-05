@@ -2,5 +2,8 @@
   "name": "feishin",
   "display_name": "Feishin",
   "vt": 2,
-  "exec": "/opt/feishin/feishin-wrapper"
+  "image": "ghcr.io/byxorna/appliance-feishin:latest",
+  "mounts": [
+    "/data/apps/feishin/config:/home/kiosk/.config/feishin"
+  ]
 }

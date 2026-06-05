@@ -1,27 +1,26 @@
 #!/bin/sh
-# Wrapper script for Feishin Electron app under Weston kiosk-shell.
+# Wrapper script for Feishin Electron app inside the appliance container.
 # Ensures Wayland backend and correct runtime paths.
 
 set -e
 
 FEISHIN_DIR=/opt/feishin
 
-# The extracted AppImage bundles its own copies of GTK3, X11 client libs,
-# and other shared libraries alongside the main binary.  Point the linker
-# at the install directory so Electron finds them without requiring the
-# host distro to ship X11 or GTK3 packages.
+# The extracted AppImage bundles its own copies of some shared libraries
+# alongside the main binary. Point the linker at the install directory
+# so Electron finds them.
 export LD_LIBRARY_PATH="$FEISHIN_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 # Electron/Chromium Wayland flags
 ELECTRON_FLAGS="--ozone-platform=wayland --enable-features=UseOzonePlatform"
 
-# Disable GPU sandbox (we run under a kiosk compositor as an unprivileged
-# user — the sandbox tries to clone namespaces that need CAP_SYS_ADMIN).
+# Disable GPU sandbox (the container runs as an unprivileged user —
+# the sandbox tries to clone namespaces that need CAP_SYS_ADMIN).
 ELECTRON_FLAGS="$ELECTRON_FLAGS --no-sandbox"
 
 # Disable hardware acceleration initially — the reTerminal's VC4 GPU may
 # not support all Chromium GPU features, and a GPU process crash kills
-# the whole app.  Software rendering is fine for a music player UI.
+# the whole app. Software rendering is fine for a music player UI.
 # Remove this flag once GPU stability is confirmed on hardware.
 ELECTRON_FLAGS="$ELECTRON_FLAGS --disable-gpu"
 

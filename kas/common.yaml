@@ -109,7 +109,7 @@ local_conf_header:
     EXTRA_USERS_PARAMS = "usermod -s /usr/bin/zsh root;"
 
   kiosk: |
-    IMAGE_INSTALL:append = " weston weston-init kiosk-user appliance-init feishin"
+    IMAGE_INSTALL:append = " weston weston-init kiosk-user appliance-init feishin podman crun fuse-overlayfs"
     SYSTEMD_DEFAULT_TARGET = "graphical.target"
 
   docs: |
