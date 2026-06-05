@@ -81,43 +81,13 @@ RPI_KERNEL_DEVICETREE_OVERLAYS:append = " overlays/i2c3.dtbo"
 
 ## 3. Kernel 6.1 incompatible overlay references
 
-**Symptom:** Build fails when meta-raspberrypi tries to compile DT
-overlays that don't exist in the 6.1 kernel source tree.
-
-**Root cause:** meta-raspberrypi scarthgap's `rpi-base.inc` lists
-overlays added after 6.1 (Pi 5 support, new DSI panel variants).
-meta-seeed-cm4 pins the kernel to 6.1.y, so these `.dts` sources are
-missing.
-
-**Fix:** Remove them at layer.conf scope (not in a bbappend) so the fix
-is visible to both the kernel recipe and image recipes that read
-`IMAGE_BOOT_FILES` at parse time:
-
-```bitbake
-KERNEL_DEVICETREE:remove = " \
-    overlays/vc4-kms-dsi-ili9881-7inch.dtbo \
-    overlays/vc4-kms-dsi-ili9881-5inch.dtbo \
-    overlays/w1-gpio-pi5.dtbo \
-    overlays/bcm2712d0.dtbo \
-"
-```
+See [scarthgap-quirks.md §4](scarthgap-quirks.md#4-meta-raspberrypi-dt-overlays-missing-from-kernel-61). Caused by meta-seeed-cm4 pinning the kernel to 6.1; fix lives in `layers/meta-appliance-bsp-reterminal/conf/layer.conf`.
 
 ---
 
 ## 4. Broken rpi-bootfiles bbappend (404 download)
 
-**Symptom:** Build fails fetching `dt-blob-disp1-cam2.bin`.
-
-**Root cause:** meta-seeed-cm4's `rpi-bootfiles.bbappend` downloads a
-`dt-blob` binary from `datasheets.raspberrypi.org` that is permanently
-404. `dt-blob.bin` is a legacy mechanism — the reTerminal display is
-configured via DT overlays in config.txt, not via dt-blob.
-
-**Fix:** BBMASK the broken bbappend:
-
-```bitbake
-BBMASK += "meta-seeed-cm4/recipes-bsp/bootfiles/rpi-bootfiles.bbappend"
-```
+See [scarthgap-quirks.md §6](scarthgap-quirks.md#6-meta-seeed-cm4-broken-rpi-bootfiles-download-404).
 
 ---
 
@@ -139,60 +109,7 @@ CMDLINE:append = " console=tty1"
 
 ---
 
-## 6. meta-seeed-cm4 image bbappends override appliance config
-
-**Symptom:** Root password gets set, unwanted dev tools (vim, git, curl,
-tmux) are pulled into the image, overriding the appliance's minimal
-package set.
-
-**Root cause:** meta-seeed-cm4 ships bbappends for `core-image-minimal`
-and `core-image-base` that set a root password and add packages. These
-run at the same priority as any other bbappend and silently modify the
-image.
-
-**Fix:** BBMASK both:
-
-```bitbake
-BBMASK += "meta-seeed-cm4/recipes-core/images/core-image-minimal.bbappend"
-BBMASK += "meta-seeed-cm4/recipes-core/images/core-image-base.bbappend"
-```
-
----
-
-## 7. `seeed-linux-dtoverlays` uses AUTOREV
-
-**Symptom:** Builds are non-reproducible; fetching can fail if upstream
-force-pushes.
-
-**Root cause:** The upstream recipe uses `SRCREV = "${AUTOREV}"` which
-resolves to `master` HEAD at fetch time.
-
-**Fix:** Pin SRCREV in a bbappend:
-
-```bitbake
-SRCREV = "c336085a3a60a39afcc64fd784ec27dca71dbed2"
-```
-
-(`recipes-kernel/seeed-linux-dtoverlays/seeed-linux-dtoverlays.bbappend`)
-
----
-
-## 8. `zsh` license breaks SPDX generation
-
-**Symptom:** `do_create_spdx` fails with "Cannot find any text for
-license zsh".
-
-**Root cause:** The `zsh` recipe in meta-oe declares `LICENSE = "zsh"`
-but Yocto has no matching file in `common-licenses/`. The SPDX tooling
-requires a license text file for every declared license.
-
-**Fix:** bbappend that maps the license to the source tree's `LICENCE`
-file:
-
-```bitbake
-LICENSE = "MIT-like"
-NO_GENERIC_LICENSE[MIT-like] = "LICENCE"
-```
-
-(`layers/meta-appliance-os/recipes-shells/zsh/zsh_%.bbappend` — this one lives
-in the OS layer since it's not hardware-specific.)
+Additional meta-seeed-cm4 workarounds (image bbappend overrides,
+AUTOREV pinning) and the zsh SPDX fix are documented in
+[scarthgap-quirks.md](scarthgap-quirks.md) since they are
+Yocto-version-specific rather than hardware-specific.

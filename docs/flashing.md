@@ -104,7 +104,7 @@ sync
 
 ## First boot
 
-Power on and connect a serial console. There is no graphical login yet — `core-image-minimal` provides a text console only.
+Power on and connect via serial console or SSH (if WiFi was pre-configured). The device boots into Weston (fullscreen Wayland compositor) and starts containerized application services. The display may remain blank until a container image is loaded for the first app.
 
 Default serial console settings: **115200 8N1** on the debug UART (GPIO 14/15 via the 40-pin header, or the USB-C port if the debug firmware is installed).
 

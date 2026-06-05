@@ -5,12 +5,12 @@ All builds run inside an OCI container (Podman by default; Docker also works). T
 ## Quick start
 
 ```bash
-make image       # Build the build-host container image (~5 min first time)
-make build       # Run the full bitbake build non-interactively
-make shell       # Open an interactive bash shell in the build environment
-make kas-shell   # Enter a kas shell with the active kas config loaded
-make status      # Show bitbake progress from running build containers
-make clean       # Remove the container image and all caches
+make build-image  # Build the build-host container image (~5 min first time)
+make build        # Run the full bitbake build non-interactively
+make shell        # Open an interactive bash shell in the build environment
+make kas-shell    # Enter a kas shell with the active kas config loaded
+make status       # Show bitbake progress from running build containers
+make clean        # Remove the container image and all caches
 ```
 
 The default variant is `reterminal-hifi`. To build a specific variant:
@@ -29,13 +29,13 @@ Variant configs live in `kas/variant-<name>.yaml`. The Makefile discovers all va
 
 ## What `make image` builds
 
-`build/Dockerfile` produces an Ubuntu 22.04 aarch64 container with:
+`make build-image` produces an Ubuntu 22.04 aarch64 container with:
 
 - Full Yocto scarthgap host dependencies (gcc, git, python3, etc.)
 - [kas 5.2](https://kas.readthedocs.io/) — Yocto build orchestrator
 - A non-root `builder` user whose UID/GID match the host user (avoids file ownership issues with bind mounts)
 
-The image is tagged `appliance-builder:latest`. Override the container engine with `make CONTAINER_ENGINE=docker image`.
+The image is tagged `appliance-builder:latest`. Override the container engine with `make CONTAINER_ENGINE=docker build-image`.
 
 ## Bind mounts
 
@@ -98,6 +98,26 @@ cat $W/build/tmp/deploy/images/seeed-reterminal/core-image-minimal-seeed-retermi
 cat $W/build/tmp/work/seeed_reterminal-poky-linux/seeed-linux-dtoverlays/1.0/temp/log.do_compile
 ```
 
+## Building app container images
+
+Apps run inside OCI containers on the device. Container images are built on the host using Podman (or Docker) and saved as tarballs for loading onto the device.
+
+Each subdirectory under `containers/` with a `Dockerfile` becomes a buildable image. Tags default to `appliance-<name>:latest`; set `CONTAINER_REGISTRY` to prepend a registry prefix (e.g., `make CONTAINER_REGISTRY=ghcr.io/myorg build-containers`).
+
+```bash
+make build-containers             # Build all app container images (arm64)
+make build-container-feishin      # Build a single app container image
+make save-containers              # Save all as OCI tarballs in artifacts/
+make save-container-feishin       # Save a single container as tarball
+```
+
+To load a container image onto the device:
+
+```bash
+scp artifacts/appliance-feishin-latest.tar root@reterminal-hifi:/tmp/
+ssh root@reterminal-hifi podman load -i /tmp/appliance-feishin-latest.tar
+```
+
 ## Cache management
 
 All caches live under `.cache/` in the repo root (gitignored):
@@ -123,7 +143,7 @@ rm -rf .cache
 Pseudo's fakeroot database can go stale with long-lived TMPDIR volumes, particularly on Podman/macOS. If `do_rootfs` fails with `path mismatch` or `inode mismatch` errors, reset the build state:
 
 ```bash
-make clean-build
+make clean-cache
 make build
 ```
 

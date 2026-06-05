@@ -1,8 +1,9 @@
-# Optional kas include for development tools and container engines.
-# Uncomment in the build target's header.includes to enable.
+# Optional kas include for development tools and extra container utilities.
 #
-# Adds podman and container runtime dependencies.
-# NOT part of the production image.
+# The core container runtime (podman, crun, fuse-overlayfs) is installed
+# by common.yaml for production.  This layer adds development extras
+# (podman-compose, slirp4netns, CNI plugins) and the meta-virtualization
+# repo dependency they need.
 
 header:
   version: 14

@@ -22,18 +22,20 @@ Variant configs live in `kas/variant-<name>.yaml`. Each variant defines a machin
 
 | Application | Status |
 |---|---|
-| [Feishin](https://github.com/jeffvli/feishin) — music player for Navidrome/Jellyfin | Planned |
+| [Feishin](https://github.com/jeffvli/feishin) — music player for Navidrome/Jellyfin | In progress |
 
 ## Quickstart
 
 Builds run inside a container. See [docs/dependencies.md](docs/dependencies.md) for host prerequisites and [docs/building.md](docs/building.md) for the full build workflow, cache layout, and troubleshooting.
 
 ```bash
-make image                        # Build the build-host container image (~5 min first time)
+make build-image                  # Build the OCI builder container image (~5 min first time)
 make check                        # Parse-validate all layers and configs (no build)
-make build                        # Build the default variant (reterminal-hifi)
+make build                        # Full build: parse-check, firmware image, RAUC update bundle
 make VARIANT=reterminal-hifi build  # Build a specific variant
 make build-all                    # Build all variants
+make build-containers             # Build all app container images (arm64)
+make save-containers              # Save container images as OCI tarballs in artifacts/
 make shell                        # Open an interactive shell in the build environment
 make kas-shell                    # Drop into kas shell with the project config loaded
 make status                       # Show bitbake progress from running build containers

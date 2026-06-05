@@ -14,10 +14,11 @@ Pinned versions of all upstream Yocto layers used by the project. All commits ar
 | **meta-raspberrypi** | scarthgap | `2c646d29912dcc87…` | 2025-12-19 | git.yoctoproject.org |
 | **meta-seeed-cm4** | main | `a2f9438ee3d2e16b…` | 2025-11-20 | Seeed-Studio/meta-seeed-cm4 |
 | **meta-rauc-community** | scarthgap | `222c61275054974c…` | 2025-11-04 | rauc/meta-rauc-community |
+| **meta-virtualization** | scarthgap | `89da4f56b4c51005…` | — | git.yoctoproject.org |
 | **meta-lts-mixins** (rust) | scarthgap/rust | `c19b6da5a3afd3c8…` | — | git.yoctoproject.org |
 | **meta-lts-mixins** (u-boot) | scarthgap/u-boot | `a44882db02a0ed0f…` | — | git.yoctoproject.org |
 
-Full commit hashes are in `kas/common.yaml` and `kas/variant-reterminal-hifi.yaml`.
+Full commit hashes are in `kas/common.yaml`, `kas/devtools.yaml`, and `kas/variant-reterminal-hifi.yaml`.
 
 ## Yocto release constraint
 
