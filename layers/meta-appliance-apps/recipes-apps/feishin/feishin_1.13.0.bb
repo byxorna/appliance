@@ -31,6 +31,12 @@ INSANE_SKIP:${PN} = " \
     textrel \
 "
 
+# Prevent RPM from auto-generating Requires: entries for the bundled
+# shared libs.  Without this, dnf fails at do_rootfs because the host
+# distro doesn't ship libgtk-3, libX11, etc. (the AppImage carries its
+# own copies).
+SKIP_FILEDEPS:${PN} = "1"
+
 # Don't try to split debug symbols or strip the bundled binaries — they
 # ship pre-stripped and the debugger won't have sources anyway.
 INHIBIT_PACKAGE_STRIP = "1"
