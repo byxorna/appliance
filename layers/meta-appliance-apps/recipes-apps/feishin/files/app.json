@@ -2,7 +2,7 @@
   "name": "feishin",
   "display_name": "Feishin",
   "vt": 2,
-  "image": "ghcr.io/byxorna/appliance-feishin:latest",
+  "image": "appliance-feishin:latest",
   "mounts": [
     "/data/apps/feishin/config:/home/kiosk/.config/feishin"
   ]

@@ -1,13 +1,21 @@
 # Appliance OS 5-partition A/B layout for eMMC (mmcblk0)
 #
-# p1  /boot  vfat  128M   RPi firmware + U-Boot + config.txt + boot.scr + DTBs
-# p2  /      ext4  auto   rootfs slot A (read-only)
-# p3  /      ext4  auto   rootfs slot B (read-only, same size as A)
-# p4  /data  ext4  1G     persistent platform + app data
-# p5  /home  ext4  500M   user home dirs (growfs to fill remaining eMMC)
+# WKS entries 4 and 5 are logical partitions inside an MBR extended
+# container (p4), so they appear as mmcblk0p5 and mmcblk0p6.
+#
+# p1  mmcblk0p1  /boot  vfat  128M   RPi firmware + U-Boot + config.txt + DTBs
+# p2  mmcblk0p2  /      ext4  auto   rootfs slot A (read-only)
+# p3  mmcblk0p3  /      ext4  auto   rootfs slot B (read-only, same size as A)
+#     mmcblk0p4  —      —     —      MBR extended container
+# p4  mmcblk0p5  /home  ext4  1G     user home dirs
+# p5  mmcblk0p6  /data  ext4  4G+    persistent data (growfs to fill eMMC)
+#
+# /data holds container images, app state, and platform config — it needs the
+# bulk of the eMMC.  On a 32 GB device this gives ~30 GB to /data after the
+# boot + dual rootfs partitions.
 
 part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4096 --size 128
 part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label rootfs_A --align 4096
 part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label rootfs_B --align 4096
-part /data --fixed-size 1024M --ondisk mmcblk0 --fstype=ext4 --label data --align 4096
-part /home --source rootfs --rootfs-dir=${IMAGE_ROOTFS}/home --ondisk mmcblk0 --fstype=ext4 --label homefs --align 4096 --size 500 --fsoptions "x-systemd.growfs"
+part /home --source rootfs --rootfs-dir=${IMAGE_ROOTFS}/home --ondisk mmcblk0 --fstype=ext4 --label homefs --align 4096 --fixed-size 1024M
+part /data --ondisk mmcblk0 --fstype=ext4 --label data --align 4096 --size 4096 --fsoptions "x-systemd.growfs"

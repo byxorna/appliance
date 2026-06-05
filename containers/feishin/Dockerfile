@@ -4,7 +4,7 @@
 # Audio via PipeWire socket passthrough. MPRIS via D-Bus passthrough.
 #
 # Build (arm64):
-#   podman build --platform linux/arm64 -t ghcr.io/byxorna/appliance-feishin:latest .
+#   podman build --platform linux/arm64 -t appliance-feishin:latest .
 #
 # The container expects these host-side bind mounts (provided by the
 # appliance-app systemd service unit):

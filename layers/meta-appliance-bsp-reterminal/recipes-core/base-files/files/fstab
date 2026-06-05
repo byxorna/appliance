@@ -1,4 +1,4 @@
-# fstab for reTerminal (5-partition A/B layout: boot + rootfsA + rootfsB + data + home)
+# fstab for reTerminal (5-partition A/B layout: boot + rootfsA + rootfsB + home + data)
 
 /dev/root            /                    auto       ro                    1  1
 proc                 /proc                proc       defaults              0  0
@@ -7,5 +7,5 @@ tmpfs                /run                 tmpfs      mode=0755,nodev,nosuid,stri
 tmpfs                /var/volatile        tmpfs      defaults              0  0
 
 /dev/mmcblk0p1       /boot                vfat       defaults,nofail       0  0
-/dev/mmcblk0p5       /data                ext4       defaults,nofail       0  0
-/dev/mmcblk0p6       /home                ext4       x-systemd.growfs      0  0
+/dev/mmcblk0p5       /home                ext4       defaults,nofail       0  0
+/dev/mmcblk0p6       /data                ext4       x-systemd.growfs      0  0

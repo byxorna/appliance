@@ -13,18 +13,20 @@ All fixes live in `layers/meta-appliance-bsp-reterminal/`.
 
 **Context:** The image uses a 5-partition MBR layout for RAUC A/B
 updates: p1=boot (FAT), p2=rootfs_A (ext4), p3=rootfs_B (ext4),
-p5=/data (ext4), p6=/home (ext4). Partitions 4+ are logical partitions
+p5=/home (ext4), p6=/data (ext4). Partitions 4+ are logical partitions
 inside an MBR extended container, so the 4th and 5th WKS entries map to
 `mmcblk0p5` and `mmcblk0p6`.
 
 **Why a custom fstab:** `meta-rauc-raspberrypi` (priority 6) ships an
 fstab via `base-files` bbappend with partition sizing appropriate for its
 reference image. Our BSP layer (priority 10) overrides the fstab to
-match our WKS layout: larger boot partition (128M vs 100M), larger data
-partition (1G vs 100M), and read-only rootfs mount. The `/home` mount
-uses `x-systemd.growfs` so the filesystem expands to fill remaining
-eMMC space at first boot (after `rauc-grow-data-part` resizes the
-extended container and partition 6).
+match our WKS layout: larger boot partition (128M vs 100M), and
+read-only rootfs mount. The `/data` mount uses `x-systemd.growfs` so the
+filesystem expands to fill remaining eMMC space at first boot (after
+`rauc-grow-data-part` resizes the extended container and partition 6).
+`/data` is the last partition and holds container images, app state, and
+platform config — it needs the bulk of the eMMC (~30 GB on a 32 GB
+device).
 
 **Files:**
 - `recipes-core/base-files/base-files_%.bbappend`

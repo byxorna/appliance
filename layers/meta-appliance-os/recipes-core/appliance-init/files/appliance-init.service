@@ -11,6 +11,7 @@ RemainAfterExit=yes
 # Platform-level persistent directories
 ExecStart=/bin/mkdir -p /data/platform
 ExecStart=/bin/mkdir -p /data/platform/containers
+ExecStart=/bin/mkdir -p /data/platform/containers/tmp
 ExecStart=/bin/mkdir -p /data/apps
 
 [Install]

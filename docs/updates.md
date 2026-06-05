@@ -136,7 +136,7 @@ The 5-partition eMMC layout used by the A/B update system:
 | 2 | mmcblk0p2 | `/` | ext4 | auto | Rootfs slot A (read-only) |
 | 3 | mmcblk0p3 | `/` | ext4 | auto | Rootfs slot B (read-only) |
 | 4 | mmcblk0p4 | — | — | — | MBR extended container |
-| 5 | mmcblk0p5 | `/data` | ext4 | 1G | Persistent platform and app data |
-| 6 | mmcblk0p6 | `/home` | ext4 | 500M+ | User home dirs (grows to fill eMMC) |
+| 5 | mmcblk0p5 | `/home` | ext4 | 1G | User home dirs |
+| 6 | mmcblk0p6 | `/data` | ext4 | 4G+ | Persistent platform and app data (grows to fill eMMC) |
 
 Slots A and B are identically sized. Only the inactive slot is written during an update — the running system is never modified. `/data` and `/home` survive updates.

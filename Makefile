@@ -49,6 +49,42 @@ COMMON_RUN_FLAGS := \
 	-e APPLIANCE_BUG_REPORT_URL="$(APPLIANCE_BUG_REPORT_URL)" \
 	$(IMAGE_NAME)
 
+# --- App container images ---------------------------------------------------
+# Each subdirectory under containers/ with a Dockerfile becomes a buildable
+# app image.  Tag is appliance-<name>:latest by default.  Set
+# CONTAINER_REGISTRY to push to a remote registry, e.g.
+#   make CONTAINER_REGISTRY=ghcr.io/myorg build-containers
+CONTAINER_REGISTRY ?=
+CONTAINER_PLATFORM ?= linux/arm64
+CONTAINER_DIRS := $(wildcard containers/*/Dockerfile)
+CONTAINER_NAMES := $(patsubst containers/%/Dockerfile,%,$(CONTAINER_DIRS))
+_registry_prefix = $(if $(CONTAINER_REGISTRY),$(CONTAINER_REGISTRY)/,)
+CONTAINER_TAGS := $(foreach n,$(CONTAINER_NAMES),$(_registry_prefix)appliance-$(n):latest)
+
+.PHONY: build-containers save-containers $(addprefix build-container-,$(CONTAINER_NAMES))
+
+build-containers: $(addprefix build-container-,$(CONTAINER_NAMES)) ## Build all app container images
+save-containers: $(addprefix save-container-,$(CONTAINER_NAMES)) ## Save all app container images as tarballs
+
+define CONTAINER_RULES
+build-container-$(1): $(EMPTY_AUTH) ## Build container image for $(1)
+	$(CONTAINER_ENGINE) build \
+		--authfile "$$(EMPTY_AUTH)" \
+		--platform $$(CONTAINER_PLATFORM) \
+		-t $$(_registry_prefix)appliance-$(1):latest \
+		containers/$(1)/
+
+save-container-$(1): build-container-$(1) ## Save $(1) container image as tarball
+	@mkdir -p "$$(ARTIFACTS_DIR)"
+	$$(CONTAINER_ENGINE) save \
+		--format oci-archive \
+		$$(_registry_prefix)appliance-$(1):latest \
+		-o $$(ARTIFACTS_DIR)/appliance-$(1)-latest.tar
+	@echo "$$(ARTIFACTS_DIR)/appliance-$(1)-latest.tar"
+endef
+
+$(foreach n,$(CONTAINER_NAMES),$(eval $(call CONTAINER_RULES,$(n))))
+
 .PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache rpiboot _build-info
 
 # Known artifact extensions produced by build and build-update targets.
