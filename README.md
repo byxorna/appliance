@@ -1,6 +1,6 @@
 # Appliance OS
 
-A minimal, single-purpose Linux distribution for dedicated hardware appliances. Boots into a fullscreen application shell hosting pluggable web applications. Built with [Yocto](https://www.yoctoproject.org/) scarthgap (5.0 LTS).
+A minimal, single-purpose Linux distribution for dedicated hardware appliances. Boots into a fullscreen application shell hosting desktop applications run in containers. Built with [Yocto](https://www.yoctoproject.org/) scarthgap (5.0 LTS).
 
 ## Design principles
 
@@ -19,6 +19,8 @@ Hardware support is separated from the OS and application layers. Adding a new d
 Variant configs live in `kas/variant-<name>.yaml`. Each variant defines a machine, BSP repos, and hardware-specific packages on top of the shared `kas/common.yaml`.
 
 ## Applications
+
+Applications are modular, containerized, and customizable.
 
 | Application | Status |
 |---|---|

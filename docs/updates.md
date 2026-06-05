@@ -140,3 +140,8 @@ The 5-partition eMMC layout used by the A/B update system:
 | 6 | mmcblk0p6 | `/data` | ext4 | 4G+ | Persistent platform and app data (grows to fill eMMC) |
 
 Slots A and B are identically sized. Only the inactive slot is written during an update — the running system is never modified. `/data` and `/home` survive updates.
+
+> [!WARNING]
+> **RAUC updates cannot change the partition layout.** RAUC writes to the rootfs slots only — it does not touch the partition table, `/boot`, `/home`, or `/data`. If you modify the partition scheme (e.g. resizing slots, adding or removing partitions, changing filesystem types), the only way to apply those changes is a full eMMC re-flash. See [flashing.md](flashing.md) for instructions.
+>
+> If you are forking this project and rolling your own partition table: here be dragons. A mismatch between the on-disk partition layout and what the firmware expects (fstab, RAUC system.conf, U-Boot env) will brick the device until it is re-flashed.
