@@ -6,6 +6,12 @@ set -e
 
 FEISHIN_DIR=/opt/feishin
 
+# The extracted AppImage bundles its own copies of GTK3, X11 client libs,
+# and other shared libraries alongside the main binary.  Point the linker
+# at the install directory so Electron finds them without requiring the
+# host distro to ship X11 or GTK3 packages.
+export LD_LIBRARY_PATH="$FEISHIN_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
 # Electron/Chromium Wayland flags
 ELECTRON_FLAGS="--ozone-platform=wayland --enable-features=UseOzonePlatform"
 

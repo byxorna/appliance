@@ -26,3 +26,4 @@ dhcpcd:x:905:
 pipewire:x:906:
 avahi:x:907:
 avahi-autoipd:x:908:
+lpadmin:x:909:

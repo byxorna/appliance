@@ -349,9 +349,13 @@ or a now-playing daemon in a future phase.
 - [x] Write `feishin_1.13.0.bb` recipe: download arm64 AppImage from upstream GitHub release, extract via `unsquashfs` (cross-arch safe), install to `/opt/feishin/`
 - [x] Pin upstream version + SHA256 checksum (v1.13.0, sha256 `3cacc03e...`)
 - [x] Write wrapper script with Wayland flags (`--ozone-platform=wayland`, `--enable-features=UseOzonePlatform`, `--no-sandbox`, `--disable-gpu`)
+- [x] Set `LD_LIBRARY_PATH=$FEISHIN_DIR` in wrapper so Electron finds bundled GTK3/X11 client libs without requiring `x11` DISTRO_FEATURE
 - [x] Write `app.json` manifest: `name: feishin`, `vt: 2`, `exec: /opt/feishin/feishin-wrapper`
 - [x] Configure persistent config: bind-mount `/data/apps/feishin/` → `~/.config/feishin/` via systemd `.mount` unit + tmpfiles.d
 - [x] Wire into build: `IMAGE_INSTALL` in `common.yaml`, `LAYERDEPENDS` on `meta-appliance-os`
+- [x] Runtime deps: `cups-lib`, `expat` added to RDEPENDS; system libs (glib, nss, dbus, cairo, pango, mesa, etc.) via RDEPENDS; bundled libs (GTK3, X11 client) via `LD_LIBRARY_PATH`
+- [x] Fix `SYSTEMD_SERVICE` parse-time assignment in `appliance-app.bbclass` (was set too late in `populate_packages:prepend`; moved to anonymous python function)
+- [x] BBMASK three broken meta-seeed-cm4 recipes (`reterminalqt5example_git.bb`, `atecc-util.bb`, `python3-seeed-python-reterminal.bb`)
 - [ ] Test: Feishin launches on VT 2, connects to Navidrome/Jellyfin, plays audio
 - [ ] Test: F1 pauses/resumes, F2/F3 skip tracks (via MPRIS)
 - [ ] Test: config survives simulated A/B update (write config, update rootfs, verify config intact)

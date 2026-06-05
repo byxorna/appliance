@@ -59,6 +59,7 @@ do_install() {
     fi
 
     dd if="$appimage" of="${WORKDIR}/feishin.squashfs" bs=1 skip="$offset"
+    rm -rf ${WORKDIR}/squashfs-root
     unsquashfs -d ${WORKDIR}/squashfs-root ${WORKDIR}/feishin.squashfs
 
     # Install the extracted tree to /opt/feishin/
@@ -102,6 +103,8 @@ RDEPENDS:${PN} += " \
     gdk-pixbuf \
     glib-2.0 \
     dbus \
+    cups-lib \
+    expat \
 "
 
 SYSTEMD_SERVICE:${PN}:append = " home-kiosk-.config-feishin.mount"
