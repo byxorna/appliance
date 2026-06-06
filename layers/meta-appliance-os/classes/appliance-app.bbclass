@@ -39,6 +39,12 @@ inherit systemd
 APPLIANCE_APP_USER ?= "kiosk"
 APPLIANCE_APP_UID  ?= "810"
 
+# The Weston compositor user owns the Wayland socket, PipeWire socket,
+# and D-Bus session bus under /run/user/<compositor_uid>/.  The container
+# maps these host-side paths into the app user's runtime dir inside the
+# container so the app process (running as APPLIANCE_APP_UID) can connect.
+APPLIANCE_COMPOSITOR_UID ?= "800"
+
 python () {
     import json, os
 
@@ -89,15 +95,20 @@ python () {
     d.setVar('FILES:%s' % pn, files)
 }
 
-# Shell helper: generate the full podman run command from app.json.
-# Outputs one argument per line for use in a systemd unit ExecStart.
-# Usage: appliance_app_podman_cmd <app.json> <uid>
+# Shell helper: generate the podman run command and mount-source list from
+# app.json.  Outputs two sections separated by a "---" line:
+#   Section 1: host-side mount sources under /data/ that must be pre-created
+#              (one path per line, may be empty)
+#   Section 2: the podman run command (backslash-continued)
+#
+# Usage: appliance_app_podman_cmd <app.json> <app_uid> <compositor_uid>
 appliance_app_podman_cmd() {
-    python3 - "$1" "$2" <<'PYEOF'
+    python3 - "$1" "$2" "$3" <<'PYEOF'
 import json, sys
 
 manifest_path = sys.argv[1]
 uid = sys.argv[2]
+compositor_uid = sys.argv[3]
 
 with open(manifest_path) as f:
     app = json.load(f)
@@ -119,18 +130,21 @@ devices = app.get('devices', ['/dev/dri'])
 for dev in devices:
     args += ['--device', dev]
 
-# Wayland socket
-args += ['-v', '/run/user/%s/wayland-%s:/run/user/%s/wayland-%s' % (uid, vt, uid, vt)]
+# Wayland socket — host path is under the compositor user (UID compositor_uid),
+# mapped into the container at the app user's XDG_RUNTIME_DIR (UID uid).
+args += ['-v', '/run/user/%s/wayland-%s:/run/user/%s/wayland-%s' % (compositor_uid, vt, uid, vt)]
 args += ['-e', 'WAYLAND_DISPLAY=wayland-%s' % vt]
 args += ['-e', 'XDG_RUNTIME_DIR=/run/user/%s' % uid]
 args += ['-e', 'GDK_BACKEND=wayland']
 
-# PipeWire audio
-args += ['-v', '/run/user/%s/pipewire-0:/run/user/%s/pipewire-0' % (uid, uid)]
+# PipeWire audio — runs in the compositor's user session.
+# ExecStartPre touches a placeholder if the socket is missing so podman
+# doesn't refuse to start; the app simply gets no audio until PipeWire runs.
+args += ['-v', '/run/user/%s/pipewire-0:/run/user/%s/pipewire-0' % (compositor_uid, uid)]
 
-# D-Bus (system + session)
+# D-Bus — system bus is global; session bus is from the compositor's session
 args += ['-v', '/run/dbus/system_bus_socket:/run/dbus/system_bus_socket']
-args += ['-v', '/run/user/%s/bus:/run/user/%s/bus' % (uid, uid)]
+args += ['-v', '/run/user/%s/bus:/run/user/%s/bus' % (compositor_uid, uid)]
 args += ['-e', 'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%s/bus' % uid]
 
 # Persistent app data
@@ -151,8 +165,21 @@ for arg in app.get('podman_args', []):
 # Image reference
 args.append(image)
 
-# Output as a single space-joined command line.
-# Use backslash-newline continuation for readability in the unit file.
+# --- Section 1: mount sources to pre-create ---
+# Collect host paths under /data/ from standard and extra mounts that the
+# service's ExecStartPre should mkdir before podman runs.
+precreate = ['/data/apps/%s' % name]
+for mnt in app.get('mounts', []):
+    src = mnt.split(':')[0]
+    if src.startswith('/data/'):
+        precreate.append(src)
+
+for p in precreate:
+    print(p)
+
+print('---')
+
+# --- Section 2: podman command ---
 print(' \\\n    '.join(args))
 PYEOF
 }
@@ -173,6 +200,7 @@ do_install:append() {
     fi
 
     local uid="${APPLIANCE_APP_UID}"
+    local compositor_uid="${APPLIANCE_COMPOSITOR_UID}"
     local container_name="appliance-app-${app_name}"
 
     # --- Install the manifest -------------------------------------------------
@@ -180,14 +208,27 @@ do_install:append() {
     install -m 0644 "$manifest" ${D}/opt/${app_name}/app.json
 
     # --- Build the podman run command line ------------------------------------
-    local podman_cmd
-    podman_cmd=$(appliance_app_podman_cmd "$manifest" "$uid")
+    local raw_output
+    raw_output=$(appliance_app_podman_cmd "$manifest" "$uid" "$compositor_uid")
+
+    local mount_section=$(echo "$raw_output" | sed '/^---$/,$d')
+    local podman_cmd=$(echo "$raw_output" | sed '1,/^---$/d')
+
+    # Build ExecStartPre lines to create mount-source directories
+    local precmds=""
+    if [ -n "$mount_section" ]; then
+        echo "$mount_section" | while IFS= read -r mp; do
+            [ -n "$mp" ] || continue
+            precmds="${precmds}ExecStartPre=/bin/sh -c 'mkdir -p ${mp} && chown ${uid}:${uid} ${mp}'
+"
+        done
+    fi
 
     # --- Generate the systemd service unit ------------------------------------
     local svc="appliance-app-${app_name}.service"
     install -d ${D}${systemd_system_unitdir}
 
-    cat > ${D}${systemd_system_unitdir}/${svc} <<EOF
+    cat > ${D}${systemd_system_unitdir}/${svc} <<SVCEOF
 [Unit]
 Description=${app_display} (appliance app on VT ${app_vt})
 Documentation=file:///opt/${app_name}/app.json
@@ -197,6 +238,10 @@ After=weston@${app_vt}.service
 
 [Service]
 Type=simple
+
+$(echo "$mount_section" | while IFS= read -r mp; do [ -n "$mp" ] && echo "ExecStartPre=/bin/sh -c 'mkdir -p ${mp} && chown ${uid}:${uid} ${mp}'"; done)
+ExecStartPre=-/bin/sh -c '[ -e /run/user/${compositor_uid}/pipewire-0 ] || touch /run/user/${compositor_uid}/pipewire-0'
+
 ExecStart=${podman_cmd}
 ExecStop=/usr/bin/podman stop -t 10 ${container_name}
 
@@ -205,7 +250,7 @@ RestartSec=3s
 
 [Install]
 WantedBy=graphical.target
-EOF
+SVCEOF
 
     # --- Ensure the Weston VT instance is also enabled ------------------------
     install -d ${D}${systemd_system_unitdir}/graphical.target.wants
