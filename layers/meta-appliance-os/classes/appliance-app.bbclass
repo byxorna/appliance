@@ -146,6 +146,13 @@ args += ['-e', 'WAYLAND_DISPLAY=wayland-%s' % vt]
 args += ['-e', 'XDG_RUNTIME_DIR=/run/user/%s' % uid]
 args += ['-e', 'GDK_BACKEND=wayland']
 
+# Writable home directory for the container user.  A tmpfs avoids baking a
+# host-specific UID into the container image.  Electron needs $HOME/.config
+# for userData and Mesa needs $HOME/.cache for shader cache.  Persistent
+# app config is bind-mounted over the tmpfs from /data/apps/<name>/.
+args += ['--tmpfs', '/home/kiosk:uid=%s,gid=%s' % (uid, uid)]
+args += ['-e', 'HOME=/home/kiosk']
+
 # PipeWire audio — runs in the compositor's user session.
 # ExecStartPre touches a placeholder if the socket is missing so podman
 # doesn't refuse to start; the app simply gets no audio until PipeWire runs.
