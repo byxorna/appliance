@@ -121,9 +121,11 @@ container_name = 'appliance-app-%s' % name
 args = ['/usr/bin/podman', 'run']
 args += ['--name', container_name]
 args += ['--replace', '--rm']
+args += ['--pull', 'missing']
 args += ['--network', 'host']
 args += ['--userns', 'keep-id:uid=%s,gid=%s' % (uid, uid)]
 args += ['--security-opt', 'label=disable']
+args += ['--cgroupns', 'host']
 
 # GPU devices (default: /dev/dri)
 devices = app.get('devices', ['/dev/dri'])
