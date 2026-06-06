@@ -125,7 +125,14 @@ args += ['--pull', 'missing']
 args += ['--network', 'host']
 args += ['--userns', 'keep-id:uid=%s,gid=%s' % (uid, uid)]
 args += ['--security-opt', 'label=disable']
-args += ['--cgroupns', 'host']
+
+# Work around podman bug: with rootful --userns keep-id + --network host,
+# podman omits IsKeepID() from its isNewUserns check, causing it to generate
+# a fresh sysfs mount instead of a bind mount. The kernel denies the fresh
+# mount because the container's user namespace doesn't own the host network
+# namespace. Explicitly bind-mounting /sys bypasses the broken OCI spec.
+# Upstream: https://github.com/containers/podman/issues/21680
+args += ['-v', '/sys:/sys:ro']
 
 # GPU devices (default: /dev/dri)
 devices = app.get('devices', ['/dev/dri'])
@@ -236,12 +243,10 @@ Description=${app_display} (appliance app on VT ${app_vt})
 Documentation=file:///opt/${app_name}/app.json
 
 Requires=weston@${app_vt}.service
-Wants=systemd-tmpfiles-setup.service
 After=weston@${app_vt}.service systemd-tmpfiles-setup.service
 
 [Service]
 Type=simple
-Delegate=yes
 
 $(echo "$mount_section" | while IFS= read -r mp; do [ -n "$mp" ] && echo "ExecStartPre=/bin/sh -c 'mkdir -p ${mp} && chown ${uid}:${uid} ${mp}'"; done)
 ExecStartPre=-/bin/sh -c '[ -e /run/user/${compositor_uid}/pipewire-0 ] || touch /run/user/${compositor_uid}/pipewire-0'
