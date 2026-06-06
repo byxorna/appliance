@@ -236,6 +236,7 @@ Description=${app_display} (appliance app on VT ${app_vt})
 Documentation=file:///opt/${app_name}/app.json
 
 Requires=weston@${app_vt}.service
+Wants=systemd-tmpfiles-setup.service
 After=weston@${app_vt}.service systemd-tmpfiles-setup.service
 
 [Service]

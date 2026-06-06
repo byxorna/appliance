@@ -1,14 +1,17 @@
 # Bind-mount persistent Feishin config from /data into the kiosk user's
 # home directory so configuration survives rootfs A/B updates.
 #
-# /data/apps/feishin/ is created by the tmpfiles.d rule from
-# appliance-app.bbclass.  The mount point /home/kiosk/.config/feishin/
-# is created by feishin-config.conf tmpfiles.d.
+# /data/apps/feishin/ is created by ExecStartPre in the app service.
+# The mount point /home/kiosk/.config/feishin/ must exist on the rootfs.
+#
+# DefaultDependencies=no prevents the implicit Before=local-fs.target
+# that would create a dependency cycle with systemd-tmpfiles-setup.
 
 [Unit]
 Description=Bind-mount Feishin persistent config
 RequiresMountsFor=/data
-After=appliance-init.service systemd-tmpfiles-setup.service
+DefaultDependencies=no
+After=appliance-init.service data.mount
 Before=appliance-app-feishin.service
 
 [Mount]
@@ -18,4 +21,4 @@ Type=none
 Options=bind
 
 [Install]
-WantedBy=local-fs.target
+WantedBy=appliance-app-feishin.service
