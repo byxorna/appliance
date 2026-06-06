@@ -236,10 +236,11 @@ Description=${app_display} (appliance app on VT ${app_vt})
 Documentation=file:///opt/${app_name}/app.json
 
 Requires=weston@${app_vt}.service
-After=weston@${app_vt}.service
+After=weston@${app_vt}.service systemd-tmpfiles-setup.service
 
 [Service]
 Type=simple
+Delegate=yes
 
 $(echo "$mount_section" | while IFS= read -r mp; do [ -n "$mp" ] && echo "ExecStartPre=/bin/sh -c 'mkdir -p ${mp} && chown ${uid}:${uid} ${mp}'"; done)
 ExecStartPre=-/bin/sh -c '[ -e /run/user/${compositor_uid}/pipewire-0 ] || touch /run/user/${compositor_uid}/pipewire-0'
