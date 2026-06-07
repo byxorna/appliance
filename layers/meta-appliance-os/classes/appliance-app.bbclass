@@ -45,6 +45,12 @@ APPLIANCE_APP_UID  ?= "810"
 # container so the app process (running as APPLIANCE_APP_UID) can connect.
 APPLIANCE_COMPOSITOR_UID ?= "800"
 
+# Supplementary groups the container process needs.  --group-add keep-groups
+# does not work with rootful podman + --userns keep-id, so groups must be
+# added explicitly by GID.  Defaults cover the wayland compositor socket,
+# audio devices, and video/GPU devices.
+APPLIANCE_APP_GROUPS ?= "801 29 44"
+
 python () {
     import json, os
 
@@ -101,14 +107,15 @@ python () {
 #              (one path per line, may be empty)
 #   Section 2: the podman run command (backslash-continued)
 #
-# Usage: appliance_app_podman_cmd <app.json> <app_uid> <compositor_uid>
+# Usage: appliance_app_podman_cmd <app.json> <app_uid> <compositor_uid> <groups>
 appliance_app_podman_cmd() {
-    python3 - "$1" "$2" "$3" <<'PYEOF'
+    python3 - "$1" "$2" "$3" "$4" <<'PYEOF'
 import json, sys
 
 manifest_path = sys.argv[1]
 uid = sys.argv[2]
 compositor_uid = sys.argv[3]
+supplementary_groups = sys.argv[4].split()
 
 with open(manifest_path) as f:
     app = json.load(f)
@@ -124,6 +131,8 @@ args += ['--replace', '--rm']
 args += ['--pull', 'missing']
 args += ['--network', 'host']
 args += ['--userns', 'keep-id:uid=%s,gid=%s' % (uid, uid)]
+for gid in supplementary_groups:
+    args += ['--group-add', gid]
 args += ['--security-opt', 'label=disable']
 
 # Work around podman bug: with rootful --userns keep-id + --network host,
@@ -141,6 +150,10 @@ for dev in devices:
 
 # Wayland socket — host path is under the compositor user (UID compositor_uid),
 # mapped into the container at the app user's XDG_RUNTIME_DIR (UID uid).
+# Bind-mount the host's /run/user/<uid> (created by kiosk-runtime.conf tmpfiles)
+# so the container has a writable, correctly-owned XDG_RUNTIME_DIR.  Individual
+# compositor sockets are bind-mounted on top afterwards.
+args += ['-v', '/run/user/%s:/run/user/%s' % (uid, uid)]
 args += ['-v', '/run/user/%s/wayland-%s:/run/user/%s/wayland-%s' % (compositor_uid, vt, uid, vt)]
 args += ['-e', 'WAYLAND_DISPLAY=wayland-%s' % vt]
 args += ['-e', 'XDG_RUNTIME_DIR=/run/user/%s' % uid]
@@ -150,7 +163,7 @@ args += ['-e', 'GDK_BACKEND=wayland']
 # host-specific UID into the container image.  Electron needs $HOME/.config
 # for userData and Mesa needs $HOME/.cache for shader cache.  Persistent
 # app config is bind-mounted over the tmpfs from /data/apps/<name>/.
-args += ['--tmpfs', '/home/kiosk:uid=%s,gid=%s' % (uid, uid)]
+args += ['--mount', 'type=tmpfs,dst=/home/kiosk,U=true']
 args += ['-e', 'HOME=/home/kiosk']
 
 # PipeWire audio — runs in the compositor's user session.
@@ -225,7 +238,7 @@ do_install:append() {
 
     # --- Build the podman run command line ------------------------------------
     local raw_output
-    raw_output=$(appliance_app_podman_cmd "$manifest" "$uid" "$compositor_uid")
+    raw_output=$(appliance_app_podman_cmd "$manifest" "$uid" "$compositor_uid" "${APPLIANCE_APP_GROUPS}")
 
     local mount_section=$(echo "$raw_output" | sed '/^---$/,$d')
     local podman_cmd=$(echo "$raw_output" | sed '1,/^---$/d')
