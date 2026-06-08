@@ -76,6 +76,9 @@ repos:
   meta-appliance-apps:
     path: layers/meta-appliance-apps
 
+  meta-appliance-audio:
+    path: layers/meta-appliance-audio
+
 local_conf_header:
   rauc: |
     IMAGE_INSTALL:append = " rauc rauc-grow-data-part appliance-mark-good etc-overlay"
@@ -114,3 +117,7 @@ local_conf_header:
 
   docs: |
     IMAGE_INSTALL:append = " appliance-docs appliance-selfupdate"
+
+  audio: |
+    IMAGE_INSTALL:append = " pipewire wireplumber pipewire-pulse pipewire-user-services"
+

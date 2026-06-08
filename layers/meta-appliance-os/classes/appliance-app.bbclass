@@ -170,6 +170,13 @@ args += ['-e', 'HOME=/home/kiosk']
 # ExecStartPre touches a placeholder if the socket is missing so podman
 # doesn't refuse to start; the app simply gets no audio until PipeWire runs.
 args += ['-v', '/run/user/%s/pipewire-0:/run/user/%s/pipewire-0' % (compositor_uid, uid)]
+# PulseAudio compatibility socket — Electron/Chromium prefers the PulseAudio
+# backend.  Bind-mount the pipewire-pulse native socket file (not the parent
+# directory) and point PULSE_SERVER at it directly.  libpulse otherwise runs a
+# "secure directory" ownership check on $XDG_RUNTIME_DIR/pulse that fails for
+# the cross-UID bind mount; PULSE_SERVER bypasses that lookup entirely.
+args += ['-v', '/run/user/%s/pulse/native:/run/user/%s/pulse/native' % (compositor_uid, uid)]
+args += ['-e', 'PULSE_SERVER=unix:/run/user/%s/pulse/native' % uid]
 
 # D-Bus — system bus is global; session bus is from the compositor's session
 args += ['-v', '/run/dbus/system_bus_socket:/run/dbus/system_bus_socket']
@@ -270,6 +277,7 @@ Type=simple
 
 $(echo "$mount_section" | while IFS= read -r mp; do [ -n "$mp" ] && echo "ExecStartPre=/bin/sh -c 'mkdir -p ${mp} && chown ${uid}:${uid} ${mp}'"; done)
 ExecStartPre=-/bin/sh -c '[ -e /run/user/${compositor_uid}/pipewire-0 ] || touch /run/user/${compositor_uid}/pipewire-0'
+ExecStartPre=-/bin/sh -c 'mkdir -p /run/user/${compositor_uid}/pulse; [ -e /run/user/${compositor_uid}/pulse/native ] || touch /run/user/${compositor_uid}/pulse/native'
 
 ExecStart=${podman_cmd}
 ExecStop=/usr/bin/podman stop -t 10 ${container_name}
