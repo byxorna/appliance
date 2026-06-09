@@ -1,0 +1,51 @@
+# kas configuration for Mycroft Mark II DevKit HiFi Appliance
+# Builds the same appliance image as the reTerminal variant but targets the
+# Mark II hardware (RPi4 + SJ201). No meta-seeed-cm4 dependency.
+
+header:
+  version: 14
+  includes:
+    - kas/common.yaml
+    - kas/debug.yaml
+    - kas/devtools.yaml
+
+machine: mycroft-mkii-rpi-devkit
+
+repos:
+  meta-raspberrypi:
+    url: "https://git.yoctoproject.org/meta-raspberrypi"
+    path: build/repos/meta-raspberrypi
+    branch: scarthgap
+    commit: 2c646d29912dcc873469a57b1c207e1549c5094d
+
+  meta-rauc-community:
+    url: "https://github.com/rauc/meta-rauc-community.git"
+    path: build/repos/meta-rauc-community
+    branch: scarthgap
+    commit: 222c61275054974cdbd09bd5faa2b7a37ddbd840
+    layers:
+      meta-rauc-raspberrypi:
+
+  meta-appliance-bsp-mycroft-mkii-rpi-devkit:
+    path: layers/meta-appliance-bsp-mycroft-mkii-rpi-devkit
+
+local_conf_header:
+  mycroft-mkii-rpi-devkit-hw: |
+    IMAGE_INSTALL:append = " \
+        linux-firmware-rpidistro-bcm43455 \
+        bluez-firmware-rpidistro-bcm4345c0-hcd \
+        pi-bluetooth \
+        bluez5 \
+    "
+    # SJ201 recipes are added as Phases 2-4 land; uncomment as they exist:
+    #   sj201-dtoverlays   (Phase 2)
+    #   sj201-init         (Phase 4)
+    #   xvf3510-firmware   (Phase 4)
+    #   mycroft-mkii-rpi-devkit-config  (Phase 4)
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
+  # Named rauc-bsp to avoid colliding with the rauc key in common.yaml
+  rauc-bsp: |
+    RPI_USE_U_BOOT = "1"
+    WKS_FILE = "appliance-dual-rootfs.wks.in"
+  identity: |
+    hostname:pn-base-files = "mycroft-mkii-rpi-devkit-hifi"
