@@ -1,0 +1,16 @@
+[Unit]
+Description=SJ201 audio init (XMOS firmware + TAS5806MD amplifier)
+# i2c-1 must exist before the amp can be addressed.
+After=sys-subsystem-i2c-devices-i2c\x2d1.device
+Wants=sys-subsystem-i2c-devices-i2c\x2d1.device
+# Bring the amp up before any audio stack starts.
+Before=sound.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/sj201-init
+
+[Install]
+WantedBy=sound.target

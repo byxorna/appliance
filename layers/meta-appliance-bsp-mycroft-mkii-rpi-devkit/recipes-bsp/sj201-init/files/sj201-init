@@ -1,0 +1,22 @@
+#!/bin/sh
+# sj201-init: bring up the SJ201 audio subsystem at boot.
+#
+# Order matters: the XMOS XVF-3510 firmware must be uploaded before the
+# TAS5806MD amp is initialized.  The firmware upload is optional — it only
+# runs if the proprietary XMOS blob and flash tool are present (see the
+# xvf3510-firmware recipe, which is LICENSE_FLAGS-gated).
+set -e
+
+XVF_FLASH=/usr/sbin/xvf3510-flash
+XVF_FIRMWARE=/usr/lib/firmware/xvf3510/app_xvf3510_int_spi_boot_v4_1_0.bin
+
+if [ -x "$XVF_FLASH" ] && [ -f "$XVF_FIRMWARE" ]; then
+    echo "sj201-init: uploading XMOS XVF-3510 firmware"
+    "$XVF_FLASH" --direct "$XVF_FIRMWARE" || \
+        echo "sj201-init: XMOS firmware upload failed (continuing)" >&2
+else
+    echo "sj201-init: XMOS firmware/tool absent, skipping DSP upload" >&2
+fi
+
+echo "sj201-init: initializing TAS5806MD amplifier"
+/usr/bin/tas5806-init

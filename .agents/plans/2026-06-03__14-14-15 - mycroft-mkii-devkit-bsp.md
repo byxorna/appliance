@@ -341,16 +341,16 @@ No `meta-seeed-cm4` dependency. The Mark II BSP is self-contained.
 - [x] Add rpi-config bbappend for config.txt (I2S, SPI, I2C, DSI, overlays) via `do_deploy:append`
 - [x] Deploy overlays to boot partition via `IMAGE_BOOT_FILES:append` + `do_image_wic[depends]` in the variant
 
-### Phase 3: Kernel config + out-of-tree module (NOT STARTED)
-- [ ] Add kernel .cfg fragment enabling `CONFIG_SND_SOC_TAS5805M=m`
-- [ ] Create `vocalfusion-soundcard` recipe building the OVOS out-of-tree XMOS init module
-- [ ] Verify modules build cleanly
+### Phase 3: Kernel config + out-of-tree module (DONE — `bitbake -p` clean)
+- [x] Add kernel .cfg fragment enabling `CONFIG_SND_SOC_TAS5805M=m` (+ SND_SIMPLE_CARD, SND_SOC_SPDIF, SND_SOC_I2C_AND_SPI) via `linux-raspberrypi_%.bbappend`
+- [x] Create `vocalfusion-soundcard` recipe building the OVOS out-of-tree XMOS init module (vendored C source, adapted to the 6.6 `platform_driver.remove`→`int` API; `inherit module`, autoloaded)
+- [ ] Verify the module + kernel actually build on real toolchain (pending full `make build`)
 
-### Phase 4: SJ201 initialization (NOT STARTED; commented out in variant IMAGE_INSTALL)
-- [ ] Create `xvf3510-firmware` recipe (firmware blob + flash tool)
-- [ ] Create `sj201-init` recipe (TAS5806MD I2C init + systemd service)
-- [ ] Create `mycroft-mkii-rpi-devkit-config` recipe (modprobe.d ALSA ordering, modules-load.d)
-- [ ] Wire systemd ordering: sj201-init.service Before=sound.target
+### Phase 4: SJ201 initialization (DONE — pending parse-check)
+- [x] Create `xvf3510-firmware` recipe (firmware blob + flash tool). LICENSE_FLAGS-gated; XMOS blob + tool are proprietary/non-redistributable so NOT vendored — integrator supplies them (see recipe's files/README.md). Off by default.
+- [x] Create `sj201-init` recipe. TAS5806MD I2C init reimplemented as a self-contained C tool against Linux i2c-dev (no Python/smbus on the RO rootfs); `sj201-init` wrapper runs the (optional) XMOS upload then the amp init; oneshot systemd service.
+- [x] Create `mycroft-mkii-rpi-devkit-config` recipe (modprobe.d ALSA ordering: sj201 card 0, bcm2835 card 1)
+- [x] Wire systemd ordering: sj201-init.service Before=sound.target, After=i2c-1.device, WantedBy=sound.target
 
 ### Phase 5: Weston refactor
 - [x] Move reTerminal rotation from meta-appliance-os weston-init bbappend to meta-appliance-bsp-reterminal

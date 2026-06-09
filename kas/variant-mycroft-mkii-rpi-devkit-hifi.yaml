@@ -37,11 +37,15 @@ local_conf_header:
         pi-bluetooth \
         bluez5 \
         vocalfusion-soundcard \
+        sj201-init \
+        mycroft-mkii-rpi-devkit-config \
     "
-    # SJ201 recipes are added as Phases 2-4 land; uncomment as they exist:
-    #   sj201-init         (Phase 4)
-    #   xvf3510-firmware   (Phase 4)
-    #   mycroft-mkii-rpi-devkit-config  (Phase 4)
+    # xvf3510-firmware ships the proprietary, non-redistributable XMOS XVF-3510
+    # DSP blob + flash tool. It is gated behind LICENSE_FLAGS and the files are
+    # not vendored. To enable the far-field mic array, supply the files (see
+    # recipes-bsp/xvf3510-firmware/files/README.md) and uncomment:
+    #   LICENSE_FLAGS_ACCEPTED:append = " xmos-xvf3510-firmware"
+    #   IMAGE_INSTALL:append = " xvf3510-firmware"
     LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
   # Phase 2: SJ201 DT overlays. sj201-dtoverlays compiles the .dtbo files into
   # DEPLOY_DIR_IMAGE; place them in overlays/ on the boot partition and make
