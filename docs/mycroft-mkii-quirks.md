@@ -26,6 +26,12 @@ Buses enabled in the machine conf (`mycroft-mkii-rpi-devkit.conf`) are
 I2C, SPI, and UART. `i2c-dev` is autoloaded so userspace init tooling can
 reach the bus.
 
+### Physical access / disassembly
+
+To open the enclosure and reach the Pi and SJ201, follow the
+[Mark II teardown guide](https://blog.graywind.org/posts/mark2-teardown/)
+(good photos and diagrams of each step).
+
 ---
 
 ## 1. Custom fstab for 5-partition A/B layout
