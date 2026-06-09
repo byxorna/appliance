@@ -1,0 +1,16 @@
+# fstab for Mycroft Mark II DevKit (5-partition A/B layout:
+# boot + rootfsA + rootfsB + home + data).
+#
+# Persistent partitions are mounted by LABEL so the assignment is immune to
+# logical-partition enumeration order. The wks assigns label "homefs" to the
+# fixed 1G home partition and "data" to the grow partition.
+
+/dev/root            /                    auto       ro                    1  1
+proc                 /proc                proc       defaults              0  0
+devpts               /dev/pts             devpts     mode=0620,ptmxmode=0666,gid=5      0  0
+tmpfs                /run                 tmpfs      mode=0755,nodev,nosuid,strictatime 0  0
+tmpfs                /var/volatile        tmpfs      defaults              0  0
+
+/dev/mmcblk0p1       /boot                vfat       defaults,nofail       0  0
+LABEL=homefs         /home                ext4       defaults,nofail       0  0
+LABEL=data           /data                ext4       x-systemd.growfs      0  0
