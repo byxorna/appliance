@@ -36,6 +36,7 @@ local_conf_header:
         bluez-firmware-rpidistro-bcm4345c0-hcd \
         pi-bluetooth \
         bluez5 \
+        vocalfusion-soundcard \
     "
     # SJ201 recipes are added as Phases 2-4 land; uncomment as they exist:
     #   sj201-init         (Phase 4)
