@@ -323,27 +323,33 @@ No `meta-seeed-cm4` dependency. The Mark II BSP is self-contained.
 - [ ] Locate `xvf3510-flash` source code and check license
 - [ ] Determine if TAS5806MD DSP firmware blob is needed or if I2C init suffices
 
+> **Naming note:** the implementation uses `mycroft-mkii-rpi-devkit` (machine,
+> hostname) and the layer `meta-appliance-bsp-mycroft-mkii-rpi-devkit`, not the
+> shorter `mycroft-mkii` / `meta-appliance-bsp-mkii` used earlier in this plan.
+> SJ201 recipe names below (`sj201-dtoverlays`, `sj201-init`, `xvf3510-firmware`)
+> are still placeholders; the config recipe is `mycroft-mkii-rpi-devkit-config`.
+
 ### Phase 1: BSP layer scaffolding
-- [ ] Create `layers/meta-appliance-bsp-mkii/conf/layer.conf`
-- [ ] Create `conf/machine/mycroft-mkii.conf` (require raspberrypi4-64)
-- [ ] Create `kas/variant-mkii-hifi.yaml`
-- [ ] Copy `wic/appliance-dual-rootfs.wks.in` (or share it)
-- [ ] Verify the layer parses (`kas shell variant-mkii-hifi.yaml -c "bitbake-layers show-layers"`)
+- [x] Create `layers/meta-appliance-bsp-mycroft-mkii-rpi-devkit/conf/layer.conf` (incl. `CMDLINE:append console=tty1 ro`)
+- [x] Create `conf/machine/mycroft-mkii-rpi-devkit.conf` (require raspberrypi4-64; I2C/SPI/UART, i2c-dev autoload)
+- [x] Create `kas/variant-mycroft-mkii-rpi-devkit-hifi.yaml`
+- [x] Copy `wic/appliance-dual-rootfs.wks.in` into the BSP layer
+- [ ] Verify the layer parses (`kas shell variant-mycroft-mkii-rpi-devkit-hifi.yaml -c "bitbake-layers show-layers"`) — pending current build
 
-### Phase 2: DT overlays
-- [ ] Create `sj201-dtoverlays` recipe with sj201.dts, sj201-buttons-overlay.dts, sj201-rev10-pwm-fan-overlay.dts
-- [ ] Add rpi-config bbappend for config.txt (I2S, SPI, I2C, DSI, overlays)
-- [ ] Deploy overlays to boot partition via `IMAGE_BOOT_FILES:append`
+### Phase 2: DT overlays (DONE — overlays compiled + wired, `bitbake -p` clean)
+- [x] Create `sj201-dtoverlays` recipe with sj201.dts, sj201-buttons-overlay.dts, sj201-rev10-pwm-fan-overlay.dts (standalone `dtc-native` recipe, `inherit deploy`)
+- [x] Add rpi-config bbappend for config.txt (I2S, SPI, I2C, DSI, overlays) via `do_deploy:append`
+- [x] Deploy overlays to boot partition via `IMAGE_BOOT_FILES:append` + `do_image_wic[depends]` in the variant
 
-### Phase 3: Kernel config + out-of-tree module
+### Phase 3: Kernel config + out-of-tree module (NOT STARTED)
 - [ ] Add kernel .cfg fragment enabling `CONFIG_SND_SOC_TAS5805M=m`
 - [ ] Create `vocalfusion-soundcard` recipe building the OVOS out-of-tree XMOS init module
 - [ ] Verify modules build cleanly
 
-### Phase 4: SJ201 initialization
+### Phase 4: SJ201 initialization (NOT STARTED; commented out in variant IMAGE_INSTALL)
 - [ ] Create `xvf3510-firmware` recipe (firmware blob + flash tool)
 - [ ] Create `sj201-init` recipe (TAS5806MD I2C init + systemd service)
-- [ ] Create `mkii-config` recipe (modprobe.d ALSA ordering, modules-load.d)
+- [ ] Create `mycroft-mkii-rpi-devkit-config` recipe (modprobe.d ALSA ordering, modules-load.d)
 - [ ] Wire systemd ordering: sj201-init.service Before=sound.target
 
 ### Phase 5: Weston refactor
@@ -352,7 +358,7 @@ No `meta-seeed-cm4` dependency. The Mark II BSP is self-contained.
 - [ ] Verify Mark II build gets rotation-free weston.ini
 
 ### Phase 6: Build and validate
-- [ ] `make VARIANT=mkii-hifi build` completes
+- [x] `make VARIANT=mycroft-mkii-rpi-devkit-hifi build` — base image built 2026-06-08 (commit c4cac79, dirty). Artifacts: `.wic.bz2` (374 MB) + `.manifest` in `artifacts/`. No `.raucb` bundle yet; SJ201 recipes still commented out.
 - [ ] Image boots on RPi4 (DSI display + basic rootfs, even without SJ201 initially)
 - [ ] With SJ201: audio plays through TAS5806MD amp
 - [ ] Buttons appear as /dev/input/event* devices

@@ -40,18 +40,24 @@ whether the `meta-rauc-raspberrypi` default suffices. The WKS lives at
 
 ---
 
-## 2. SJ201 DT overlays not deployed to boot partition
+## 2. SJ201 DT overlays deployed to boot partition
 
-Out-of-tree overlays built by the `sj201-dtoverlays` recipe (Phase 2) land
-in `DEPLOYDIR` but are not picked up by `IMAGE_BOOT_FILES` unless added
-explicitly:
+The `sj201-dtoverlays` recipe (`recipes-kernel/sj201-dtoverlays/`) compiles the
+three overlays (`sj201`, `sj201-buttons-overlay`, `sj201-rev10-pwm-fan-overlay`)
+from the OpenVoiceOS VocalFusionDriver sources with `dtc-native` and deploys
+the `.dtbo` files into `DEPLOY_DIR_IMAGE`. They are not picked up by
+`IMAGE_BOOT_FILES` automatically, so the variant wires them explicitly:
 
 ```bitbake
-IMAGE_BOOT_FILES:append = " <overlay>.dtbo;overlays/<overlay>.dtbo"
+IMAGE_BOOT_FILES:append = " sj201.dtbo;overlays/sj201.dtbo ..."
+do_image_wic[depends] += "sj201-dtoverlays:do_deploy"
 ```
 
-TODO: enumerate the exact overlays (display, TAS5806, XMOS, touch) and the
-boot symptom seen before they land.
+`config.txt` enables them (and the I2S/SPI/I2C buses + DSI display) via the
+`rpi-config_git.bbappend` `do_deploy:append`.
+
+TODO: confirm the boot symptom seen on real hardware before the overlays land
+(silent card / no buttons / no fan).
 
 ---
 

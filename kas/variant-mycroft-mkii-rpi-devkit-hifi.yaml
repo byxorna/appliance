@@ -38,11 +38,20 @@ local_conf_header:
         bluez5 \
     "
     # SJ201 recipes are added as Phases 2-4 land; uncomment as they exist:
-    #   sj201-dtoverlays   (Phase 2)
     #   sj201-init         (Phase 4)
     #   xvf3510-firmware   (Phase 4)
     #   mycroft-mkii-rpi-devkit-config  (Phase 4)
     LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
+  # Phase 2: SJ201 DT overlays. sj201-dtoverlays compiles the .dtbo files into
+  # DEPLOY_DIR_IMAGE; place them in overlays/ on the boot partition and make
+  # the wic build wait for the deploy.
+  mycroft-mkii-rpi-devkit-overlays: |
+    IMAGE_BOOT_FILES:append = " \
+        sj201.dtbo;overlays/sj201.dtbo \
+        sj201-buttons-overlay.dtbo;overlays/sj201-buttons-overlay.dtbo \
+        sj201-rev10-pwm-fan-overlay.dtbo;overlays/sj201-rev10-pwm-fan-overlay.dtbo \
+    "
+    do_image_wic[depends] += "sj201-dtoverlays:do_deploy"
   # Named rauc-bsp to avoid colliding with the rauc key in common.yaml
   rauc-bsp: |
     RPI_USE_U_BOOT = "1"

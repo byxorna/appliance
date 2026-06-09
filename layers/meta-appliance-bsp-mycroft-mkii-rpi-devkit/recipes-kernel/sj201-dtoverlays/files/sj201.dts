@@ -1,0 +1,115 @@
+/*
+ * Device Tree Overlay for SJ-201 Rev6&10 - XMOS VocalFusion 3510-INT
+ *
+ * Configures the I2S audio path, the simple-audio-card named "sj201" with
+ * SPDIF DIT/DIR dummy codecs, the XMOS master clock on GPIO 4 (GPCLK0,
+ * 24.576 MHz), and the XMOS power/reset GPIOs (16/27).
+ *
+ * Source: OpenVoiceOS/VocalFusionDriver (MIT). Compiled to sj201.dtbo by the
+ * sj201-dtoverlays recipe.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    /* Enables the I2S clock producer */
+    fragment@0 {
+        target = <&i2s_clk_producer>;
+        __overlay__ {
+            status = "okay";
+        };
+    };
+
+    /* Configures the simple-audio-card for SJ-201 */
+    fragment@1 {
+        target = <&sound>;
+        __overlay__ {
+            compatible = "simple-audio-card";
+            simple-audio-card,name = "sj201";
+            status = "okay";
+
+            capture_link: simple-audio-card,dai-link@0 {
+                format = "i2s";
+
+                r_cpu_dai: cpu {
+                    sound-dai = <&i2s_clk_producer>;
+                    dai-tdm-slot-num = <2>;
+                    dai-tdm-slot-width = <32>;
+                };
+
+                r_codec_dai: codec {
+                    sound-dai = <&codec_in>;
+                };
+            };
+
+            playback_link: simple-audio-card,dai-link@1 {
+                format = "i2s";
+
+                p_cpu_dai: cpu {
+                    sound-dai = <&i2s_clk_producer>;
+                    dai-tdm-slot-num = <2>;
+                    dai-tdm-slot-width = <32>;
+                };
+
+                p_codec_dai: codec {
+                    sound-dai = <&codec_out>;
+                };
+            };
+        };
+    };
+
+    /* Configures vocalfusion soundcard control */
+    fragment@2 {
+        target-path = "/";
+        __overlay__ {
+            vocalfusion_soundcard_ctrl: vocalfusion-soundcard {
+                compatible = "vocalfusion-soundcard";
+                status = "okay";
+
+                clocks = <&clocks 38>;
+                clock-names = "mclk";
+                clock-frequency = <24576000>; /* 24.576 MHz */
+
+                pinctrl-names = "default";
+                pinctrl-0 = <&xvf_clk_pin &xvf_ctrl_pins>;
+
+                pwr-gpio = <&gpio 16 0>; /* GPIO 16, active high */
+                rst-gpio = <&gpio 27 0>; /* GPIO 27, active high */
+            };
+
+            codec_out: spdif-transmitter {
+                #address-cells = <0>;
+                #size-cells = <0>;
+                #sound-dai-cells = <0>;
+                compatible = "linux,spdif-dit";
+                status = "okay";
+            };
+
+            codec_in: spdif-receiver {
+                #address-cells = <0>;
+                #size-cells = <0>;
+                #sound-dai-cells = <0>;
+                compatible = "linux,spdif-dir";
+                status = "okay";
+            };
+        };
+    };
+
+    /* Configures GPIO pins for the clock and control */
+    fragment@3 {
+        target = <&gpio>;
+        __overlay__ {
+            xvf_clk_pin: xvf_clk_pin {
+                brcm,pins = <4>;
+                brcm,function = <4>; /* ALT0 (GPCLK0) */
+            };
+            xvf_ctrl_pins: xvf_ctrl_pins {
+                brcm,pins = <16 27>;
+                brcm,function = <1 1>; /* output */
+            };
+        };
+    };
+};

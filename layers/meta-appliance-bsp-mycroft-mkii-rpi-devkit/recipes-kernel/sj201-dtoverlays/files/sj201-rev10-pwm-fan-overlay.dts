@@ -1,0 +1,81 @@
+/*
+ * Device Tree Overlay for SJ-201 Rev10 - PWM fan.
+ *
+ * PWM output on GPIO 13 (ALT0 / PWM1) driving a pwm-fan with five cooling
+ * levels mapped to four CPU thermal trip points (40/50/55/60 C).
+ *
+ * Source: OpenVoiceOS/VocalFusionDriver (MIT). Compiled to
+ * sj201-rev10-pwm-fan-overlay.dtbo by the sj201-dtoverlays recipe.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    fragment@0 {
+        target = <&gpio>;
+        __overlay__ {
+            pwm_pins: pwm_pins {
+                brcm,pins = <13>;
+                brcm,function = <4>; /* ALT0 (PWM1) */
+                brcm,pull = <0>;
+            };
+        };
+    };
+
+    fragment@1 {
+        target = <&pwm>;
+        __overlay__ {
+            pinctrl-names = "default";
+            pinctrl-0 = <&pwm_pins>;
+            assigned-clock-rates = <2400000>;
+            status = "okay";
+        };
+    };
+
+    fragment@2 {
+        target-path = "/";
+        __overlay__ {
+            fan0: sj201-rev10-pwm-fan@0 {
+                compatible = "pwm-fan";
+                cooling-min-state = <0>;
+                cooling-max-state = <4>;
+                #cooling-cells = <2>;
+                cooling-levels = <255 192 129 66 0>; /* inverted polarity */
+                pwms = <&pwm 1 1000000 0>;           /* channel 1, 1 s period */
+                status = "okay";
+            };
+        };
+    };
+
+    fragment@3 {
+        target = <&cpu_thermal>;
+        __overlay__ {
+            trips {
+                trip0: trip0 { temperature = <40000>; hysteresis = <10000>; type = "active"; };
+                trip1: trip1 { temperature = <50000>; hysteresis = <2000>;  type = "active"; };
+                trip2: trip2 { temperature = <55000>; hysteresis = <2000>;  type = "active"; };
+                trip3: trip3 { temperature = <60000>; hysteresis = <4000>;  type = "active"; };
+            };
+            cooling-maps {
+                map0 { trip = <&trip0>; cooling-device = <&fan0 0 1>; };
+                map1 { trip = <&trip1>; cooling-device = <&fan0 1 2>; };
+                map2 { trip = <&trip2>; cooling-device = <&fan0 2 3>; };
+                map3 { trip = <&trip3>; cooling-device = <&fan0 3 4>; };
+            };
+        };
+    };
+
+    __overrides__ {
+        poe_fan_temp0 = <&trip0>,"temperature:0";
+        poe_fan_temp0_hyst = <&trip0>,"hysteresis:0";
+        poe_fan_temp1 = <&trip1>,"temperature:0";
+        poe_fan_temp1_hyst = <&trip1>,"hysteresis:0";
+        poe_fan_temp2 = <&trip2>,"temperature:0";
+        poe_fan_temp2_hyst = <&trip2>,"hysteresis:0";
+        poe_fan_temp3 = <&trip3>,"temperature:0";
+        poe_fan_temp3_hyst = <&trip3>,"hysteresis:0";
+    };
+};
