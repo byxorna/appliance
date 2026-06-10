@@ -26,8 +26,8 @@ The SJ201 daughterboard carries the audio and front-panel hardware:
 | --- | --- | --- |
 | XMOS XVF-3510 | Far-field voice DSP / mic array; SPI firmware upload at boot | Gated proprietary blob, not implemented |
 | TAS5806MD | I2S Class-D amplifier, I2C addr `0x2f` on bus 1, needs init to un-mute | ✅ `sj201-init` |
-| Waveshare 4.3" DSI display | Front panel (`vc4-kms-dsi-7inch`) | ✅ weston |
-| ft5x06 touch | Capacitive touch over I2C (`10-0038`) | ✅ enumerated |
+| RPi-family DSI panel | 800×480, Atmel-MCU backlight (`10-0045`); bound by `vc4-kms-dsi-7inch` (label only — physical diagonal is smaller) | ✅ weston |
+| ft5x06 touch | Capacitive touch over I2C (`10-0038`, same DSI bus as backlight) | ✅ enumerated |
 | GPIO buttons | VOLUMEUP/DOWN (22/23), VOICECOMMAND (24, wakeup), MICMUTE (25) | ✅ gpio-keys |
 | WS2812B LED ring | 12× NeoPixel; **R10 = direct Pi GPIO12 PWM**, R6 = I2C 0x04 via ATtiny | Not implemented |
 | PWM fan | GPIO13, thermal-zone driven | ✅ pwm-fan |
@@ -147,8 +147,6 @@ the kernel command line in layer.conf.
 
 ---
 
----
-
 ## 6. PipeWire is per-user; a root login shell steals the audio card
 
 PipeWire/WirePlumber run as **user services** in the compositor's
@@ -175,6 +173,62 @@ Consequences when debugging from a **root** serial/SSH shell:
 
 The PipeWire sink currently shows as the generic "Built-in Audio Stereo"
 rather than "SJ201"; cosmetic only (a WirePlumber alias could rename it).
+
+---
+
+Yocto-version-specific workarounds shared with every BSP are documented in
+[scarthgap-quirks.md](scarthgap-quirks.md).
+
+---
+
+## 7. DSI display blanks on a wedged I2C bus, not a software blank timer
+
+The DSI panel intermittently goes dark while everything else keeps running.
+This is **not** a compositor screensaver, logind idle action, or kernel
+framebuffer console blank — all of those were ruled out:
+
+- Weston `idle-time=0` (set in `weston.ini [core]`) — idle path disabled.
+- logind `IdleAction=ignore` — no idle blanking.
+- `consoleblank=0` (kernel) — fbcon blank timer off.
+- `/sys/class/drm/card1-DSI-1/dpms` reads `On` when dark — the DRM
+  connector is **not** in DPMS-off.
+
+**Actual cause:** the panel's Atmel-MCU backlight/power-sequencer
+(`10-0045`) and the ft5x06 touch (`10-0038`) sit on the **`fe205000.i2c`
+DSI/CSI bus, which is shared between the ARM (Linux) and the VideoCore
+firmware**, behind an i2c-mux (`i2c-22` → `i2c-10`). When the firmware does
+display housekeeping on that bus concurrently with Linux, the bus wedges:
+the ARM logs `Got unexpected interrupt (from firmware?)`, clears it, and the
+firmware mailbox times out, leaving the Atmel MCU unresponsive. Symptoms:
+
+- Reads of `actual_brightness` and writes to `brightness`/`bl_power` **hang
+  and time out** ("connection timed out").
+- `i2cdetect -y 10` loses `0x38` (touch) even though it stays driver-bound.
+- The backlight goes dark while DRM DPMS still reports `On`.
+- A **touch event** wakes it (re-asserts the mux channel); a **warm reboot
+  does not** clear it (the Atmel MCU isn't reset), but a **power cycle**
+  does (cold-resets the MCU). This reboot-vs-power-pull asymmetry is the
+  signature of the firmware/MCU bus lockup.
+
+**Fix:** `disable_fw_kms_setup=1` in `config.txt` (added by
+`rpi-config_git.bbappend`). Full KMS parses EDID itself, so the firmware no
+longer does display setup on the shared bus, removing the contention. The
+kernel side is already covered: 6.6.x carries the hardened
+`rpi-panel-attiny-regulator` driver (I2C retries + longer Atmel POWERON
+delays, upstream mid-2022), so no kernel bump is needed. No duplicate
+touch/backlight overlays are present (`rpi-ft5406`/`rpi-backlight` would
+double-bind the controllers and cause the same fight) — only
+`vc4-kms-dsi-7inch` binds them.
+
+> The `vc4-kms-dsi-7inch` overlay name is a label, not the panel size: this
+> panel runs at **800×480** on a physically small diagonal. Reference:
+> [raspberrypi/linux#5397](https://github.com/raspberrypi/linux/issues/5397).
+
+**Manual recovery if already wedged (no reboot):**
+
+```sh
+rmmod rpi_panel_attiny_regulator && modprobe rpi_panel_attiny_regulator
+```
 
 ---
 
