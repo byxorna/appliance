@@ -334,7 +334,8 @@ No `meta-seeed-cm4` dependency. The Mark II BSP is self-contained.
 - [x] Create `conf/machine/mycroft-mkii-rpi-devkit.conf` (require raspberrypi4-64; I2C/SPI/UART, i2c-dev autoload)
 - [x] Create `kas/variant-mycroft-mkii-rpi-devkit-hifi.yaml`
 - [x] Copy `wic/appliance-dual-rootfs.wks.in` into the BSP layer
-- [ ] Verify the layer parses (`kas shell variant-mycroft-mkii-rpi-devkit-hifi.yaml -c "bitbake-layers show-layers"`) — pending current build
+- [x] Verify the layer parses and image builds (full build succeeded; boots on hardware)
+- [x] Add label-based fstab (`base-files_%.bbappend` + `files/fstab`). **Device-path fstab crossed /home and /data** (p5→/data, p6→/home) and grew the wrong partition; mount by `LABEL=homefs`/`LABEL=data` instead. The `/root`→`/home/root` symlink was hoisted to `meta-appliance-os` (distro-wide).
 
 ### Phase 2: DT overlays (DONE — overlays compiled + wired, `bitbake -p` clean)
 - [x] Create `sj201-dtoverlays` recipe with sj201.dts, sj201-buttons-overlay.dts, sj201-rev10-pwm-fan-overlay.dts (standalone `dtc-native` recipe, `inherit deploy`)
@@ -344,7 +345,7 @@ No `meta-seeed-cm4` dependency. The Mark II BSP is self-contained.
 ### Phase 3: Kernel config + out-of-tree module (DONE — `bitbake -p` clean)
 - [x] Add kernel .cfg fragment enabling `CONFIG_SND_SOC_TAS5805M=m` (+ SND_SIMPLE_CARD, SND_SOC_SPDIF, SND_SOC_I2C_AND_SPI) via `linux-raspberrypi_%.bbappend`
 - [x] Create `vocalfusion-soundcard` recipe building the OVOS out-of-tree XMOS init module (vendored C source, adapted to the 6.6 `platform_driver.remove`→`int` API; `inherit module`, autoloaded)
-- [ ] Verify the module + kernel actually build on real toolchain (pending full `make build`)
+- [x] Verify the module + kernel actually build on real toolchain (built; `card 0: sj201` enumerates via `aplay -l`)
 
 ### Phase 4: SJ201 initialization (DONE — pending parse-check)
 - [x] Create `xvf3510-firmware` recipe (firmware blob + flash tool). LICENSE_FLAGS-gated; XMOS blob + tool are proprietary/non-redistributable so NOT vendored — integrator supplies them (see recipe's files/README.md). Off by default.
@@ -355,12 +356,14 @@ No `meta-seeed-cm4` dependency. The Mark II BSP is self-contained.
 ### Phase 5: Weston refactor
 - [x] Move reTerminal rotation from meta-appliance-os weston-init bbappend to meta-appliance-bsp-reterminal
 - [x] Verify reTerminal build still works after refactor (bitbake -p passes; only pre-existing feishin-wrapper error)
-- [ ] Verify Mark II build gets rotation-free weston.ini
+- [x] Mark II gets rotation-free weston.ini (weston renders upright on the DSI panel; Feishin running)
 
-### Phase 6: Build and validate
-- [x] `make VARIANT=mycroft-mkii-rpi-devkit-hifi build` — base image built 2026-06-08 (commit c4cac79, dirty). Artifacts: `.wic.bz2` (374 MB) + `.manifest` in `artifacts/`. No `.raucb` bundle yet; SJ201 recipes still commented out.
-- [ ] Image boots on RPi4 (DSI display + basic rootfs, even without SJ201 initially)
-- [ ] With SJ201: audio plays through TAS5806MD amp
-- [ ] Buttons appear as /dev/input/event* devices
-- [ ] Fan spins under thermal load
-- [ ] Weston kiosk-shell shows on DSI display with touch working
+### Phase 6: Build and validate (HARDWARE-VALIDATED on SJ201 R10)
+- [x] `make VARIANT=mycroft-mkii-rpi-devkit-hifi build` — full image built. Manifest confirms `kernel-module-vocalfusion-soundcard`, `sj201-init` (cortexa72), `mycroft-mkii-rpi-devkit-config`, `vocalfusion-soundcard`; `xvf3510-firmware` correctly absent (gated).
+- [x] Image boots on RPi4 from microSD (no eMMC; Pi 4 EEPROM `BOOT_ORDER` governs device selection)
+- [x] Audio plays through TAS5806MD amp (`sj201-init` → play mode; sink active in weston-session PipeWire; sound heard)
+- [x] Buttons appear as `/dev/input/event0` (`soc:sj201_buttons`: VOLUMEUP/DOWN, MICMUTE, VOICECOMMAND)
+- [x] Fan spins under thermal load (`cooling_device0` = pwm-fan, cur_state tracks temp)
+- [x] Weston kiosk-shell shows on DSI display with touch (`ft5x06` on event5)
+- [ ] LED ring (R10 = GPIO12 NeoPixel) — not implemented
+- [ ] XMOS mic array — gated proprietary blob, off by default

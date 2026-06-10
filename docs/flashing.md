@@ -46,6 +46,14 @@ II DevKit, the microSD slot is on the Raspberry Pi 4 itself; see the
 [teardown guide](https://blog.graywind.org/posts/mark2-teardown/) if the
 enclosure blocks access to the slot.
 
+> **Pi 4B boot order (EEPROM).** The Pi 4 chooses its boot device from the
+> `BOOT_ORDER` value baked into the bootloader EEPROM, *independent of the
+> flashed image*. A DevKit shipped to boot USB-first will show a blank
+> screen with no card inserted and ignore a freshly flashed SD if a
+> bootable USB stick is also attached. Inspect/change it from any booted
+> OS with `rpi-eeprom-config --edit` (`0xf41` = SD\u2192USB, `0xf14` =
+> USB\u2192SD). The Mark II DevKit has **no eMMC** \u2014 SD or USB only.
+
 ## Flashing to embedded eMMC (rpiboot)
 
 Applies to CM4-based devices with onboard eMMC (e.g. the stock
