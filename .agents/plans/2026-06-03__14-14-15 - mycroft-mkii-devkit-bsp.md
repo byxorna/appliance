@@ -8,7 +8,7 @@
    appliance image as the reTerminal variant but targeting the Mark II hardware.
 3. The SJ201 audio subsystem must be fully operational: XMOS XVF-3510 DSP
    firmware loaded, TAS5806MD amplifier initialized, I2S audio working.
-4. The Waveshare 4.3" DSI display must work with touch input (Goodix GT911).
+4. The DSI display must work with touch input. (Confirmed on hardware: RPi-family 800×480 DSI panel, Atmel-MCU backlight at I2C `0x45`, ft5x06 touch at I2C `0x38` — NOT a Waveshare/Goodix GT911 panel as originally assumed.)
 5. GPIO buttons (vol up, vol down, wake, mic mute) must appear as evdev input
    devices via `gpio-keys` DT overlay.
 6. PWM fan thermal management must be active.
@@ -367,3 +367,22 @@ No `meta-seeed-cm4` dependency. The Mark II BSP is self-contained.
 - [x] Weston kiosk-shell shows on DSI display with touch (`ft5x06` on event5)
 - [ ] LED ring (R10 = GPIO12 NeoPixel) — not implemented
 - [ ] XMOS mic array — gated proprietary blob, off by default
+
+### Phase 7: DSI display blanking / I2C-bus wedge (fix applied, soak pending)
+The DSI panel intermittently goes dark (sometimes backlight-off, sometimes
+backlit-but-black). Root-caused to the panel's Atmel-MCU backlight (`10-0045`)
+and ft5x06 touch (`10-0038`) sharing the `fe205000.i2c` DSI/CSI bus with the
+VideoCore firmware; concurrent firmware display housekeeping wedges the bus
+(backlight/touch transfers time out, DRM DPMS still reads `On`). Warm reboot
+does not clear it; a power cycle does. See `docs/mycroft-mkii-quirks.md` §7.
+- [x] Rule out software blank timers (Weston `idle-time=0`, logind `IdleAction=ignore`, kernel `consoleblank=0`, DRM DPMS `On`)
+- [x] Confirm bus-wedge signature (brightness read/write hang "connection timed out"; `i2cdetect -y 10` loses `0x38`)
+- [x] Confirm kernel 6.6.63 already carries the hardened `rpi-panel-attiny-regulator` (retries + longer Atmel POWERON delays) — no kernel bump needed
+- [x] Confirm no duplicate touch/backlight overlays (`rpi-ft5406`/`rpi-backlight` absent; only `vc4-kms-dsi-7inch` binds them)
+- [x] Confirm SJ201/TAS5806 is isolated on `/dev/i2c-1`, not contending with the DSI bus
+- [x] Apply preventive fix: `disable_fw_kms_setup=1` in `rpi-config_git.bbappend` (keeps firmware off the shared DSI bus; KMS parses EDID itself)
+- [x] Correct stale docs/comments (panel is RPi-family 800×480 DSI w/ Atmel backlight + ft5x06, NOT Waveshare 4.3"/GT911) and add quirks §7
+- [x] Add diagnostic-only probe `scripts/dsi-unwedge-probe.sh` (recovery via weston-restart / attiny-rebind removed — both trigger a VC4/DSI kernel Oops)
+- [x] Rebuild + reflash image with the fix (`0.3.0-0-gc55b320`, BUILD_ID 20260610015138)
+- [ ] **Soak test**: confirm panel no longer wedges over an extended idle period
+- [ ] If it recurs: capture the Oops `Call trace` (probe §4) to pin the kernel-side fault; recovery remains power-cycle only
