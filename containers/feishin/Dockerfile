@@ -39,6 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # X11 client libs (Electron links against these even in Wayland mode)
     libx11-6 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 \
     libxcb1 \
+    mpv \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and extract the Feishin AppImage.
@@ -57,5 +58,8 @@ RUN chmod +x /opt/feishin/feishin-wrapper
 
 # Run as the kiosk user (UID mapped to host via --userns keep-id)
 USER 810:810
+
+# https://github.com/jeffvli/feishin#configuration
+ENV ANALYTICS_DISABLED=true
 
 ENTRYPOINT ["/opt/feishin/feishin-wrapper"]
