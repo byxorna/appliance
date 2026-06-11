@@ -148,10 +148,10 @@ PipeWire defaults to 0.40 (40%) for new sinks. Add a WirePlumber config file in 
 - [x] Update docs: add section to `docs/mycroft-mkii-quirks.md` about button mappings
   - Also fixed pre-existing emdash/unicode arrow violations in the file
 
-- [ ] Make `/run/user/800/` group-traversable for `inputd`
+- [x] Make `/run/user/800/` group-traversable for `inputd`
   - Added `ExecStartPost=/bin/chmod g+x /run/user/800` to `weston@.service`
 
-- [ ] Test on hardware
-  - triggerhappy runs as `inputd`, buttons fire, but wpctl still fails with "Could not connect to PipeWire"
-  - Root cause: `/run/user/800/` is 0700, `inputd` can't traverse it
-  - Fix deployed (chmod g+x), awaiting rebuild and retest
+- [x] Test on hardware
+  - Volume up/down: working (wpctl set-volume via PipeWire socket)
+  - Mic mute toggle: working (action 0 catches both slide directions)
+  - Play/pause: fails with D-Bus session bus auth error (SO_PEERCRED rejects cross-user). Left broken intentionally. Will work after weston/kiosk session refactor.
