@@ -16,13 +16,13 @@ SRC_URI = " \
 
 S = "${WORKDIR}"
 
-RDEPENDS:${PN} = "triggerhappy wireplumber-tools"
+RDEPENDS:${PN} = "triggerhappy wireplumber"
 
 inherit useradd
 
 USERADD_PACKAGES = "${PN}"
-USERADD_PARAM:${PN} = "-u 820 -g inputd -G input,pipewire -r -d / -s /usr/sbin/nologin inputd"
 GROUPADD_PARAM:${PN} = "-g 820 inputd"
+USERADD_PARAM:${PN} = "-u 820 -g inputd -r -d / -s /usr/sbin/nologin inputd"
 
 do_install() {
     install -d ${D}${libexecdir}/appliance

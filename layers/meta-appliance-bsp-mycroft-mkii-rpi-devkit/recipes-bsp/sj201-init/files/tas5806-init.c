@@ -85,7 +85,7 @@ int main(void)
 		 * Software volume control (PipeWire) operates on top of this
 		 * hardware ceiling.
 		 */
-		{ 0x4c, 0x30 },          /* digital volume: -24 dB */
+		{ 0x4c, 0x48 },          /* digital volume: -36 dB */
 		{ 0x30, 0x01 },          /* SDOUT = DSP input */
 		{ 0x03, STATE_DEEP_SLEEP },
 		{ 0x03, STATE_HIZ },
