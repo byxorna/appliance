@@ -76,7 +76,16 @@ int main(void)
 		{ 0x01, 0x00 },          /* remove reset */
 		{ 0x78, 0x00 },          /* remove clear-fault */
 		{ 0x33, 0x03 },          /* I2S word length = 32-bit */
-		{ 0x4c, 0x60 },          /* digital volume */
+		/*
+		 * Digital volume (reg 0x4c): each LSB = 0.5 dB attenuation.
+		 *   0x00 =   0.0 dB (maximum, no attenuation)
+		 *   0x30 = -24.0 dB
+		 *   0x60 = -48.0 dB
+		 *   0xFF = -127.5 dB (near-silent)
+		 * Software volume control (PipeWire) operates on top of this
+		 * hardware ceiling.
+		 */
+		{ 0x4c, 0x30 },          /* digital volume: -24 dB */
 		{ 0x30, 0x01 },          /* SDOUT = DSP input */
 		{ 0x03, STATE_DEEP_SLEEP },
 		{ 0x03, STATE_HIZ },

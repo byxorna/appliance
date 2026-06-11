@@ -14,7 +14,7 @@ LED ring and XMOS mic array remain unimplemented.
 
 ## Board overview
 
-The Mark II DevKit is a **stock Raspberry Pi 4B** (`raspberrypi4-64`) — it
+The Mark II DevKit is a **stock Raspberry Pi 4B** (`raspberrypi4-64`). It
 has **no eMMC**; the OS lives on the **microSD card**. Flashing is a plain
 `bzcat … .wic.bz2 | dd` to the SD card; there is no `rpiboot` / boot-switch
 dance (that is CM4-only). Boot device selection is governed by the Pi 4
@@ -26,7 +26,7 @@ The SJ201 daughterboard carries the audio and front-panel hardware:
 | --- | --- | --- |
 | XMOS XVF-3510 | Far-field voice DSP / mic array; SPI firmware upload at boot | Gated proprietary blob, not implemented |
 | TAS5806MD | I2S Class-D amplifier, I2C addr `0x2f` on bus 1, needs init to un-mute | ✅ `sj201-init` |
-| RPi-family DSI panel | 800×480, Atmel-MCU backlight (`10-0045`); bound by `vc4-kms-dsi-7inch` (label only — physical diagonal is smaller) | ✅ weston |
+| RPi-family DSI panel | 800x480, Atmel-MCU backlight (`10-0045`); bound by `vc4-kms-dsi-7inch` (label only, physical diagonal is smaller) | ✅ weston |
 | ft5x06 touch | Capacitive touch over I2C (`10-0038`, same DSI bus as backlight) | ✅ enumerated |
 | GPIO buttons | VOLUMEUP/DOWN (22/23), VOICECOMMAND (24, wakeup), MICMUTE (25) | ✅ gpio-keys |
 | WS2812B LED ring | 12× NeoPixel; **R10 = direct Pi GPIO12 PWM**, R6 = I2C 0x04 via ATtiny | Not implemented |
@@ -60,8 +60,8 @@ extended container (p4).
 
 **A device-path fstab (`/dev/mmcblk0p5 /home`, `/dev/mmcblk0p6 /data`)
 silently crosses the mounts.** On this hardware the logical-partition
-enumeration assigned p5→/data and p6→/home — the reverse of the WKS intent
-— so `x-systemd.growfs` grew the *wrong* partition (the 1G fixed /home
+enumeration assigned p5 to /data and p6 to /home, the reverse of the WKS
+intent. `x-systemd.growfs` grew the *wrong* partition (the 1G fixed /home
 filled instead of /data). The partition table itself was correct
 (p5 = 1024M fixed, p6 = grow); only the mount mapping was wrong.
 
@@ -77,7 +77,7 @@ LABEL=data     /data   ext4   x-systemd.growfs       0  0
 The Mark II BSP ships this fstab via
 `recipes-core/base-files/base-files_%.bbappend` (just `FILESEXTRAPATHS` +
 `files/fstab`; base-files' own `SRC_URI` already lists `file://fstab`).
-The `/root` → `/home/root` symlink (persistent root home on the read-only
+The `/root` -> `/home/root` symlink (persistent root home on the read-only
 rootfs) is **distro-wide policy and lives in `meta-appliance-os`**, not the
 BSP. Reflash is required to fix an already-mis-grown card.
 
@@ -128,7 +128,7 @@ uploaded at runtime before the mic array works.
 Transport is **SPI**. The `xvf3510-firmware` recipe ships the blob +
 `xvf3510-flash` tool, and `sj201-init` uploads it during boot **only if
 both are present** (it logs `XMOS firmware/tool absent, skipping DSP
-upload` and continues otherwise — playback does not depend on it).
+upload` and continues otherwise. Playback does not depend on it).
 
 The blob and tool are **proprietary and non-redistributable**, so the
 recipe is gated behind `LICENSE_FLAGS = "xmos-xvf3510-firmware"` and the
@@ -151,7 +151,7 @@ the kernel command line in layer.conf.
 
 PipeWire/WirePlumber run as **user services** in the compositor's
 `systemd --user` session. The compositor user is **`weston` (uid 800)**,
-not `kiosk` — Feishin (Chromium, run as `kiosk`) connects to the weston
+not `kiosk`. Feishin (Chromium, run as `kiosk`) connects to the weston
 session's PipeWire as a *client*.
 
 Consequences when debugging from a **root** serial/SSH shell:
@@ -169,10 +169,37 @@ Consequences when debugging from a **root** serial/SSH shell:
   ```
 
 - `speaker-test -D hw:0,0` as root will always hit EBUSY while the weston
-  session holds the card — this is **not** a fault.
+  session holds the card. This is **not** a fault.
 
 The PipeWire sink currently shows as the generic "Built-in Audio Stereo"
 rather than "SJ201"; cosmetic only (a WirePlumber alias could rename it).
+
+---
+
+## 7. Front-panel button mappings
+
+The SJ201's four GPIO buttons are exposed as a `gpio-keys` input device by
+the `sj201-buttons` DT overlay. `triggerhappy` (running as the `inputd`
+user) maps key events to actions:
+
+| GPIO | Key code | Action |
+|------|----------|--------|
+| 22 | KEY_VOLUMEUP | `wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+` |
+| 23 | KEY_VOLUMEDOWN | `wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-` |
+| 24 | KEY_VOICECOMMAND | MPRIS PlayPause via D-Bus |
+| 25 | KEY_MICMUTE | `wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle` |
+
+Trigger config: `/etc/triggerhappy/triggers.d/sj201-buttons.conf`.
+Helper scripts: `/usr/libexec/appliance/`.
+
+The `inputd` user has `input` group (evdev access) and `pipewire` group
+(PipeWire socket access). The PipeWire socket is configured with
+group-readable permissions (`0770`, group `pipewire`) so `inputd` can
+call `wpctl` without running as `weston` or root.
+
+The TAS5806 hardware digital volume defaults to -24 dB (register 0x4c =
+0x30). PipeWire's software volume operates on top of this ceiling, with
+WirePlumber defaulting new sinks to 60%.
 
 ---
 
@@ -181,22 +208,22 @@ Yocto-version-specific workarounds shared with every BSP are documented in
 
 ---
 
-## 7. DSI display blanks on a wedged I2C bus, not a software blank timer
+## 8. DSI display blanks on a wedged I2C bus, not a software blank timer
 
 The DSI panel intermittently goes dark while everything else keeps running.
 This is **not** a compositor screensaver, logind idle action, or kernel
-framebuffer console blank — all of those were ruled out:
+framebuffer console blank. All of those were ruled out:
 
-- Weston `idle-time=0` (set in `weston.ini [core]`) — idle path disabled.
-- logind `IdleAction=ignore` — no idle blanking.
-- `consoleblank=0` (kernel) — fbcon blank timer off.
-- `/sys/class/drm/card1-DSI-1/dpms` reads `On` when dark — the DRM
+- Weston `idle-time=0` (set in `weston.ini [core]`). Idle path disabled.
+- logind `IdleAction=ignore`. No idle blanking.
+- `consoleblank=0` (kernel). Fbcon blank timer off.
+- `/sys/class/drm/card1-DSI-1/dpms` reads `On` when dark. The DRM
   connector is **not** in DPMS-off.
 
 **Actual cause:** the panel's Atmel-MCU backlight/power-sequencer
 (`10-0045`) and the ft5x06 touch (`10-0038`) sit on the **`fe205000.i2c`
 DSI/CSI bus, which is shared between the ARM (Linux) and the VideoCore
-firmware**, behind an i2c-mux (`i2c-22` → `i2c-10`). When the firmware does
+firmware**, behind an i2c-mux (`i2c-22` -> `i2c-10`). When the firmware does
 display housekeeping on that bus concurrently with Linux, the bus wedges:
 the ARM logs `Got unexpected interrupt (from firmware?)`, clears it, and the
 firmware mailbox times out, leaving the Atmel MCU unresponsive. Symptoms:
@@ -217,7 +244,7 @@ kernel side is already covered: 6.6.x carries the hardened
 `rpi-panel-attiny-regulator` driver (I2C retries + longer Atmel POWERON
 delays, upstream mid-2022), so no kernel bump is needed. No duplicate
 touch/backlight overlays are present (`rpi-ft5406`/`rpi-backlight` would
-double-bind the controllers and cause the same fight) — only
+double-bind the controllers and cause the same fight). Only
 `vc4-kms-dsi-7inch` binds them.
 
 > The `vc4-kms-dsi-7inch` overlay name is a label, not the panel size: this

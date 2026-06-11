@@ -14,6 +14,7 @@ render:x:802:
 seat:x:803:
 weston-launch:x:804:
 kiosk:x:810:
+inputd:x:820:
 
 # --- system daemon groups (900-949) ------------------------------------------
 systemd-network:x:900:

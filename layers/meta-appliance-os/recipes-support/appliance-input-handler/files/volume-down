@@ -1,0 +1,2 @@
+#!/bin/sh
+exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-

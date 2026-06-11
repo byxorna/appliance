@@ -121,3 +121,6 @@ local_conf_header:
   audio: |
     IMAGE_INSTALL:append = " pipewire wireplumber pipewire-pulse pipewire-user-services"
 
+  input-handler: |
+    IMAGE_INSTALL:append = " appliance-input-handler"
+
