@@ -7,5 +7,5 @@
     "shell": "/usr/sbin/nologin",
     "disposition": "regular",
     "service": "io.systemd.DropIn",
-    "memberOf": ["wayland", "audio", "video"]
+    "memberOf": ["wayland", "audio", "video", "pipewire"]
 }

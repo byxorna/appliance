@@ -39,11 +39,16 @@ inherit systemd
 APPLIANCE_APP_USER ?= "kiosk"
 APPLIANCE_APP_UID  ?= "810"
 
-# The Weston compositor user owns the Wayland socket, PipeWire socket,
-# and D-Bus session bus under /run/user/<compositor_uid>/.  The container
-# maps these host-side paths into the app user's runtime dir inside the
-# container so the app process (running as APPLIANCE_APP_UID) can connect.
+# The Weston compositor user owns the Wayland socket under
+# /run/user/<compositor_uid>/.  The container maps this into the app
+# user's XDG_RUNTIME_DIR so the app process can connect to Wayland.
 APPLIANCE_COMPOSITOR_UID ?= "800"
+
+# The session user owns PipeWire, PulseAudio, D-Bus, and WirePlumber
+# under /run/user/<session_uid>/.  With the kiosk-session split this
+# equals APPLIANCE_APP_UID — no cross-UID socket mapping needed for
+# audio or D-Bus.
+APPLIANCE_SESSION_UID ?= "810"
 
 # Supplementary groups the container process needs.  --group-add keep-groups
 # does not work with rootful podman + --userns keep-id, so groups must be
@@ -107,15 +112,16 @@ python () {
 #              (one path per line, may be empty)
 #   Section 2: the podman run command (backslash-continued)
 #
-# Usage: appliance_app_podman_cmd <app.json> <app_uid> <compositor_uid> <groups>
+# Usage: appliance_app_podman_cmd <app.json> <app_uid> <compositor_uid> <session_uid> <groups>
 appliance_app_podman_cmd() {
-    python3 - "$1" "$2" "$3" "$4" <<'PYEOF'
+    python3 - "$1" "$2" "$3" "$4" "$5" <<'PYEOF'
 import json, sys
 
 manifest_path = sys.argv[1]
 uid = sys.argv[2]
 compositor_uid = sys.argv[3]
-supplementary_groups = sys.argv[4].split()
+session_uid = sys.argv[4]
+supplementary_groups = sys.argv[5].split()
 
 with open(manifest_path) as f:
     app = json.load(f)
@@ -148,12 +154,14 @@ devices = app.get('devices', ['/dev/dri'])
 for dev in devices:
     args += ['--device', dev]
 
-# Wayland socket — host path is under the compositor user (UID compositor_uid),
-# mapped into the container at the app user's XDG_RUNTIME_DIR (UID uid).
-# Bind-mount the host's /run/user/<uid> (created by kiosk-runtime.conf tmpfiles)
-# so the container has a writable, correctly-owned XDG_RUNTIME_DIR.  Individual
-# compositor sockets are bind-mounted on top afterwards.
-args += ['-v', '/run/user/%s:/run/user/%s' % (uid, uid)]
+# Bind-mount the session user's runtime dir. PipeWire, PulseAudio, and
+# D-Bus sockets all live here (owned by kiosk via kiosk-session.service).
+# Since session_uid == uid, no cross-UID mapping is needed for audio/D-Bus.
+args += ['-v', '/run/user/%s:/run/user/%s' % (session_uid, uid)]
+
+# Wayland socket lives in the compositor's runtime dir (different UID).
+# Bind-mount it on top of the session runtime dir mount so the app sees
+# it at /run/user/<uid>/wayland-<vt>.
 args += ['-v', '/run/user/%s/wayland-%s:/run/user/%s/wayland-%s' % (compositor_uid, vt, uid, vt)]
 args += ['-e', 'WAYLAND_DISPLAY=wayland-%s' % vt]
 args += ['-e', 'XDG_RUNTIME_DIR=/run/user/%s' % uid]
@@ -166,21 +174,14 @@ args += ['-e', 'GDK_BACKEND=wayland']
 args += ['--mount', 'type=tmpfs,dst=/home/kiosk,U=true']
 args += ['-e', 'HOME=/home/kiosk']
 
-# PipeWire audio — runs in the compositor's user session.
-# ExecStartPre touches a placeholder if the socket is missing so podman
-# doesn't refuse to start; the app simply gets no audio until PipeWire runs.
-args += ['-v', '/run/user/%s/pipewire-0:/run/user/%s/pipewire-0' % (compositor_uid, uid)]
-# PulseAudio compatibility socket — Electron/Chromium prefers the PulseAudio
-# backend.  Bind-mount the pipewire-pulse native socket file (not the parent
-# directory) and point PULSE_SERVER at it directly.  libpulse otherwise runs a
-# "secure directory" ownership check on $XDG_RUNTIME_DIR/pulse that fails for
-# the cross-UID bind mount; PULSE_SERVER bypasses that lookup entirely.
-args += ['-v', '/run/user/%s/pulse/native:/run/user/%s/pulse/native' % (compositor_uid, uid)]
+# PulseAudio compatibility — Electron/Chromium prefers the PulseAudio
+# backend.  libpulse's "secure directory" ownership check on
+# $XDG_RUNTIME_DIR/pulse can fail depending on mount layering; pointing
+# PULSE_SERVER directly at the socket bypasses that lookup.
 args += ['-e', 'PULSE_SERVER=unix:/run/user/%s/pulse/native' % uid]
 
-# D-Bus — system bus is global; session bus is from the compositor's session
+# D-Bus — system bus is global; session bus is in the session runtime dir
 args += ['-v', '/run/dbus/system_bus_socket:/run/dbus/system_bus_socket']
-args += ['-v', '/run/user/%s/bus:/run/user/%s/bus' % (compositor_uid, uid)]
 args += ['-e', 'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%s/bus' % uid]
 
 # Persistent app data
@@ -237,6 +238,7 @@ do_install:append() {
 
     local uid="${APPLIANCE_APP_UID}"
     local compositor_uid="${APPLIANCE_COMPOSITOR_UID}"
+    local session_uid="${APPLIANCE_SESSION_UID}"
     local container_name="appliance-app-${app_name}"
 
     # --- Install the manifest -------------------------------------------------
@@ -245,7 +247,7 @@ do_install:append() {
 
     # --- Build the podman run command line ------------------------------------
     local raw_output
-    raw_output=$(appliance_app_podman_cmd "$manifest" "$uid" "$compositor_uid" "${APPLIANCE_APP_GROUPS}")
+    raw_output=$(appliance_app_podman_cmd "$manifest" "$uid" "$compositor_uid" "$session_uid" "${APPLIANCE_APP_GROUPS}")
 
     local mount_section=$(echo "$raw_output" | sed '/^---$/,$d')
     local podman_cmd=$(echo "$raw_output" | sed '1,/^---$/d')
@@ -269,15 +271,15 @@ do_install:append() {
 Description=${app_display} (appliance app on VT ${app_vt})
 Documentation=file:///opt/${app_name}/app.json
 
-Requires=weston@${app_vt}.service
-After=weston@${app_vt}.service systemd-tmpfiles-setup.service
+Requires=weston@${app_vt}.service kiosk-session.service
+After=weston@${app_vt}.service kiosk-session.service systemd-tmpfiles-setup.service
 
 [Service]
 Type=simple
 
 $(echo "$mount_section" | while IFS= read -r mp; do [ -n "$mp" ] && echo "ExecStartPre=/bin/sh -c 'mkdir -p ${mp} && chown ${uid}:${uid} ${mp}'"; done)
-ExecStartPre=-/bin/sh -c '[ -e /run/user/${compositor_uid}/pipewire-0 ] || touch /run/user/${compositor_uid}/pipewire-0'
-ExecStartPre=-/bin/sh -c 'mkdir -p /run/user/${compositor_uid}/pulse; [ -e /run/user/${compositor_uid}/pulse/native ] || touch /run/user/${compositor_uid}/pulse/native'
+ExecStartPre=-/bin/sh -c '[ -e /run/user/${session_uid}/pipewire-0 ] || touch /run/user/${session_uid}/pipewire-0'
+ExecStartPre=-/bin/sh -c 'mkdir -p /run/user/${session_uid}/pulse; [ -e /run/user/${session_uid}/pulse/native ] || touch /run/user/${session_uid}/pulse/native'
 
 ExecStart=${podman_cmd}
 ExecStop=/usr/bin/podman stop -t 10 ${container_name}

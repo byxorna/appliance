@@ -1,0 +1,15 @@
+[Unit]
+Description=Kiosk user session (PipeWire, D-Bus, WirePlumber)
+After=systemd-user-sessions.service dbus.socket
+Before=graphical.target
+
+[Service]
+Type=simple
+ExecStart=/bin/sleep infinity
+ExecStartPost=/bin/chmod g+x /run/user/810
+User=kiosk
+Group=kiosk
+PAMName=kiosk-session
+
+[Install]
+WantedBy=graphical.target

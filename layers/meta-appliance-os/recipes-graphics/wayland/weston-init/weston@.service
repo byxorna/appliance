@@ -30,11 +30,6 @@ ConditionPathExists=/dev/tty0
 [Service]
 Type=notify
 ExecStart=/usr/bin/weston --modules=systemd-notify.so --socket=wayland-%i
-# pam_systemd creates /run/user/800 with mode 0700. Services that need
-# access to the PipeWire, PulseAudio, or D-Bus sockets inside (e.g.
-# triggerhappy/inputd for hardware volume keys) join the weston group
-# and need group-execute on the directory to traverse it.
-ExecStartPost=/bin/chmod g+x /run/user/800
 ExecStartPost=/bin/chgrp wayland /run/user/800/wayland-%i
 ExecStartPost=/bin/chmod g+rw /run/user/800/wayland-%i
 

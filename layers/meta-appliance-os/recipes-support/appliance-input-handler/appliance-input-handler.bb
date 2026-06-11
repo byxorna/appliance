@@ -12,6 +12,7 @@ SRC_URI = " \
     file://media-play-pause \
     file://mic-mute-toggle \
     file://triggerhappy-override.conf \
+    file://10-appliance.conf \
 "
 
 S = "${WORKDIR}"
@@ -36,10 +37,17 @@ do_install() {
     install -d ${D}${systemd_system_unitdir}/triggerhappy.service.d
     install -m 0644 ${S}/triggerhappy-override.conf \
         ${D}${systemd_system_unitdir}/triggerhappy.service.d/override.conf
+
+    # D-Bus session policy: allow inputd to connect to kiosk's session bus
+    # for MPRIS play/pause control
+    install -d ${D}${sysconfdir}/dbus-1/session.d
+    install -m 0644 ${S}/10-appliance.conf \
+        ${D}${sysconfdir}/dbus-1/session.d/10-appliance.conf
 }
 
 FILES:${PN} = " \
     ${libexecdir}/appliance/ \
     ${sysconfdir}/triggerhappy/triggers.d/ \
     ${systemd_system_unitdir}/triggerhappy.service.d/ \
+    ${sysconfdir}/dbus-1/session.d/ \
 "

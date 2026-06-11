@@ -149,10 +149,12 @@ the kernel command line in layer.conf.
 
 ## 6. PipeWire is per-user; a root login shell steals the audio card
 
-PipeWire/WirePlumber run as **user services** in the compositor's
-`systemd --user` session. The compositor user is **`weston` (uid 800)**,
-not `kiosk`. Feishin (Chromium, run as `kiosk`) connects to the weston
-session's PipeWire as a *client*.
+PipeWire/WirePlumber run as **user services** in the kiosk user's
+`systemd --user` session (uid 810). The `kiosk-session.service` system
+unit holds a logind session open for kiosk via PAM, which creates
+`/run/user/810` and starts `systemd --user`. `ConditionUser=kiosk`
+drop-ins on the PipeWire units prevent them from starting in other user
+sessions (e.g. weston's).
 
 Consequences when debugging from a **root** serial/SSH shell:
 
@@ -164,11 +166,11 @@ Consequences when debugging from a **root** serial/SSH shell:
 - Test through the real session instead:
 
   ```sh
-  su -s /bin/sh weston -c 'XDG_RUNTIME_DIR=/run/user/800 wpctl status'
-  su -s /bin/sh weston -c 'XDG_RUNTIME_DIR=/run/user/800 speaker-test -c2 -twav -l1'
+  su -s /bin/sh kiosk -c 'XDG_RUNTIME_DIR=/run/user/810 wpctl status'
+  su -s /bin/sh kiosk -c 'XDG_RUNTIME_DIR=/run/user/810 speaker-test -c2 -twav -l1'
   ```
 
-- `speaker-test -D hw:0,0` as root will always hit EBUSY while the weston
+- `speaker-test -D hw:0,0` as root will always hit EBUSY while the kiosk
   session holds the card. This is **not** a fault.
 
 The PipeWire sink currently shows as the generic "Built-in Audio Stereo"
