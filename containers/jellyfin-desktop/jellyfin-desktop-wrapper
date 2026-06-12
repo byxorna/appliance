@@ -1,16 +1,15 @@
 #!/bin/sh
 # Wrapper script for Jellyfin Desktop inside the appliance container.
 # Delegates to the extracted AppImage's AppRun, which sets up the
-# bundled glibc, ELF interpreter symlink, and PipeWire paths.
+# bundled glibc, ELF interpreter symlink, LD_LIBRARY_PATH, and
+# PipeWire paths.
 #
-# LD_LIBRARY_PATH is set here (not only in AppRun) so that CEF
-# subprocesses launched via fork+exec of /proc/self/exe inherit it.
-# AppRun prepends the same paths, so this is a no-op for the main
-# process but critical for children that bypass AppRun.
+# LD_LIBRARY_PATH is NOT set here because it would poison host
+# binaries (bash, coreutils) that AppRun invokes before exec'ing
+# jellyfin-desktop. AppRun sets it right before the final exec.
 
 set -e
 
-APPDIR=/opt/jellyfin-desktop
-export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/bin${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+LOG_LEVEL="${JFN_LOG_LEVEL:-trace}"
 
-exec "${APPDIR}/AppRun" "$@"
+exec /opt/jellyfin-desktop/AppRun --log-level "$LOG_LEVEL" "$@"

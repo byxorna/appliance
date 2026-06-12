@@ -99,7 +99,7 @@ python () {
 
     # Set FILES early so packaging finds all generated outputs
     files = (d.getVar('FILES:%s' % pn) or '')
-    files += ' /opt/%s/' % name
+    files += ' /opt/%s' % name
     files += ' %s/%s' % (unitdir, svc)
     files += ' %s/graphical.target.wants/weston@%s.service' % (unitdir, vt)
     files += ' %s/tmpfiles.d/appliance-app-%s.conf' % (libdir, name)
@@ -241,9 +241,7 @@ do_install:append() {
     local session_uid="${APPLIANCE_SESSION_UID}"
     local container_name="appliance-app-${app_name}"
 
-    # --- Install the manifest -------------------------------------------------
     install -d ${D}/opt/${app_name}
-    install -m 0644 "$manifest" ${D}/opt/${app_name}/app.json
 
     # --- Build the podman run command line ------------------------------------
     local raw_output
@@ -269,7 +267,6 @@ do_install:append() {
     cat > ${D}${systemd_system_unitdir}/${svc} <<SVCEOF
 [Unit]
 Description=${app_display} (appliance app on VT ${app_vt})
-Documentation=file:///opt/${app_name}/app.json
 
 Requires=weston@${app_vt}.service kiosk-session.service
 After=weston@${app_vt}.service kiosk-session.service systemd-tmpfiles-setup.service

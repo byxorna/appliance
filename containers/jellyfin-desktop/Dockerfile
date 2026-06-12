@@ -130,14 +130,6 @@ RUN set -eu && \
            "$APPDIR/usr/lib/bfd-plugins" \
            "$APPDIR/usr/lib/ldscripts" \
            "$APPDIR/usr/lib/systemd" \
-           "$APPDIR"/usr/lib/libLLVM* \
-           "$APPDIR"/usr/lib/llvm* \
-           "$APPDIR"/usr/lib/clang* \
-           "$APPDIR"/usr/lib/LLVMgold* \
-           "$APPDIR"/usr/lib/libLTO* \
-           "$APPDIR"/usr/lib/libgallium* \
-           "$APPDIR"/usr/lib/dri_gbm.so* \
-           "$APPDIR"/usr/lib/gbm/dri_gbm.so* \
            "$APPDIR"/usr/lib/udev* \
            "$APPDIR"/usr/lib/guile* \
            "$APPDIR"/usr/lib/git* \
@@ -152,7 +144,6 @@ RUN set -eu && \
            "$APPDIR/usr/share/zsh" \
            "$APPDIR/usr/share/fish" \
            "$APPDIR/usr/share/vala" && \
-    rm -rf "$APPDIR/usr/lib/dri" "$APPDIR/usr/lib/vdpau" && \
     find "$APPDIR/usr/lib" -mindepth 2 \( -name '*.so' -o -name '*.so.*' \) | while read lib; do \
         base="$(basename "$lib")" && \
         [ ! -e "$APPDIR/usr/lib/$base" ] && cp -L "$lib" "$APPDIR/usr/lib/$base"; \
@@ -175,6 +166,13 @@ RUN set -eu && \
 # Stage 2: minimal runtime image
 # ---------------------------------------------------------------------------
 FROM docker.io/library/ubuntu:24.04
+
+# fontconfig: provides /etc/fonts/fonts.conf so CEF and libass can find fonts.
+# fonts-dejavu-core: minimal Latin/Cyrillic font set for UI rendering.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core && \
+    fc-cache -f && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy the assembled AppDir directly (skip AppImage packaging + re-extraction)
 COPY --from=builder /tmp/AppDir /opt/jellyfin-desktop
