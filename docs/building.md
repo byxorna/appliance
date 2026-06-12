@@ -25,7 +25,7 @@ To build all variants:
 make build-all
 ```
 
-Variant configs live in `kas/variant-<name>.yaml`. The Makefile discovers all variants by globbing `kas/variant-*.yaml`.
+Variant configs live in `kas/variant-<name>.yaml`. List available variants with `make print-variants`.
 
 ## What `make image` builds
 
@@ -142,8 +142,13 @@ This walks through building everything from scratch for a variant and deploying 
 ### 1. Build
 
 ```bash
+# find what you would like to build
+make print-variants
+
+# pick something
 VARIANT=mycroft-mkii-rpi-devkit-hifi
 
+# build it
 make VARIANT=$VARIANT clean-cache build save-containers
 ```
 

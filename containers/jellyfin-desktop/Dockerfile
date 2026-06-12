@@ -100,9 +100,12 @@ RUN set -eu && \
     cp /build/vk_swiftshader_icd.json "$APPDIR/usr/bin/" 2>/dev/null || true && \
     cp /build/libcef.so "$APPDIR/usr/bin/" && \
     cp /build/libEGL.so "$APPDIR/usr/bin/" && \
+    ln -sf libEGL.so "$APPDIR/usr/bin/libEGL.so.1" && \
     cp /build/libGLESv2.so "$APPDIR/usr/bin/" && \
+    ln -sf libGLESv2.so "$APPDIR/usr/bin/libGLESv2.so.2" && \
     cp /build/libvk_swiftshader.so "$APPDIR/usr/bin/" && \
     cp -a /usr/lib64 "$APPDIR/usr/lib" && \
+    cp -L "/lib/${LD_SONAME}" "$APPDIR/usr/lib/${LD_SONAME}" && \
     cp /build/libmpv.so.2 "$APPDIR/usr/lib/" && \
     mkdir -p "$APPDIR/usr/share/crypto-policies/DEFAULT" && \
     cp /usr/share/crypto-policies/DEFAULT/gnutls.txt \
@@ -150,21 +153,6 @@ RUN set -eu && \
            "$APPDIR/usr/share/fish" \
            "$APPDIR/usr/share/vala" && \
     rm -rf "$APPDIR/usr/lib/dri" "$APPDIR/usr/lib/vdpau" && \
-    rm -f "$APPDIR"/usr/lib/libEGL.so* \
-          "$APPDIR"/usr/lib/libEGL_mesa.so* \
-          "$APPDIR"/usr/lib/libGL.so* \
-          "$APPDIR"/usr/lib/libGLX.so* \
-          "$APPDIR"/usr/lib/libGLX_mesa.so* \
-          "$APPDIR"/usr/lib/libGLESv1_CM.so* \
-          "$APPDIR"/usr/lib/libGLESv2.so* \
-          "$APPDIR"/usr/lib/libGLdispatch.so* \
-          "$APPDIR"/usr/lib/libOpenGL.so* \
-          "$APPDIR"/usr/lib/libgbm.so* \
-          "$APPDIR"/usr/lib/libvulkan.so* \
-          "$APPDIR"/usr/lib/libdrm.so* \
-          "$APPDIR"/usr/lib/libdrm_*.so* \
-          "$APPDIR"/usr/lib/libxshmfence.so* \
-          "$APPDIR"/usr/lib/libglapi.so* && \
     find "$APPDIR/usr/lib" -mindepth 2 \( -name '*.so' -o -name '*.so.*' \) | while read lib; do \
         base="$(basename "$lib")" && \
         [ ! -e "$APPDIR/usr/lib/$base" ] && cp -L "$lib" "$APPDIR/usr/lib/$base"; \
@@ -194,6 +182,12 @@ COPY --from=builder /tmp/AppDir /opt/jellyfin-desktop
 # Install the wrapper script
 COPY jellyfin-desktop-wrapper /opt/jellyfin-desktop/jellyfin-desktop-wrapper
 RUN chmod +x /opt/jellyfin-desktop/jellyfin-desktop-wrapper
+
+# Verify the bundled linker + libs resolve everything. Uses the same
+# interpreter and LD_LIBRARY_PATH that AppRun sets at runtime. If any
+# "not found" appears, the build fails here instead of at first boot.
+COPY verify-deps.sh /tmp/verify-deps.sh
+RUN chmod +x /tmp/verify-deps.sh && /tmp/verify-deps.sh && rm /tmp/verify-deps.sh
 
 # Run as the kiosk user (UID mapped to host via --userns keep-id)
 USER 810:810
