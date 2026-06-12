@@ -71,3 +71,47 @@ journalctl -u hciuart -b
 systemctl restart hciuart
 systemctl restart bluetooth
 ```
+
+## App Containers
+
+Each application runs as a podman container managed by a systemd service (`appliance-app-<name>.service`). The container's environment, mounts, and devices are configured at build time through the app's `app.json` manifest. Operators can customize container behavior at runtime without rebuilding.
+
+### Environment variables
+
+Each app reads `/data/apps/<name>/env` at container start. This is a plain-text file with one `KEY=VALUE` per line. Comments (`#`) and blank lines are allowed. Values set here override any defaults baked into the image.
+
+```bash
+# Example: point Feishin at a specific Navidrome server
+cat >> /data/apps/feishin/env <<'EOF'
+NAVIDROME_URL=http://music.local:4533
+EOF
+
+systemctl restart appliance-app-feishin
+```
+
+The file lives on the persistent `/data` partition and survives rootfs updates. It's created empty on first boot if missing.
+
+### Viewing container state
+
+```bash
+# Service status and recent logs
+systemctl status appliance-app-feishin
+journalctl -u appliance-app-feishin -f
+
+# Inspect the running container
+podman inspect appliance-app-feishin
+
+# Shell into a running container
+podman exec -it appliance-app-feishin /bin/sh
+
+# List all app containers
+podman ps --filter 'name=appliance-app-'
+```
+
+### Restarting an app
+
+```bash
+systemctl restart appliance-app-feishin
+```
+
+The container is replaced on each start (`--replace --rm`), so restarts are clean.

@@ -33,6 +33,13 @@
 #   4. Creates a graphical.target.wants symlink for weston@<vt>.service
 #   5. Sets up /data/apps/<name>/ via tmpfiles.d
 #   6. Wires SYSTEMD_SERVICE so the image builder enables the unit
+#
+# Operator environment overrides:
+#   Each app reads /data/apps/<name>/env at container start. Operators
+#   can add KEY=VALUE lines (one per line, # comments allowed) to inject
+#   or override environment variables without rebuilding or using
+#   systemctl-edit. The file is created empty on first boot if missing.
+#   Changes take effect on the next service restart.
 
 inherit systemd
 
@@ -199,6 +206,12 @@ for k, v in app.get('env', {}).items():
 for arg in app.get('podman_args', []):
     args.append(arg)
 
+# Operator environment overrides from /data/apps/<name>/env.
+# This file is read at container start, so operators can inject or
+# override environment variables without rebuilding the image or
+# using systemctl-edit.  Placed last so operator values win.
+args += ['--env-file', '/data/apps/%s/env' % name]
+
 # Image reference
 args.append(image)
 
@@ -277,6 +290,7 @@ Type=simple
 $(echo "$mount_section" | while IFS= read -r mp; do [ -n "$mp" ] && echo "ExecStartPre=/bin/sh -c 'mkdir -p ${mp} && chown ${uid}:${uid} ${mp}'"; done)
 ExecStartPre=-/bin/sh -c '[ -e /run/user/${session_uid}/pipewire-0 ] || touch /run/user/${session_uid}/pipewire-0'
 ExecStartPre=-/bin/sh -c 'mkdir -p /run/user/${session_uid}/pulse; [ -e /run/user/${session_uid}/pulse/native ] || touch /run/user/${session_uid}/pulse/native'
+ExecStartPre=-/bin/sh -c '[ -e /data/apps/${app_name}/env ] || touch /data/apps/${app_name}/env'
 
 ExecStart=${podman_cmd}
 ExecStop=/usr/bin/podman stop -t 10 ${container_name}
