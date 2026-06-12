@@ -1,0 +1,10 @@
+{
+  "name": "jellyfin-desktop",
+  "display_name": "Jellyfin Desktop",
+  "vt": 2,
+  "image": "appliance-jellyfin-desktop:latest",
+  "mounts": [
+    "/data/apps/jellyfin-desktop/config:/home/kiosk/.config/jellyfin-desktop",
+    "/data/apps/jellyfin-desktop/cache:/home/kiosk/.cache/jellyfin-desktop"
+  ]
+}

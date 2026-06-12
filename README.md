@@ -15,6 +15,7 @@ Hardware support is separated from the OS and application layers. Adding a new d
 | Device | Status | Build target |
 |---|---|---|
 | [Seeed reTerminal](https://www.seeedstudio.com/ReTerminal-with-CM4-p-4904.html) (CM4, 4GB RAM, 32GB eMMC, 5" DSI touchscreen) | MVP | `reterminal-hifi` |
+| [Mycroft Mark II](https://github.com/MycroftAI/hardware-mycroft-mark-II) RPi4 DevKit + SJ201 | MVP | `mycroft-mkii-rpi-devkit-hifi`, `mycroft-mkii-rpi-devkit-tv` |
 
 Variant configs live in `kas/variant-<name>.yaml`. Each variant defines a machine, BSP repos, and hardware-specific packages on top of the shared `kas/common.yaml`.
 
@@ -25,6 +26,7 @@ Applications are modular, containerized, and customizable.
 | Application | Status |
 |---|---|
 | [Feishin](https://github.com/jeffvli/feishin) — music player for Navidrome/Jellyfin | In progress |
+| [Jellyfin Desktop](https://github.com/jellyfin/jellyfin-desktop) — native Jellyfin client (CEF + mpv) | In progress |
 
 ## Quickstart
 

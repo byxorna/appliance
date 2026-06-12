@@ -50,5 +50,7 @@ local_conf_header:
   rauc-bsp: |
     RPI_USE_U_BOOT = "1"
     WKS_FILE = "appliance-dual-rootfs.wks.in"
+  app: |
+    IMAGE_INSTALL:append = " feishin"
   identity: |
     hostname:pn-base-files = "reterminal-hifi"

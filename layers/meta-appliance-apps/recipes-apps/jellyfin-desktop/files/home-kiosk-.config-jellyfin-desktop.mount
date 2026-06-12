@@ -1,0 +1,24 @@
+# Bind-mount persistent Jellyfin Desktop config from /data into the kiosk
+# user's home directory so configuration survives rootfs A/B updates.
+#
+# /data/apps/jellyfin-desktop/ is created by ExecStartPre in the app service.
+# The mount point /home/kiosk/.config/jellyfin-desktop/ must exist on the rootfs.
+#
+# DefaultDependencies=no prevents the implicit Before=local-fs.target
+# that would create a dependency cycle with systemd-tmpfiles-setup.
+
+[Unit]
+Description=Bind-mount Jellyfin Desktop persistent config
+RequiresMountsFor=/data
+DefaultDependencies=no
+After=appliance-init.service data.mount
+Before=appliance-app-jellyfin-desktop.service
+
+[Mount]
+What=/data/apps/jellyfin-desktop
+Where=/home/kiosk/.config/jellyfin-desktop
+Type=none
+Options=bind
+
+[Install]
+WantedBy=appliance-app-jellyfin-desktop.service

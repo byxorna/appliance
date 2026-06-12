@@ -85,7 +85,7 @@ endef
 
 $(foreach n,$(CONTAINER_NAMES),$(eval $(call CONTAINER_RULES,$(n))))
 
-.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache rpiboot _build-info
+.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache rpiboot _build-info print-variants print-machines
 
 # Known artifact extensions produced by build and build-update targets.
 # Only these are checksummed in the build-info sidecar.
@@ -96,6 +96,12 @@ build: check build-firmware build-update ## Full build: parse-check, firmware im
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+print-variants: ## List all available variants (one per line)
+	@for v in $(VARIANTS); do echo "$$v"; done
+
+print-machines: ## List all unique machines across variants (one per line)
+	@awk '/^machine:/ {print $$2}' kas/variant-*.yaml | sort -u
 
 $(EMPTY_AUTH):
 	@mkdir -p "$(dir $@)"

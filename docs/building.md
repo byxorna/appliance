@@ -111,11 +111,10 @@ make save-containers              # Save all as OCI tarballs in artifacts/
 make save-container-feishin       # Save a single container as tarball
 ```
 
-To load a container image onto the device:
+To load a container image onto the device (streams via stdin, no temp file needed on the device):
 
 ```bash
-scp artifacts/appliance-feishin-latest.tar root@reterminal-hifi:/tmp/
-ssh root@reterminal-hifi podman load -i /tmp/appliance-feishin-latest.tar
+ssh root@reterminal-hifi podman load < artifacts/appliance-feishin-latest.tar
 ```
 
 ## Cache management
@@ -124,9 +123,9 @@ All caches live under `.cache/` in the repo root (gitignored):
 
 | Directory | Contents | Safe to delete? |
 |---|---|---|
-| `.cache/downloads/` | Yocto source tarballs | Yes — sources will be re-fetched |
-| `.cache/sstate/` | Yocto shared state | Yes — rebuild will be slower but correct |
-| `.cache/repos/` | Bare git reference clones of upstream layers | Yes — repos will be re-cloned |
+| `.cache/downloads/` | Yocto source tarballs | Yes, sources will be re-fetched |
+| `.cache/sstate/` | Yocto shared state | Yes, rebuild will be slower but correct |
+| `.cache/repos/` | Bare git reference clones of upstream layers | Yes, repos will be re-cloned |
 
 `make clean` removes the container image, the named TMPDIR volume, **and** the entire cache directory, giving you a true clean slate.
 
@@ -134,6 +133,63 @@ To remove only the caches without deleting the container image:
 
 ```bash
 rm -rf .cache
+```
+
+## Full rebuild and deploy
+
+This walks through building everything from scratch for a variant and deploying it to a running device. Useful after layer changes, config changes, or when troubleshooting stale build state.
+
+### 1. Build
+
+```bash
+VARIANT=mycroft-mkii-rpi-devkit-hifi
+
+make VARIANT=$VARIANT clean-cache build save-containers
+```
+
+`clean-cache` resets the TMPDIR volume and sstate, forcing a full rebuild. `build` produces the firmware image (`.wic.bz2`) and RAUC update bundle (`.raucb`). `save-containers` builds and saves all app container images as OCI tarballs in `artifacts/`.
+
+For incremental builds (no cache reset), drop `clean-cache`:
+
+```bash
+make VARIANT=$VARIANT build save-containers
+```
+
+### 2. Deploy the rootfs update
+
+Copy the RAUC bundle to the device and install it to the inactive slot:
+
+```bash
+HOST=root@mycroft-mkii-rpi-devkit-hifi
+BUNDLE=$(ls artifacts/$VARIANT-*.raucb)
+
+scp $BUNDLE $HOST:/tmp/
+ssh $HOST rauc install /tmp/$(basename $BUNDLE)
+```
+
+### 3. Deploy container images
+
+Stream each tarball directly into `podman load` over SSH to avoid needing disk space on the device for a temporary copy:
+
+```bash
+for tar in artifacts/appliance-*-latest.tar; do
+    ssh $HOST podman load < $tar
+done
+```
+
+### 4. Reboot
+
+```bash
+ssh $HOST reboot
+```
+
+After reboot, `appliance-mark-good.service` marks the new slot as good. Verify with `ssh $HOST rauc status`.
+
+### Listing variants and machines
+
+```bash
+make print-variants    # one variant per line
+make print-machines    # one unique machine per line
 ```
 
 ## Troubleshooting

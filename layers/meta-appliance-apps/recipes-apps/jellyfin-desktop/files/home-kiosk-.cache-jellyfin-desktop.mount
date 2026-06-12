@@ -1,0 +1,25 @@
+# Bind-mount persistent Jellyfin Desktop cache (CEF cookies, localStorage,
+# login tokens) from /data into the kiosk user's home so sessions survive
+# reboots and rootfs A/B updates.
+#
+# /data/apps/jellyfin-desktop/cache/ is created by ExecStartPre in the app service.
+# The mount point /home/kiosk/.cache/jellyfin-desktop/ must exist on the rootfs.
+#
+# DefaultDependencies=no prevents the implicit Before=local-fs.target
+# that would create a dependency cycle with systemd-tmpfiles-setup.
+
+[Unit]
+Description=Bind-mount Jellyfin Desktop persistent cache
+RequiresMountsFor=/data
+DefaultDependencies=no
+After=appliance-init.service data.mount
+Before=appliance-app-jellyfin-desktop.service
+
+[Mount]
+What=/data/apps/jellyfin-desktop/cache
+Where=/home/kiosk/.cache/jellyfin-desktop
+Type=none
+Options=bind
+
+[Install]
+WantedBy=appliance-app-jellyfin-desktop.service
