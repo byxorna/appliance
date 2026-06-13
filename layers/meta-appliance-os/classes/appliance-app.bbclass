@@ -161,6 +161,14 @@ devices = app.get('devices', ['/dev/dri'])
 for dev in devices:
     args += ['--device', dev]
 
+# Host GPU userspace (Mesa, libdrm, etc.) mounted at /usr/lib/gpu so
+# containers can find them without bundling a GPU stack. DRI drivers
+# are dlopen'd by Mesa from LIBGL_DRIVERS_PATH.
+# LD_LIBRARY_PATH is set so AppRun (which appends to it) picks them up.
+args += ['-v', '/usr/lib:/usr/lib/gpu:ro']
+args += ['-e', 'LD_LIBRARY_PATH=/usr/lib/gpu']
+args += ['-e', 'LIBGL_DRIVERS_PATH=/usr/lib/gpu/dri']
+
 # Bind-mount the session user's runtime dir. PipeWire, PulseAudio, and
 # D-Bus sockets all live here (owned by kiosk via kiosk-session.service).
 # Since session_uid == uid, no cross-UID mapping is needed for audio/D-Bus.

@@ -1,30 +1,15 @@
 # Jellyfin Desktop container for appliance-os
 #
-# Multi-stage build: stage 1 compiles jellyfin-desktop from source on
-# Fedora (matching upstream's AppImage toolchain), stage 2 copies the
-# assembled AppDir into a minimal Ubuntu 24.04 runtime image.
+# Stage 1 rebuilds upstream's Fedora toolchain image and calls
+# container-build.sh to compile, assemble, and strip the AppDir.
+# Stage 2 copies the AppDir into a minimal Ubuntu 24.04 runtime.
 #
 # Build (arm64, native only - no cross-compile):
 #   podman build --platform linux/arm64 -t appliance-jellyfin-desktop:latest .
-#
-# The container expects these host-side bind mounts (provided by the
-# appliance-app systemd service unit):
-#   - Wayland socket:  /run/user/810/wayland-<vt>
-#   - PipeWire socket: /run/user/810/pipewire-0
-#   - D-Bus sockets:   /run/dbus/system_bus_socket, /run/user/810/bus
-#   - GPU device:      /dev/dri
-#   - Persistent data: /data/apps/jellyfin-desktop/
 
 # ---------------------------------------------------------------------------
-# Stage 1: build jellyfin-desktop from source
+# Stage 1: Fedora toolchain + upstream container-build.sh
 # ---------------------------------------------------------------------------
-# Layers are ordered slowest-changing first for optimal cache reuse:
-#   1. OS + RPM Fusion repos (changes ~yearly)
-#   2. Dev toolchain packages (changes rarely)
-#   3. appimagetool + runtime (changes rarely)
-#   4. Source clone at pinned commit (changes per update)
-#   5. CEF download (changes when upstream bumps CEF)
-#   6. Cargo build + AppDir assembly (changes per update)
 
 FROM docker.io/library/fedora:latest AS builder
 
@@ -77,94 +62,29 @@ RUN git clone --recurse-submodules ${JELLYFIN_DESKTOP_REPO} /src && \
 WORKDIR /src
 RUN cargo xtask fetch-cef
 
-# Build jellyfin-desktop + mpv from source
-RUN cargo xtask build --out /build
+# Build + assemble AppDir via upstream's container-build.sh.
+# It handles: cargo build, strip, AppDir layout, lib flattening, LLVM/GPU
+# lib stripping, patchelf fixups, and appimagetool packaging.
+# /tmp/AppDir survives after the script finishes.
+RUN mkdir -p /build /host-output && \
+    VERSION=dev /src/dev/linux/appimage/container-build.sh
 
-# Assemble AppDir (reproduces container-build.sh logic)
-RUN set -eu && \
-    ARCH="$(uname -m)" && \
+# On Fedora aarch64, the dynamic linker lives in /usr/lib/ (ABI requirement),
+# not /usr/lib64/. container-build.sh copies /usr/lib64 but misses /usr/lib/
+# ld-linux-aarch64.so.1. Copy it explicitly if absent.
+RUN ARCH="$(uname -m)" && \
     case "$ARCH" in \
         x86_64)  LD_SONAME=ld-linux-x86-64.so.2 ;; \
         aarch64) LD_SONAME=ld-linux-aarch64.so.1 ;; \
-        *) echo "unsupported arch: $ARCH" >&2; exit 1 ;; \
     esac && \
-    strip /build/*.so /build/jellyfin-desktop && \
-    APPDIR=/tmp/AppDir && \
-    rm -rf "$APPDIR" && \
-    mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share" && \
-    cp /build/jellyfin-desktop "$APPDIR/usr/bin/" && \
-    cp /build/*.pak "$APPDIR/usr/bin/" && \
-    cp /build/icudtl.dat "$APPDIR/usr/bin/" && \
-    cp /build/v8_context_snapshot.bin "$APPDIR/usr/bin/" && \
-    cp -r /build/locales "$APPDIR/usr/bin/" && \
-    cp /build/vk_swiftshader_icd.json "$APPDIR/usr/bin/" 2>/dev/null || true && \
-    cp /build/libcef.so "$APPDIR/usr/bin/" && \
-    cp /build/libEGL.so "$APPDIR/usr/bin/" && \
-    ln -sf libEGL.so "$APPDIR/usr/bin/libEGL.so.1" && \
-    cp /build/libGLESv2.so "$APPDIR/usr/bin/" && \
-    ln -sf libGLESv2.so "$APPDIR/usr/bin/libGLESv2.so.2" && \
-    cp /build/libvk_swiftshader.so "$APPDIR/usr/bin/" && \
-    cp -a /usr/lib64 "$APPDIR/usr/lib" && \
-    cp -L "/lib/${LD_SONAME}" "$APPDIR/usr/lib/${LD_SONAME}" && \
-    cp /build/libmpv.so.2 "$APPDIR/usr/lib/" && \
-    mkdir -p "$APPDIR/usr/share/crypto-policies/DEFAULT" && \
-    cp /usr/share/crypto-policies/DEFAULT/gnutls.txt \
-       "$APPDIR/usr/share/crypto-policies/DEFAULT/gnutls.txt" && \
-    mkdir -p "$APPDIR/usr/share/applications" \
-             "$APPDIR/usr/share/icons/hicolor/scalable/apps" \
-             "$APPDIR/usr/share/metainfo" && \
-    cp /src/resources/linux/org.jellyfin.JellyfinDesktop.desktop \
-       "$APPDIR/usr/share/applications/" && \
-    cp /src/resources/linux/org.jellyfin.JellyfinDesktop.svg \
-       "$APPDIR/usr/share/icons/hicolor/scalable/apps/" && \
-    cp /src/resources/linux/org.jellyfin.JellyfinDesktop.metainfo.xml \
-       "$APPDIR/usr/share/metainfo/" && \
-    find "$APPDIR/usr/lib" -name '*.a' -delete && \
-    rm -rf "$APPDIR/usr/lib/pkgconfig" \
-           "$APPDIR/usr/lib/cmake" \
-           "$APPDIR/usr/lib/python"* \
-           "$APPDIR/usr/lib/perl"* \
-           "$APPDIR/usr/lib/ruby"* \
-           "$APPDIR/usr/lib/node_modules" \
-           "$APPDIR/usr/lib/gcc" \
-           "$APPDIR/usr/lib/bfd-plugins" \
-           "$APPDIR/usr/lib/ldscripts" \
-           "$APPDIR/usr/lib/systemd" \
-           "$APPDIR"/usr/lib/udev* \
-           "$APPDIR"/usr/lib/guile* \
-           "$APPDIR"/usr/lib/git* \
-           "$APPDIR/usr/share/doc" \
-           "$APPDIR/usr/share/man" \
-           "$APPDIR/usr/share/info" \
-           "$APPDIR/usr/share/gtk-doc" \
-           "$APPDIR/usr/share/locale" \
-           "$APPDIR/usr/share/i18n" \
-           "$APPDIR/usr/share/help" \
-           "$APPDIR/usr/share/bash-completion" \
-           "$APPDIR/usr/share/zsh" \
-           "$APPDIR/usr/share/fish" \
-           "$APPDIR/usr/share/vala" && \
-    find "$APPDIR/usr/lib" -mindepth 2 \( -name '*.so' -o -name '*.so.*' \) | while read lib; do \
-        base="$(basename "$lib")" && \
-        [ ! -e "$APPDIR/usr/lib/$base" ] && cp -L "$lib" "$APPDIR/usr/lib/$base"; \
-    done && \
-    find "$APPDIR/usr/lib" "$APPDIR/usr/bin" -type f \( -name '*.so*' -o -executable \) 2>/dev/null | while read f; do \
-        patchelf --print-needed "$f" 2>/dev/null | grep '^/' | while read lib; do \
-            base="$(basename "$lib")" && \
-            patchelf --replace-needed "$lib" "$base" "$f" 2>/dev/null || true; \
-        done; \
-    done && \
-    patchelf --set-interpreter "/tmp/.jf-cef-interp/${LD_SONAME}" \
-        "$APPDIR/usr/bin/jellyfin-desktop" && \
-    cp "$APPDIR/usr/share/applications/org.jellyfin.JellyfinDesktop.desktop" "$APPDIR/" && \
-    cp "$APPDIR/usr/share/icons/hicolor/scalable/apps/org.jellyfin.JellyfinDesktop.svg" "$APPDIR/" && \
-    ln -sf org.jellyfin.JellyfinDesktop.svg "$APPDIR/.DirIcon" && \
-    cp /src/dev/linux/appimage/AppRun "$APPDIR/AppRun" && \
-    chmod +x "$APPDIR/AppRun"
+    if [ ! -e "/tmp/AppDir/usr/lib/${LD_SONAME}" ]; then \
+        cp -L "/lib/${LD_SONAME}" "/tmp/AppDir/usr/lib/${LD_SONAME}"; \
+    fi
 
 # ---------------------------------------------------------------------------
 # Stage 2: minimal runtime image
 # ---------------------------------------------------------------------------
+# TODO: use distroless if we dont need any debug tooling inside runtime image
 FROM docker.io/library/ubuntu:24.04
 
 # fontconfig: provides /etc/fonts/fonts.conf so CEF and libass can find fonts.

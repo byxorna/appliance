@@ -38,31 +38,13 @@ Bind-mount these host paths into the container:
 | `/usr/lib/libxshmfence*` | X shared memory fences (Mesa dependency) |
 | `/usr/share/glvnd` | EGL vendor JSON |
 
-Implementation: rather than mounting each `.so` individually (brittle if soversions change), mount a directory. Create a `/usr/lib/gpu/` directory on the host via a small recipe or tmpfiles.d snippet. Populate it with symlinks to the real libs. Mount `/usr/lib/gpu:/usr/lib/gpu:ro` into the container and set `LD_LIBRARY_PATH` to include it.
-
-Simpler alternative that avoids the indirection: mount `/usr/lib/dri:/usr/lib/dri:ro` (directory, stable path) and `/usr/share/glvnd:/usr/share/glvnd:ro`. For the `.so` files, mount the whole `/usr/lib` as a lower-priority read-only overlay... no, that's complicated.
-
-Simplest approach: the AppDir's `LD_LIBRARY_PATH` puts bundled libs first. Upstream's script deletes GPU libs from the AppDir. When mpv's Mesa `libEGL` (deleted from AppDir) isn't found in `$APPDIR/usr/lib`, the linker falls through to the system `/usr/lib`. So we just need `/usr/lib` to be visible. It already is (the container's Ubuntu rootfs has `/usr/lib`). We just need the host's Mesa files to exist there.
-
-Mount the host libs into `/usr/lib/` in the container. The container's Ubuntu base has an empty `/usr/lib/` (plus fontconfig from our earlier change). The bind-mounts overlay specific files/dirs on top of it.
-
-Final approach for the bbclass:
+Final approach for the bbclass: mount host `/usr/lib` at `/usr/lib/gpu` (read-only) and `/usr/lib/dri` at `/usr/lib/dri` (for DRI driver dlopen). Set `LD_LIBRARY_PATH=/usr/lib/gpu` so AppRun appends it after the bundled lib paths. No individual soname mounts, no glvnd dependency, no lib-exists checks. Whatever the host has, the container can find.
 
 ```python
-# Host GPU libraries (Mesa EGL, GBM, DRI drivers). The container's AppDir
-# strips these (upstream design), expecting host-provided GPU stack.
 args += ['-v', '/usr/lib/dri:/usr/lib/dri:ro']
-args += ['-v', '/usr/share/glvnd:/usr/share/glvnd:ro']
-# Individual libs: glob at recipe parse time won't work (cross-compile).
-# Mount the needed .so files by stable soname.
-for lib in ['libEGL.so.1', 'libEGL_mesa.so.0',
-            'libgbm.so.1', 'libGLESv2.so.2',
-            'libglapi.so.0', 'libGLdispatch.so.0',
-            'libdrm.so.2', 'libxshmfence.so.1']:
-    args += ['-v', '/usr/lib/%s:/usr/lib/%s:ro' % (lib, lib)]
+args += ['-v', '/usr/lib:/usr/lib/gpu:ro']
+args += ['-e', 'LD_LIBRARY_PATH=/usr/lib/gpu']
 ```
-
-Sonames are stable (`.so.1`, `.so.2`, `.so.0`). They don't change between Mesa minor versions. If a major soversion bump happens (rare, maybe once a decade for libdrm), the build breaks visibly.
 
 ### 3. Dockerfile AppDir assembly
 

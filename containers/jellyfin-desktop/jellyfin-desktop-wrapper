@@ -10,6 +10,6 @@
 
 set -e
 
-LOG_LEVEL="${JFN_LOG_LEVEL:-trace}"
+LOG_LEVEL="${JFN_LOG_LEVEL:-info}"
 
 exec /opt/jellyfin-desktop/AppRun --log-level "$LOG_LEVEL" "$@"

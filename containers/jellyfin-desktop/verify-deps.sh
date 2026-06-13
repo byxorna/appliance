@@ -25,11 +25,22 @@ RESULT=$(
 echo "$RESULT"
 
 FAIL=0
-if echo "$RESULT" | grep -qiE 'not found|cannot open|error while loading'; then
+# GPU/Mesa libs are stripped from the AppDir and bind-mounted from the host
+# at runtime. Filter them out so they don't cause false failures here.
+HOST_GPU_LIBS="libEGL\.so|libEGL_mesa\.so|libgbm\.so|libGLESv2\.so|libglapi\.so|libGLdispatch\.so|libdrm\.so|libdrm_|libxshmfence\.so|libOpenGL\.so|libGL\.so|libGLX\.so|libGLX_mesa\.so|libGLESv1_CM\.so|libvulkan\.so"
+FILTERED=$(echo "$RESULT" | grep -iE 'not found|cannot open|error while loading' | grep -vE "$HOST_GPU_LIBS" || true)
+if [ -n "$FILTERED" ]; then
     echo "" >&2
     echo "FATAL: unresolved libraries in jellyfin-desktop:" >&2
-    echo "$RESULT" | grep -iE 'not found|cannot open|error while loading' >&2
+    echo "$FILTERED" >&2
     FAIL=1
+fi
+
+GPU_MISSING=$(echo "$RESULT" | grep -iE 'not found|cannot open|error while loading' | grep -E "$HOST_GPU_LIBS" || true)
+if [ -n "$GPU_MISSING" ]; then
+    echo ""
+    echo "OK (host-provided at runtime):"
+    echo "$GPU_MISSING"
 fi
 
 if [ "$FAIL" -eq 1 ]; then
