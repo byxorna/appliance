@@ -58,6 +58,12 @@ ARG JELLYFIN_DESKTOP_REF=main
 RUN git clone --recurse-submodules ${JELLYFIN_DESKTOP_REPO} /src && \
     cd /src && git checkout ${JELLYFIN_DESKTOP_REF}
 
+# Local patches applied on top of upstream.
+# TODO: file upstream bug at https://github.com/jellyfin/jellyfin-desktop
+# once validated on hardware, then drop these patches when fixed upstream.
+COPY patches/ /tmp/patches/
+RUN cd /src && git apply /tmp/patches/*.patch
+
 # Download CEF (separate layer, ~300MB, only changes when upstream bumps CEF version)
 WORKDIR /src
 RUN cargo xtask fetch-cef

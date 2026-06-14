@@ -1,0 +1,35 @@
+From: appliance-os <appliance-os@localhost>
+Subject: [PATCH] wayland: treat configure as implicit scale=1.0 when fractional scale is unavailable
+
+jfn_wl_scale_known() gates the entire VO startup sequence. It only
+returns true after a wp_fractional_scale_v1.preferred_scale event sets
+WINDOW_STATE.scale. On compositors that don't advertise
+wp_fractional_scale_manager_v1 (Weston < 14.0, Cage, etc.), this event
+never fires, and the application hangs forever in wait_for_vo_window().
+
+All downstream consumers already default to scale 1.0 when the scale
+sentinel is unset (jfn_wl_get_cached_scale returns 1.0, PendingConfigure
+defaults scale_120 to 120, CEF's cached_scale returns 1.0). The only
+place that doesn't is this gate.
+
+Fall back: if the compositor has sent an xdg_toplevel.configure (meaning
+window_size_known is true), it has committed to a geometry. Without
+fractional scale, the implicit scale is 1.0. Let the app proceed.
+
+---
+ src/wayland/src/proxy.rs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/wayland/src/proxy.rs b/src/wayland/src/proxy.rs
+index 0000000..0000001 100644
+--- a/src/wayland/src/proxy.rs
++++ b/src/wayland/src/proxy.rs
+@@ -68,7 +68,7 @@ extern "C" fn on_scale(scale_120: c_int) {
+ }
+
+ pub fn jfn_wl_scale_known() -> bool {
+-    WINDOW_STATE.scale() > 0.0
++    WINDOW_STATE.scale() > 0.0 || jfn_wl_window_size_known()
+ }
+
+ pub fn jfn_wl_get_cached_scale() -> f32 {

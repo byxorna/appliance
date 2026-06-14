@@ -6,5 +6,8 @@
   "mounts": [
     "/data/apps/jellyfin-desktop/config:/home/kiosk/.config/jellyfin-desktop",
     "/data/apps/jellyfin-desktop/cache:/home/kiosk/.cache/jellyfin-desktop"
-  ]
+  ],
+  "env": {
+    "MESA_SHADER_CACHE_DIR": "/home/kiosk/.cache/jellyfin-desktop/mesa"
+  }
 }
