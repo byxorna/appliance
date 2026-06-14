@@ -6,8 +6,8 @@ would poison container binaries with incompatible host glibc)."
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-DEPENDS = "mesa libdrm"
-RDEPENDS:${PN} = "mesa-megadriver libdrm"
+DEPENDS = "mesa libdrm vulkan-loader"
+RDEPENDS:${PN} = "mesa-megadriver libdrm vulkan-loader"
 
 GPU_LIBDIR = "${libdir}/gpu"
 
@@ -28,6 +28,7 @@ do_install() {
         libgbm.so.* \
         libglapi.so.* \
         libdrm.so.* libdrm_*.so.* \
+        libvulkan.so.* \
     ; do
         for f in ${STAGING_LIBDIR}/${pattern}; do
             [ -e "$f" ] || continue
@@ -48,6 +49,7 @@ PRIVATE_LIBS = "\
     libGLESv2.so.2 \
     libgbm.so.1 \
     libglapi.so.0 \
+    libvulkan.so.1 \
     libdrm.so.2 \
     libdrm_nouveau.so.2 \
     libdrm_radeon.so.1 \
