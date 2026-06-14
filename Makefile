@@ -16,7 +16,7 @@ BUILDER_GID := $(shell id -g)
 
 # Version from nearest git tag (e.g. "0.1.0-3-gbce1bc4-dirty")
 APPLIANCE_VERSION := $(shell git -C "$(CURDIR)" describe --tags --long --always --dirty 2>/dev/null | sed 's/^v//')
-APPLIANCE_HOME_URL ?= $(shell git -C "$(CURDIR)" remote get-url origin 2>/dev/null | sed 's/\.git$$//')
+APPLIANCE_HOME_URL ?= $(shell git -C "$(CURDIR)" remote get-url origin 2>/dev/null | sed 's/\.git$$//; s|^git@\([^:]*\):|https://\1/|')
 APPLIANCE_BUG_REPORT_URL ?= $(addsuffix /issues,$(APPLIANCE_HOME_URL))
 
 CACHE_DIR := $(CURDIR)/.cache
