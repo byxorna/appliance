@@ -29,6 +29,7 @@ do_install() {
         libglapi.so.* \
         libdrm.so.* libdrm_*.so.* \
         libvulkan.so.* \
+        libgallium*.so* \
     ; do
         for f in ${STAGING_LIBDIR}/${pattern}; do
             [ -e "$f" ] || continue
@@ -44,20 +45,18 @@ do_install() {
     done
 }
 
-PRIVATE_LIBS = "\
-    libEGL.so.1 \
-    libGLESv2.so.2 \
-    libgbm.so.1 \
-    libglapi.so.0 \
-    libvulkan.so.1 \
-    libdrm.so.2 \
-    libdrm_nouveau.so.2 \
-    libdrm_radeon.so.1 \
-    libdrm_amdgpu.so.1 \
-    libdrm_intel.so.1 \
-    libdrm_freedreno.so.1 \
-    libdrm_omap.so.1 \
-    libdrm_etnaviv.so.1 \
-"
-INSANE_SKIP:${PN} = "already-stripped dev-so"
+# These are copies of real shared libraries placed in a non-standard path
+# (/usr/lib/gpu/) for container bind-mounting. OE's packaging QA is not
+# designed for this pattern.
+
+# Don't register as a provider of libdrm.so.2, libgbm.so.1, etc.
+EXCLUDE_FROM_SHLIBS = "1"
+# Don't auto-generate RDEPENDS from DT_NEEDED entries
+INHIBIT_SHLIBDEPS = "1"
+# Don't strip binaries (they're already stripped by the source package)
+INHIBIT_PACKAGE_STRIP = "1"
+# Don't split debug symbols into a -dbg package
+INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
+# Skip QA checks that fire on ELF files in non-standard paths
+INSANE_SKIP:${PN} = "already-stripped dev-so file-rdeps libdir ldflags textrel useless-rpaths"
 FILES:${PN} = "${GPU_LIBDIR}"
