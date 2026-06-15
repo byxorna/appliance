@@ -6,7 +6,7 @@ would poison container binaries with incompatible host glibc)."
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-DEPENDS = "mesa libdrm vulkan-loader"
+DEPENDS = "mesa libdrm vulkan-loader wayland"
 RDEPENDS:${PN} = "mesa-megadriver libdrm vulkan-loader"
 
 GPU_LIBDIR = "${libdir}/gpu"
@@ -37,6 +37,8 @@ do_install() {
         libdrm.so.* libdrm_*.so.* \
         libvulkan.so.* \
         libgallium*.so* \
+        libwayland-server.so.* \
+        libwayland-client.so.* \
     ; do
         for f in ${STAGING_LIBDIR}/${pattern}; do
             [ -e "$f" ] || continue
