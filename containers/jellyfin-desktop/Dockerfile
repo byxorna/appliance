@@ -11,7 +11,7 @@
 # Stage 1: Fedora toolchain + upstream container-build.sh
 # ---------------------------------------------------------------------------
 
-FROM docker.io/library/fedora:latest AS builder
+FROM docker.io/library/fedora:44 AS builder
 
 # RPM Fusion provides full FFmpeg (all decoders). Separate layer because
 # the RPM Fusion URL embeds the Fedora version and changes on upgrades.
@@ -95,8 +95,10 @@ FROM docker.io/library/ubuntu:24.04
 
 # fontconfig: provides /etc/fonts/fonts.conf so CEF and libass can find fonts.
 # fonts-dejavu-core: minimal Latin/Cyrillic font set for UI rendering.
+# libnss3: provides libnssckbi.so (NSS built-in root CA trust store) for CEF
+#   HTTPS certificate validation.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core && \
+    apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core libnss3 && \
     fc-cache -f && \
     rm -rf /var/lib/apt/lists/*
 
