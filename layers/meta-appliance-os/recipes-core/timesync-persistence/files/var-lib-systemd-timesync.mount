@@ -1,0 +1,15 @@
+[Unit]
+Description=Bind mount persistent timesync clock storage
+DefaultDependencies=no
+After=timesync-persistence-setup.service data.mount
+Requires=timesync-persistence-setup.service
+Before=systemd-timesyncd.service
+
+[Mount]
+What=/data/platform/timesync
+Where=/var/lib/systemd/timesync
+Type=none
+Options=bind
+
+[Install]
+WantedBy=local-fs.target

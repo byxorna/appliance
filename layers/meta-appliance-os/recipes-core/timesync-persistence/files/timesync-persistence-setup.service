@@ -1,0 +1,15 @@
+[Unit]
+Description=Create persistent timesync clock directory
+DefaultDependencies=no
+RequiresMountsFor=/data
+Before=var-lib-systemd-timesync.mount
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/mkdir -p /data/platform/timesync
+ExecStart=/bin/chown systemd-timesync:systemd-timesync /data/platform/timesync
+ExecStart=/bin/chmod 755 /data/platform/timesync
+
+[Install]
+WantedBy=var-lib-systemd-timesync.mount

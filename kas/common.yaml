@@ -90,6 +90,7 @@ local_conf_header:
         wpa-supplicant \
         dhcpcd \
         dhcpcd-persistence \
+        timesync-persistence \
         iproute2 \
         kernel-modules \
     "
