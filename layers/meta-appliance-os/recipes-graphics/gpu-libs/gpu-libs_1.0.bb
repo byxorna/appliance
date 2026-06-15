@@ -14,11 +14,18 @@ GPU_LIBDIR = "${libdir}/gpu"
 do_install() {
     install -d ${D}${GPU_LIBDIR}
     install -d ${D}${GPU_LIBDIR}/dri
+    install -d ${D}${GPU_LIBDIR}/gbm
 
     # Mesa DRI drivers (vc4, v3d, kmsro, etc.)
     for f in ${STAGING_LIBDIR}/dri/*_dri.so; do
         [ -e "$f" ] || continue
         install -m 0755 "$f" ${D}${GPU_LIBDIR}/dri/
+    done
+
+    # GBM backend (dri_gbm.so) -- Mesa 25.x loads this from <libdir>/gbm/
+    for f in ${STAGING_LIBDIR}/gbm/*_gbm.so; do
+        [ -e "$f" ] || continue
+        install -m 0755 "$f" ${D}${GPU_LIBDIR}/gbm/
     done
 
     # Mesa + libdrm shared libraries

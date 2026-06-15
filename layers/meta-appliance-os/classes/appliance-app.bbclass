@@ -169,7 +169,7 @@ for dev in devices:
 args += ['-v', '/usr/lib/gpu:/usr/lib/gpu:ro']
 args += ['-e', 'LD_LIBRARY_PATH=/usr/lib/gpu']
 args += ['-e', 'LIBGL_DRIVERS_PATH=/usr/lib/gpu/dri']
-args += ['-e', 'GBM_BACKENDS_PATH=/usr/lib/gpu/dri']
+args += ['-e', 'GBM_BACKENDS_PATH=/usr/lib/gpu/gbm']
 
 # Bind-mount the session user's runtime dir. PipeWire, PulseAudio, and
 # D-Bus sockets all live here (owned by kiosk via kiosk-session.service).
