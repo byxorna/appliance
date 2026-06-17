@@ -85,7 +85,7 @@ endef
 
 $(foreach n,$(CONTAINER_NAMES),$(eval $(call CONTAINER_RULES,$(n))))
 
-.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache rpiboot _build-info print-variants print-machines
+.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache rpiboot _build-info print-variants print-machines $(addprefix x-rebuild-redeploy-,$(VARIANTS))
 
 # Known artifact extensions produced by build and build-update targets.
 # Only these are checksummed in the build-info sidecar.
@@ -239,6 +239,90 @@ $(RPIBOOT): $(USBBOOT_DIR)/.git
 
 rpiboot: $(RPIBOOT) ## Put the CM4 eMMC into USB mass storage mode via rpiboot
 	sudo $(RPIBOOT) -d $(USBBOOT_DIR)/mass-storage-gadget64
+
+# --- Remote deploy (x-rebuild-redeploy-<variant>) ----------------------------
+# One-command rebuild + deploy to a device over SSH.
+#   make DEVICE_IP=192.168.86.99 x-rebuild-redeploy-mycroft-mkii-rpi-devkit-tv
+#
+# Builds the RAUC update bundle and the variant's app container, transfers
+# both to the device, installs the bundle via rauc, and loads the container
+# into podman.  Collects os-release and container image ID before and after
+# so the summary shows what changed.
+DEVICE_IP ?=
+DEVICE_USER ?= root
+
+# Resolve which container an app recipe maps to.  Greps the variant's kas
+# config for IMAGE_INSTALL entries that match a known container name.
+_variant_container = $(strip $(foreach c,$(CONTAINER_NAMES),$(if $(shell grep -q '$(c)' kas/variant-$(1).yaml && echo y),$(c))))
+
+define DEPLOY_RULES
+.PHONY: x-rebuild-redeploy-$(1)
+x-rebuild-redeploy-$(1): ## Rebuild + deploy $(1) to DEVICE_IP
+	$$(if $$(DEVICE_IP),,@echo "ERROR: DEVICE_IP is required"; exit 1)
+	$(eval _CONTAINER := $(call _variant_container,$(1)))
+	$(eval _V_MACHINE := $(shell awk '/^machine:/ {print $$2}' kas/variant-$(1).yaml))
+	$(eval _V_IMAGE := $(shell awk '/^target:/ {print $$2}' kas/variant-$(1).yaml kas/common.yaml | head -1))
+	$(eval _RAUCB := $(ARTIFACTS_DIR)/$(1)-$(_V_IMAGE)-$(_V_MACHINE).raucb)
+	$(eval _CONTAINER_TAR := $(ARTIFACTS_DIR)/appliance-$(_CONTAINER)-latest.tar)
+	@echo "══════════════════════════════════════════════════════════════"
+	@echo "  variant:   $(1)"
+	@echo "  machine:   $(_V_MACHINE)"
+	@echo "  container: $(_CONTAINER)"
+	@echo "  device:    $$(DEVICE_USER)@$$(DEVICE_IP)"
+	@echo "══════════════════════════════════════════════════════════════"
+	@echo ""
+	@echo "--- Collecting pre-deploy state from device ---"
+	@ssh $$(DEVICE_USER)@$$(DEVICE_IP) '\
+		echo "SLOT_STATUS:"; rauc status 2>/dev/null; \
+		echo ""; \
+		echo "OS_RELEASE:"; cat /etc/os-release 2>/dev/null; \
+		echo ""; \
+		echo "CONTAINER_IMAGE:"; podman inspect --format="{{.Id}}" appliance-$(_CONTAINER):latest 2>/dev/null || echo "(none)"; \
+		echo "CONTAINER_CREATED:"; podman inspect --format="{{.Created}}" appliance-$(_CONTAINER):latest 2>/dev/null || echo "(none)"; \
+		echo "UPTIME:"; uptime \
+	' | tee /tmp/_appliance_predeploy_$(1).txt
+	@echo ""
+	@echo "--- Building RAUC bundle + container ---"
+	$$(MAKE) VARIANT=$(1) build-update
+	$$(if $(_CONTAINER),$$(MAKE) VARIANT=$(1) build-container-$(_CONTAINER) save-container-$(_CONTAINER))
+	@echo ""
+	@echo "--- Transferring container image ---"
+	$$(if $(_CONTAINER),cat "$(_CONTAINER_TAR)" | ssh $$(DEVICE_USER)@$$(DEVICE_IP) podman load)
+	@echo ""
+	@echo "--- Transferring and installing RAUC bundle ---"
+	scp "$(_RAUCB)" $$(DEVICE_USER)@$$(DEVICE_IP):/tmp/
+	ssh $$(DEVICE_USER)@$$(DEVICE_IP) rauc install /tmp/$$(notdir $(_RAUCB))
+	@echo ""
+	@echo "--- Collecting post-deploy state ---"
+	@ssh $$(DEVICE_USER)@$$(DEVICE_IP) '\
+		echo "SLOT_STATUS:"; rauc status 2>/dev/null; \
+		echo ""; \
+		echo "CONTAINER_IMAGE:"; podman inspect --format="{{.Id}}" appliance-$(_CONTAINER):latest 2>/dev/null || echo "(none)"; \
+		echo "CONTAINER_CREATED:"; podman inspect --format="{{.Created}}" appliance-$(_CONTAINER):latest 2>/dev/null || echo "(none)" \
+	' | tee /tmp/_appliance_postdeploy_$(1).txt
+	@echo ""
+	@echo "══════════════════════════════════════════════════════════════"
+	@echo "  DEPLOY COMPLETE"
+	@echo "══════════════════════════════════════════════════════════════"
+	@echo "  variant:   $(1)"
+	@echo "  device:    $$(DEVICE_USER)@$$(DEVICE_IP)"
+	@echo ""
+	@echo "  Pre-deploy OS:"
+	@grep -E 'VERSION_ID=|BUILD_ID=' /tmp/_appliance_predeploy_$(1).txt 2>/dev/null | sed 's/^/    /' || echo "    (unavailable)"
+	@echo ""
+	@echo "  Pre-deploy container ($(_CONTAINER)):"
+	@awk '/^CONTAINER_IMAGE:/{getline; print "    " $$$$0}' /tmp/_appliance_predeploy_$(1).txt 2>/dev/null || echo "    (unavailable)"
+	@echo ""
+	@echo "  Post-deploy container ($(_CONTAINER)):"
+	@awk '/^CONTAINER_IMAGE:/{getline; print "    " $$$$0}' /tmp/_appliance_postdeploy_$(1).txt 2>/dev/null || echo "    (unavailable)"
+	@echo ""
+	@echo "  RAUC bundle installed. Reboot device to activate."
+	@echo "  Post-reboot OS will reflect the new rootfs."
+	@echo "══════════════════════════════════════════════════════════════"
+	@rm -f /tmp/_appliance_predeploy_$(1).txt /tmp/_appliance_postdeploy_$(1).txt
+endef
+
+$(foreach v,$(VARIANTS),$(eval $(call DEPLOY_RULES,$(v))))
 
 clean-cache: ## Reset build state (TMPDIR volume + sstate) to fix pseudo/inode errors
 	$(CONTAINER_ENGINE) volume rm $(TMPDIR_VOL) || :
