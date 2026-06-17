@@ -1,0 +1,24 @@
+# Bind-mount persistent Firefox cache from /data into the kiosk user's
+# home directory so caches survive reboots and rootfs A/B updates.
+#
+# /data/apps/firefox-kiosk/cache/ is created by ExecStartPre in the app service.
+# The mount point /home/kiosk/.cache/mozilla/firefox/ must exist on the rootfs.
+#
+# DefaultDependencies=no prevents the implicit Before=local-fs.target
+# that would create a dependency cycle with systemd-tmpfiles-setup.
+
+[Unit]
+Description=Bind-mount Firefox Kiosk persistent cache
+RequiresMountsFor=/data
+DefaultDependencies=no
+After=appliance-init.service data.mount
+Before=appliance-app-firefox-kiosk.service
+
+[Mount]
+What=/data/apps/firefox-kiosk/cache
+Where=/home/kiosk/.cache/mozilla/firefox
+Type=none
+Options=bind
+
+[Install]
+WantedBy=appliance-app-firefox-kiosk.service

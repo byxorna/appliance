@@ -1,0 +1,11 @@
+{
+  "name": "firefox-kiosk",
+  "display_name": "Firefox Kiosk",
+  "vt": 2,
+  "image": "appliance-firefox-kiosk:latest",
+  "mounts": [
+    "/data/apps/firefox-kiosk/profile:/home/kiosk/.mozilla/firefox/kiosk",
+    "/data/apps/firefox-kiosk/cache:/home/kiosk/.cache/mozilla/firefox",
+    "/data/apps/firefox-kiosk/downloads:/home/kiosk/Downloads"
+  ]
+}

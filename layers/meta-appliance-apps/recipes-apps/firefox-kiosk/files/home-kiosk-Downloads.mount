@@ -1,0 +1,24 @@
+# Bind-mount persistent Downloads directory from /data into the kiosk
+# user's home so downloaded files survive reboots and rootfs A/B updates.
+#
+# /data/apps/firefox-kiosk/downloads/ is created by ExecStartPre in the app service.
+# The mount point /home/kiosk/Downloads/ must exist on the rootfs.
+#
+# DefaultDependencies=no prevents the implicit Before=local-fs.target
+# that would create a dependency cycle with systemd-tmpfiles-setup.
+
+[Unit]
+Description=Bind-mount Firefox Kiosk persistent downloads
+RequiresMountsFor=/data
+DefaultDependencies=no
+After=appliance-init.service data.mount
+Before=appliance-app-firefox-kiosk.service
+
+[Mount]
+What=/data/apps/firefox-kiosk/downloads
+Where=/home/kiosk/Downloads
+Type=none
+Options=bind
+
+[Install]
+WantedBy=appliance-app-firefox-kiosk.service

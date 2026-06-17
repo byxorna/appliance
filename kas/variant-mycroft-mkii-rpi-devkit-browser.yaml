@@ -1,0 +1,56 @@
+# kas configuration for Mycroft Mark II DevKit Browser Appliance
+# Boots into Firefox kiosk mode on the Mark II's display.
+
+header:
+  version: 14
+  includes:
+    - kas/common.yaml
+    - kas/debug.yaml
+    - kas/devtools.yaml
+
+machine: mycroft-mkii-rpi-devkit
+
+repos:
+  meta-raspberrypi:
+    url: "https://git.yoctoproject.org/meta-raspberrypi"
+    path: build/repos/meta-raspberrypi
+    branch: scarthgap
+    commit: 2c646d29912dcc873469a57b1c207e1549c5094d
+
+  meta-rauc-community:
+    url: "https://github.com/rauc/meta-rauc-community.git"
+    path: build/repos/meta-rauc-community
+    branch: scarthgap
+    commit: 222c61275054974cdbd09bd5faa2b7a37ddbd840
+    layers:
+      meta-rauc-raspberrypi:
+
+  meta-appliance-bsp-mycroft-mkii-rpi-devkit:
+    path: layers/meta-appliance-bsp-mycroft-mkii-rpi-devkit
+
+local_conf_header:
+  mycroft-mkii-rpi-devkit-hw: |
+    IMAGE_INSTALL:append = " \
+        linux-firmware-rpidistro-bcm43455 \
+        bluez-firmware-rpidistro-bcm4345c0-hcd \
+        pi-bluetooth \
+        bluez5 \
+        vocalfusion-soundcard \
+        sj201-init \
+        mycroft-mkii-rpi-devkit-config \
+    "
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
+  mycroft-mkii-rpi-devkit-overlays: |
+    IMAGE_BOOT_FILES:append = " \
+        sj201.dtbo;overlays/sj201.dtbo \
+        sj201-buttons-overlay.dtbo;overlays/sj201-buttons-overlay.dtbo \
+        sj201-rev10-pwm-fan-overlay.dtbo;overlays/sj201-rev10-pwm-fan-overlay.dtbo \
+    "
+    do_image_wic[depends] += "sj201-dtoverlays:do_deploy"
+  rauc-bsp: |
+    RPI_USE_U_BOOT = "1"
+    WKS_FILE = "appliance-dual-rootfs.wks.in"
+  app: |
+    IMAGE_INSTALL:append = " firefox-kiosk"
+  identity: |
+    hostname:pn-base-files = "mycroft-mkii-rpi-devkit-browser"
