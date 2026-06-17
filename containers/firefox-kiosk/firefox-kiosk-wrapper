@@ -1,0 +1,38 @@
+#!/bin/sh
+# Wrapper script for Firefox inside the appliance container.
+# Launches in kiosk mode (fullscreen, no chrome) on the Wayland backend.
+#
+# Operator overrides (set in /data/apps/firefox-kiosk/env on the host):
+#   FIREFOX_URL    - start page URL (default: about:blank)
+#   FIREFOX_ARGS   - extra Firefox arguments
+
+set -e
+
+PROFILE_DIR="/home/kiosk/.mozilla/firefox/kiosk"
+
+mkdir -p "$PROFILE_DIR"
+mkdir -p /home/kiosk/.cache
+
+export MOZ_ENABLE_WAYLAND=1
+
+# Use host GPU libs (bind-mounted at /usr/lib/gpu by appliance-app.bbclass).
+# Prepend so host Mesa wins over the container's Mesa.
+export LD_LIBRARY_PATH="/usr/lib/gpu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LIBGL_DRIVERS_PATH=/usr/lib/gpu/dri
+export GBM_BACKENDS_PATH=/usr/lib/gpu/gbm
+
+# Disable crash reporter and telemetry. The container's PID namespace
+# prevents prctl(PR_SET_DUMPABLE), and the Glean store can't write
+# outside the profile directory.
+export MOZ_CRASHREPORTER_DISABLE=1
+export MOZILLA_TELEMETRY_REPORTING=0
+export MOZ_DATA_REPORTING=0
+
+URL="${FIREFOX_URL:-about:blank}"
+
+exec firefox \
+    --kiosk "$URL" \
+    --profile "$PROFILE_DIR" \
+    --no-remote \
+    --no-sandbox \
+    ${FIREFOX_ARGS:-}
