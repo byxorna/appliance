@@ -17,10 +17,27 @@ do_install() {
     install -d ${D}${GPU_LIBDIR}/gbm
 
     # Mesa DRI drivers (vc4, v3d, kmsro, etc.)
+    # Copy real files first, then symlinks (resolving to their target).
     for f in ${STAGING_LIBDIR}/dri/*_dri.so; do
         [ -e "$f" ] || continue
-        install -m 0755 "$f" ${D}${GPU_LIBDIR}/dri/
+        cp -L "$f" ${D}${GPU_LIBDIR}/dri/
+        chmod 0755 ${D}${GPU_LIBDIR}/dri/$(basename "$f")
     done
+
+    # Mesa 25.x megadriver: individual *_dri.so files are symlinks to
+    # libgallium-*.so in the image but may not exist in STAGING_LIBDIR.
+    # If the dri/ dir is still empty, create symlinks to the megadriver.
+    if [ -z "$(ls -A ${D}${GPU_LIBDIR}/dri/ 2>/dev/null)" ]; then
+        gallium=$(ls ${D}${GPU_LIBDIR}/libgallium*.so* 2>/dev/null | head -1)
+        if [ -n "$gallium" ]; then
+            gallium_name=$(basename "$gallium")
+            for drv in v3d vc4 kmsro panfrost lima etnaviv swrast zink; do
+                ln -sf ../${gallium_name} ${D}${GPU_LIBDIR}/dri/${drv}_dri.so
+            done
+        else
+            bbwarn "gpu-libs: no DRI drivers and no libgallium megadriver found"
+        fi
+    fi
 
     # GBM backend (dri_gbm.so) -- Mesa 25.x loads this from <libdir>/gbm/
     for f in ${STAGING_LIBDIR}/gbm/*_gbm.so; do

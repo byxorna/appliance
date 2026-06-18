@@ -21,10 +21,21 @@ export LD_LIBRARY_PATH="/usr/lib/gpu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export LIBGL_DRIVERS_PATH=/usr/lib/gpu/dri
 export GBM_BACKENDS_PATH=/usr/lib/gpu/gbm
 
+# Disable all Firefox sandboxes. The container runs as an unprivileged
+# user in a user namespace, which prevents the seccomp-bpf and
+# clone(CLONE_NEWUSER) calls Firefox's sandbox needs.
+export MOZ_DISABLE_CONTENT_SANDBOX=1
+export MOZ_DISABLE_GMP_SANDBOX=1
+export MOZ_DISABLE_GPU_SANDBOX=1
+export MOZ_DISABLE_RDD_SANDBOX=1
+export MOZ_DISABLE_SOCKET_PROCESS_SANDBOX=1
+export MOZ_DISABLE_UTILITY_SANDBOX=1
+
 # Disable crash reporter and telemetry. The container's PID namespace
 # prevents prctl(PR_SET_DUMPABLE), and the Glean store can't write
 # outside the profile directory.
 export MOZ_CRASHREPORTER_DISABLE=1
+export MOZ_CRASHREPORTER=0
 export MOZILLA_TELEMETRY_REPORTING=0
 export MOZ_DATA_REPORTING=0
 
@@ -34,5 +45,4 @@ exec firefox \
     --kiosk "$URL" \
     --profile "$PROFILE_DIR" \
     --no-remote \
-    --no-sandbox \
     ${FIREFOX_ARGS:-}
