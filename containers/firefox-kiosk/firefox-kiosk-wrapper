@@ -1,6 +1,6 @@
 #!/bin/sh
 # Wrapper script for Firefox inside the appliance container.
-# Launches in kiosk mode (fullscreen, no chrome) on the Wayland backend.
+# Launches Firefox fullscreen on the Wayland backend.
 #
 # Operator overrides (set in /data/apps/firefox-kiosk/env on the host):
 #   FIREFOX_URL    - start page URL (default: about:blank)
@@ -21,19 +21,8 @@ export LD_LIBRARY_PATH="/usr/lib/gpu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export LIBGL_DRIVERS_PATH=/usr/lib/gpu/dri
 export GBM_BACKENDS_PATH=/usr/lib/gpu/gbm
 
-# Disable all Firefox sandboxes. The container runs as an unprivileged
-# user in a user namespace, which prevents the seccomp-bpf and
-# clone(CLONE_NEWUSER) calls Firefox's sandbox needs.
-export MOZ_DISABLE_CONTENT_SANDBOX=1
-export MOZ_DISABLE_GMP_SANDBOX=1
-export MOZ_DISABLE_GPU_SANDBOX=1
-export MOZ_DISABLE_RDD_SANDBOX=1
-export MOZ_DISABLE_SOCKET_PROCESS_SANDBOX=1
-export MOZ_DISABLE_UTILITY_SANDBOX=1
-
-# Disable crash reporter and telemetry. The container's PID namespace
-# prevents prctl(PR_SET_DUMPABLE), and the Glean store can't write
-# outside the profile directory.
+# Disable crash reporter and telemetry. The Glean store can't write
+# outside the profile directory in the container.
 export MOZ_CRASHREPORTER_DISABLE=1
 export MOZ_CRASHREPORTER=0
 export MOZILLA_TELEMETRY_REPORTING=0
@@ -42,7 +31,7 @@ export MOZ_DATA_REPORTING=0
 URL="${FIREFOX_URL:-about:blank}"
 
 exec firefox \
-    --kiosk "$URL" \
+    "$URL" \
     --profile "$PROFILE_DIR" \
     --no-remote \
     ${FIREFOX_ARGS:-}

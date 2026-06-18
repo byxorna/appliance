@@ -7,5 +7,8 @@
     "/data/apps/firefox-kiosk/profile:/home/kiosk/.mozilla/firefox/kiosk",
     "/data/apps/firefox-kiosk/cache:/home/kiosk/.cache/mozilla/firefox",
     "/data/apps/firefox-kiosk/downloads:/home/kiosk/Downloads"
+  ],
+  "podman_args": [
+    "--security-opt", "seccomp=unconfined"
   ]
 }
