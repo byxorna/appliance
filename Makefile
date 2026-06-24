@@ -23,7 +23,7 @@ CACHE_DIR := $(CURDIR)/.cache
 DOWNLOADS_DIR := $(CACHE_DIR)/downloads
 SSTATE_DIR := $(CACHE_DIR)/sstate
 REPO_REF_DIR := $(CACHE_DIR)/repos
-TMPDIR_VOL := appliance-$(VARIANT)-tmpdir
+BUILD_VOL := appliance-$(VARIANT)-build
 
 # Podman inherits ~/.docker/config.json credHelpers, which may reference
 # helpers not installed on this host (e.g. ecr-login).  An empty auth file
@@ -41,7 +41,7 @@ COMMON_RUN_FLAGS := \
 	-v "$(DOWNLOADS_DIR)":/workspace/downloads:Z \
 	-v "$(SSTATE_DIR)":/workspace/sstate-cache:Z \
 	-v "$(REPO_REF_DIR)":/workspace/repos:Z \
-	-v "$(TMPDIR_VOL)":/workspace/build/tmp:Z \
+	-v "$(BUILD_VOL)":/workspace/build:Z \
 	-e KAS_REPO_REF_DIR=/workspace/repos \
 	-e APPLIANCE_VERSION="$(APPLIANCE_VERSION)" \
 	-e APPLIANCE_VARIANT="$(VARIANT)" \
@@ -85,7 +85,7 @@ endef
 
 $(foreach n,$(CONTAINER_NAMES),$(eval $(call CONTAINER_RULES,$(n))))
 
-.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache rpiboot _build-info print-variants print-machines $(addprefix x-rebuild-redeploy-,$(VARIANTS))
+.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache clean-cache-all rpiboot _build-info print-variants print-machines $(addprefix x-rebuild-redeploy-,$(VARIANTS))
 
 # Known artifact extensions produced by build and build-update targets.
 # Only these are checksummed in the build-info sidecar.
@@ -324,10 +324,16 @@ endef
 
 $(foreach v,$(VARIANTS),$(eval $(call DEPLOY_RULES,$(v))))
 
-clean-cache: ## Reset build state (TMPDIR volume + sstate) to fix pseudo/inode errors
-	$(CONTAINER_ENGINE) volume rm $(TMPDIR_VOL) || :
+clean-cache: ## Reset build state (build volume + sstate) for current VARIANT
+	$(CONTAINER_ENGINE) volume rm $(BUILD_VOL) || :
 	rm -rf "$(SSTATE_DIR)" || :
 
-clean: clean-cache ## Remove container image, build volumes, and all caches
+clean-cache-all: ## Reset build state (build volumes + sstate) for all variants
+	@for v in $(VARIANTS); do \
+		$(CONTAINER_ENGINE) volume rm "appliance-$$v-build" || :; \
+	done
+	rm -rf "$(SSTATE_DIR)" || :
+
+clean: clean-cache-all ## Remove container image, build volumes, and all caches
 	$(CONTAINER_ENGINE) rmi $(IMAGE_NAME) || :
 	rm -rf "$(CACHE_DIR)" "$(ARTIFACTS_DIR)" build/repos build/usbboot || :
