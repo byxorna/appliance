@@ -1,0 +1,54 @@
+# Machine configuration for the Mycroft Mark II RPi DevKit (RPi4 + SJ201).
+# Included by variant files targeting this hardware.
+
+header:
+  version: 14
+
+machine: mycroft-mkii-rpi-devkit
+
+repos:
+  meta-raspberrypi:
+    url: "https://git.yoctoproject.org/meta-raspberrypi"
+    path: build/repos/meta-raspberrypi
+    branch: scarthgap
+    commit: 2c646d29912dcc873469a57b1c207e1549c5094d
+
+  meta-rauc-community:
+    url: "https://github.com/rauc/meta-rauc-community.git"
+    path: build/repos/meta-rauc-community
+    branch: scarthgap
+    commit: 222c61275054974cdbd09bd5faa2b7a37ddbd840
+    layers:
+      meta-rauc-raspberrypi:
+
+  meta-appliance-bsp-mycroft-mkii-rpi-devkit:
+    path: layers/meta-appliance-bsp-mycroft-mkii-rpi-devkit
+
+local_conf_header:
+  mycroft-mkii-rpi-devkit-hw: |
+    IMAGE_INSTALL:append = " \
+        linux-firmware-rpidistro-bcm43455 \
+        bluez-firmware-rpidistro-bcm4345c0-hcd \
+        pi-bluetooth \
+        bluez5 \
+        vocalfusion-soundcard \
+        sj201-init \
+        mycroft-mkii-rpi-devkit-config \
+    "
+    # xvf3510-firmware ships the proprietary, non-redistributable XMOS XVF-3510
+    # DSP blob + flash tool. It is gated behind LICENSE_FLAGS and the files are
+    # not vendored. To enable the far-field mic array, supply the files (see
+    # recipes-bsp/xvf3510-firmware/files/README.md) and uncomment:
+    #   LICENSE_FLAGS_ACCEPTED:append = " xmos-xvf3510-firmware"
+    #   IMAGE_INSTALL:append = " xvf3510-firmware"
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
+  mycroft-mkii-rpi-devkit-overlays: |
+    IMAGE_BOOT_FILES:append = " \
+        sj201.dtbo;overlays/sj201.dtbo \
+        sj201-buttons-overlay.dtbo;overlays/sj201-buttons-overlay.dtbo \
+        sj201-rev10-pwm-fan-overlay.dtbo;overlays/sj201-rev10-pwm-fan-overlay.dtbo \
+    "
+    do_image_wic[depends] += "sj201-dtoverlays:do_deploy"
+  rauc-bsp: |
+    RPI_USE_U_BOOT = "1"
+    WKS_FILE = "appliance-dual-rootfs.wks.in"

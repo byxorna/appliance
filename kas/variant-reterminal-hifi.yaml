@@ -1,55 +1,18 @@
 # kas configuration for reTerminal HiFi Appliance
-# Builds on common.yaml, adding the reTerminal BSP and HiFi-specific packages.
+# Builds on common.yaml + machine config, adding Feishin.
 
 header:
   version: 14
   includes:
     - kas/common.yaml
+    - kas/machine-seeed-reterminal.yaml
     # Optional: uncomment to include in this build.
     - kas/debug.yaml
     - kas/devtools.yaml
 
 machine: seeed-reterminal
 
-repos:
-  meta-raspberrypi:
-    url: "https://git.yoctoproject.org/meta-raspberrypi"
-    path: build/repos/meta-raspberrypi
-    branch: scarthgap
-    commit: 2c646d29912dcc873469a57b1c207e1549c5094d
-
-  meta-seeed-cm4:
-    url: "https://github.com/Seeed-Studio/meta-seeed-cm4.git"
-    path: build/repos/meta-seeed-cm4
-    branch: main
-    commit: a2f9438ee3d2e16b17d40476de344889e4a92c9b
-
-  meta-rauc-community:
-    url: "https://github.com/rauc/meta-rauc-community.git"
-    path: build/repos/meta-rauc-community
-    branch: scarthgap
-    commit: 222c61275054974cdbd09bd5faa2b7a37ddbd840
-    layers:
-      meta-rauc-raspberrypi:
-
-  meta-appliance-bsp-reterminal:
-    path: layers/meta-appliance-bsp-reterminal
-
 local_conf_header:
-  reterminal-hw: |
-    IMAGE_INSTALL:append = " \
-        seeed-linux-dtoverlays \
-        reterminal-config \
-        linux-firmware-rpidistro-bcm43455 \
-        bluez-firmware-rpidistro-bcm4345c0-hcd \
-        pi-bluetooth \
-        bluez5 \
-    "
-    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
-  # Named rauc-bsp to avoid colliding with the rauc key in common.yaml
-  rauc-bsp: |
-    RPI_USE_U_BOOT = "1"
-    WKS_FILE = "appliance-dual-rootfs.wks.in"
   app: |
     IMAGE_INSTALL:append = " feishin"
   identity: |
