@@ -1,0 +1,9 @@
+[reticulum]
+share_instance = yes
+instance_control_socket = yes
+enable_transport = yes
+
+[interfaces]
+  [[Auto Discovery]]
+    type = AutoInterface
+    enabled = yes

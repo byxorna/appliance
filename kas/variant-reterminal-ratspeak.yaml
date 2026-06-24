@@ -1,0 +1,18 @@
+# kas configuration for reTerminal Ratspeak Appliance
+# Mesh messenger with Reticulum transport and LXMF relay.
+
+header:
+  version: 14
+  includes:
+    - kas/common.yaml
+    - kas/machine-seeed-reterminal.yaml
+    - kas/debug.yaml
+    - kas/devtools.yaml
+
+machine: seeed-reterminal
+
+local_conf_header:
+  app: |
+    IMAGE_INSTALL:append = " ratspeak appliance-reticulum"
+  identity: |
+    hostname:pn-base-files = "reterminal-ratspeak"

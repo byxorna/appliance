@@ -1,0 +1,13 @@
+[lxmf]
+display_name = Appliance Relay
+announce_at_start = yes
+
+[propagation]
+enable_node = yes
+node_name = Appliance Relay
+announce_at_start = yes
+autopeer = yes
+autopeer_maxdepth = 4
+
+[logging]
+loglevel = 4

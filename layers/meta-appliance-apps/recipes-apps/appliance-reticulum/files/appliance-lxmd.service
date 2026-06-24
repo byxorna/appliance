@@ -1,0 +1,22 @@
+[Unit]
+Description=LXMF propagation node
+After=appliance-rnsd.service
+Wants=appliance-rnsd.service
+
+[Service]
+Type=simple
+ExecStartPre=-/usr/bin/podman rm -f appliance-lxmd
+ExecStart=/usr/bin/podman run \
+    --name appliance-lxmd \
+    --rm \
+    --network host \
+    -v /data/apps/reticulum/rnsd/config:/etc/rsReticulum:ro \
+    -v /data/apps/reticulum/lxmd/config:/etc/rsLXMF:ro \
+    -v /data/apps/reticulum/lxmd/storage:/var/lib/rsLXMF \
+    appliance-lxmd:latest
+ExecStop=/usr/bin/podman stop -t 10 appliance-lxmd
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

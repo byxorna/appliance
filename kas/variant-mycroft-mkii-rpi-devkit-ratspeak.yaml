@@ -1,0 +1,18 @@
+# kas configuration for Mycroft Mark II DevKit Ratspeak Appliance
+# Mesh messenger with Reticulum transport and LXMF relay.
+
+header:
+  version: 14
+  includes:
+    - kas/common.yaml
+    - kas/machine-mycroft-mkii-rpi-devkit.yaml
+    - kas/debug.yaml
+    - kas/devtools.yaml
+
+machine: mycroft-mkii-rpi-devkit
+
+local_conf_header:
+  app: |
+    IMAGE_INSTALL:append = " ratspeak appliance-reticulum"
+  identity: |
+    hostname:pn-base-files = "mycroft-mkii-rpi-devkit-ratspeak"

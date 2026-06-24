@@ -1,0 +1,15 @@
+[Unit]
+Description=Bind-mount Ratspeak persistent data
+RequiresMountsFor=/data
+DefaultDependencies=no
+After=appliance-init.service data.mount
+Before=appliance-app-ratspeak.service
+
+[Mount]
+What=/data/apps/reticulum/ratspeak
+Where=/home/kiosk/.local/share/org.ratspeak.desktop
+Type=none
+Options=bind
+
+[Install]
+WantedBy=appliance-app-ratspeak.service
