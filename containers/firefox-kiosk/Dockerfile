@@ -65,6 +65,10 @@ RUN STRAY=$(find /usr/lib/ -name 'libEGL.so*' -o -name 'libGL.so*' \
 COPY firefox-kiosk-wrapper /usr/local/bin/firefox-kiosk-wrapper
 RUN chmod +x /usr/local/bin/firefox-kiosk-wrapper
 
+# Enterprise policies: suppress all first-run prompts, telemetry, update
+# checks, and other nags. Locked via policies.json so users can't override.
+COPY policies.json /usr/lib/firefox/distribution/policies.json
+
 # Run as the kiosk user (UID mapped to host via --userns keep-id)
 USER 810:810
 
