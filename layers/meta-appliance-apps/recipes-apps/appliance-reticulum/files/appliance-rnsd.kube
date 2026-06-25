@@ -1,0 +1,15 @@
+[Unit]
+Description=Reticulum transport daemon
+After=network-online.target
+Wants=network-online.target
+
+[Kube]
+Yaml=/usr/share/appliance-reticulum/appliance-rnsd-pod.yaml
+Network=host
+
+[Service]
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

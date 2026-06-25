@@ -1,4 +1,5 @@
-FROM docker.io/library/rust:1.87-slim-bookworm AS builder
+ARG RUST_VERSION=1.96
+FROM docker.io/library/rust:${RUST_VERSION}-slim-bookworm AS builder
 
 ARG RSRETICULUM_VERSION=v1.0.1
 

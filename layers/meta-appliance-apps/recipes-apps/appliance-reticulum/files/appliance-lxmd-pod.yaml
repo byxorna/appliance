@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lxmd
+spec:
+  hostNetwork: true
+  restartPolicy: Always
+  containers:
+    - name: daemon
+      image: appliance-lxmd:latest
+      args: ["--config", "/etc/rsLXMF", "--rnsconfig", "/etc/rsReticulum", "--propagation-node"]
+      volumeMounts:
+        - name: rns-config
+          mountPath: /etc/rsReticulum
+        - name: lxmf-config
+          mountPath: /etc/rsLXMF
+        - name: storage
+          mountPath: /var/lib/rsLXMF
+  volumes:
+    - name: rns-config
+      hostPath:
+        path: /data/apps/reticulum/rnsd/config
+        type: Directory
+    - name: lxmf-config
+      hostPath:
+        path: /data/apps/reticulum/lxmd/config
+        type: Directory
+    - name: storage
+      hostPath:
+        path: /data/apps/reticulum/lxmd/storage
+        type: DirectoryOrCreate

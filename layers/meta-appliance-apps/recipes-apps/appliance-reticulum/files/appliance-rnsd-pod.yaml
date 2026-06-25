@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rnsd
+spec:
+  hostNetwork: true
+  restartPolicy: Always
+  containers:
+    - name: daemon
+      image: appliance-rnsd:latest
+      args: ["--config", "/etc/rsReticulum"]
+      volumeMounts:
+        - name: config
+          mountPath: /etc/rsReticulum
+        - name: storage
+          mountPath: /var/lib/rsReticulum
+      resources:
+        requests:
+          podman.io/device=/dev/ttyUSB0: 1
+          podman.io/device=/dev/ttyACM0: 1
+  volumes:
+    - name: config
+      hostPath:
+        path: /data/apps/reticulum/rnsd/config
+        type: Directory
+    - name: storage
+      hostPath:
+        path: /data/apps/reticulum/rnsd/storage
+        type: DirectoryOrCreate

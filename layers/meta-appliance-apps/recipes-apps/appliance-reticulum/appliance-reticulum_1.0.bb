@@ -1,19 +1,19 @@
 SUMMARY = "Reticulum transport and LXMF relay services (containerized)"
-DESCRIPTION = "Headless systemd services for rnsd-rs (Reticulum transport daemon) \
-and lxmd-rs (LXMF propagation node). Both run as OCI containers managed by podman. \
-Ships default configs and data directory layout."
+DESCRIPTION = "Headless services for rnsd-rs (Reticulum transport daemon) \
+and lxmd-rs (LXMF propagation node). Both run as OCI containers managed by \
+podman via Quadlet .kube units. Ships default configs and data directory layout."
 HOMEPAGE = "https://github.com/ratspeak/rsReticulum"
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit systemd
-
 COMMUNITY_NODES_URL = "https://codeberg.org/latticeworks/wiki/raw/branch/main/resources/reticulum/community_nodes_list"
 
 SRC_URI = " \
-    file://appliance-rnsd.service \
-    file://appliance-lxmd.service \
+    file://appliance-rnsd.kube \
+    file://appliance-lxmd.kube \
+    file://appliance-rnsd-pod.yaml \
+    file://appliance-lxmd-pod.yaml \
     file://reticulum-config.template \
     file://lxmf-config \
     file://appliance-reticulum-data.conf \
@@ -35,28 +35,31 @@ do_compile() {
 }
 
 do_install() {
-    install -d ${D}${systemd_system_unitdir}
-    install -m 0644 ${WORKDIR}/appliance-rnsd.service \
-        ${D}${systemd_system_unitdir}/appliance-rnsd.service
-    install -m 0644 ${WORKDIR}/appliance-lxmd.service \
-        ${D}${systemd_system_unitdir}/appliance-lxmd.service
-
-    install -d ${D}${nonarch_libdir}/tmpfiles.d
-    install -m 0644 ${WORKDIR}/appliance-reticulum-data.conf \
-        ${D}${nonarch_libdir}/tmpfiles.d/appliance-reticulum-data.conf
+    install -d ${D}${sysconfdir}/containers/systemd
+    install -m 0644 ${WORKDIR}/appliance-rnsd.kube \
+        ${D}${sysconfdir}/containers/systemd/appliance-rnsd.kube
+    install -m 0644 ${WORKDIR}/appliance-lxmd.kube \
+        ${D}${sysconfdir}/containers/systemd/appliance-lxmd.kube
 
     install -d ${D}${datadir}/appliance-reticulum
+    install -m 0644 ${WORKDIR}/appliance-rnsd-pod.yaml \
+        ${D}${datadir}/appliance-reticulum/appliance-rnsd-pod.yaml
+    install -m 0644 ${WORKDIR}/appliance-lxmd-pod.yaml \
+        ${D}${datadir}/appliance-reticulum/appliance-lxmd-pod.yaml
     install -m 0644 ${WORKDIR}/reticulum-config \
         ${D}${datadir}/appliance-reticulum/reticulum-config.default
     install -m 0644 ${WORKDIR}/lxmf-config \
         ${D}${datadir}/appliance-reticulum/lxmf-config.default
-}
 
-SYSTEMD_SERVICE:${PN} = "appliance-rnsd.service appliance-lxmd.service"
+    install -d ${D}${nonarch_libdir}/tmpfiles.d
+    install -m 0644 ${WORKDIR}/appliance-reticulum-data.conf \
+        ${D}${nonarch_libdir}/tmpfiles.d/appliance-reticulum-data.conf
+}
 
 RDEPENDS:${PN} = "podman"
 
 FILES:${PN} += " \
-    ${nonarch_libdir}/tmpfiles.d/appliance-reticulum-data.conf \
+    ${sysconfdir}/containers/systemd \
     ${datadir}/appliance-reticulum \
+    ${nonarch_libdir}/tmpfiles.d/appliance-reticulum-data.conf \
 "

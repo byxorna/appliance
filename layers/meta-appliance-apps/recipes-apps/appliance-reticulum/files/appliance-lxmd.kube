@@ -1,0 +1,15 @@
+[Unit]
+Description=LXMF propagation node
+After=appliance-rnsd.service
+Wants=appliance-rnsd.service
+
+[Kube]
+Yaml=/usr/share/appliance-reticulum/appliance-lxmd-pod.yaml
+Network=host
+
+[Service]
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
