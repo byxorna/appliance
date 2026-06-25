@@ -12,7 +12,7 @@ Description=Bind-mount Feishin persistent config
 RequiresMountsFor=/data
 DefaultDependencies=no
 After=appliance-init.service data.mount
-Before=appliance-app-feishin.service
+Before=feishin.service
 
 [Mount]
 What=/data/apps/feishin
@@ -21,4 +21,4 @@ Type=none
 Options=bind
 
 [Install]
-WantedBy=appliance-app-feishin.service
+WantedBy=feishin.service

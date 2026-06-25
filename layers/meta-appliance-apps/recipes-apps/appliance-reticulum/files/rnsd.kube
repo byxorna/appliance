@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Kube]
-Yaml=/usr/share/appliance-reticulum/appliance-rnsd-pod.yaml
+Yaml=/usr/share/appliance-reticulum/rnsd-pod.yaml
 Network=host
 
 [Service]

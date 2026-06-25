@@ -27,7 +27,7 @@
 # What this class does:
 #   1. Parses app.json at parse time for SYSTEMD_SERVICE / FILES
 #   2. Installs app.json to /opt/<name>/app.json
-#   3. Generates a systemd service unit: appliance-app-<name>.service
+#   3. Generates a systemd service unit: <name>.service
 #      that launches the container via podman with Wayland, PipeWire,
 #      and D-Bus passthrough
 #   4. Creates a graphical.target.wants symlink for weston@<vt>.service
@@ -94,7 +94,7 @@ python () {
     if 'image' not in app:
         bb.fatal('appliance-app.bbclass: app.json must have an image field')
 
-    svc = 'appliance-app-%s.service' % name
+    svc = '%s.service' % name
     pn = d.getVar('PN')
     unitdir = d.getVar('systemd_system_unitdir')
     libdir = d.getVar('nonarch_libdir')
@@ -109,7 +109,7 @@ python () {
     files += ' /opt/%s' % name
     files += ' %s/%s' % (unitdir, svc)
     files += ' %s/graphical.target.wants/weston@%s.service' % (unitdir, vt)
-    files += ' %s/tmpfiles.d/appliance-app-%s.conf' % (libdir, name)
+    files += ' %s/tmpfiles.d/%s.conf' % (libdir, name)
     d.setVar('FILES:%s' % pn, files)
 }
 
@@ -136,7 +136,7 @@ with open(manifest_path) as f:
 name = app['name']
 vt = str(app['vt'])
 image = app['image']
-container_name = 'appliance-app-%s' % name
+container_name = '%s' % name
 
 args = ['/usr/bin/podman', 'run']
 args += ['--name', container_name]
@@ -262,7 +262,7 @@ do_install:append() {
     local uid="${APPLIANCE_APP_UID}"
     local compositor_uid="${APPLIANCE_COMPOSITOR_UID}"
     local session_uid="${APPLIANCE_SESSION_UID}"
-    local container_name="appliance-app-${app_name}"
+    local container_name="${app_name}"
 
     install -d ${D}/opt/${app_name}
 
@@ -284,7 +284,7 @@ do_install:append() {
     fi
 
     # --- Generate the systemd service unit ------------------------------------
-    local svc="appliance-app-${app_name}.service"
+    local svc="${app_name}.service"
     install -d ${D}${systemd_system_unitdir}
 
     cat > ${D}${systemd_system_unitdir}/${svc} <<SVCEOF
@@ -319,7 +319,7 @@ SVCEOF
 
     # --- tmpfiles.d: create persistent data dir on /data ----------------------
     install -d ${D}${nonarch_libdir}/tmpfiles.d
-    cat > ${D}${nonarch_libdir}/tmpfiles.d/appliance-app-${app_name}.conf <<EOF
+    cat > ${D}${nonarch_libdir}/tmpfiles.d/${app_name}.conf <<EOF
 # Persistent data directory for ${app_display}
 d /data/apps/${app_name} 0750 ${APPLIANCE_APP_USER} ${APPLIANCE_APP_USER} -
 EOF

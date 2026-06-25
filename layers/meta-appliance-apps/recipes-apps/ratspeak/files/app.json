@@ -5,5 +5,9 @@
   "image": "appliance-ratspeak:latest",
   "mounts": [
     "/data/apps/reticulum/ratspeak:/home/kiosk/.local/share/org.ratspeak.desktop"
-  ]
+  ],
+  "env": {
+    "GSK_RENDERER": "cairo",
+    "WEBKIT_DISABLE_DMABUF_RENDERER": "1"
+  }
 }

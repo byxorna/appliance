@@ -1,10 +1,10 @@
 [Unit]
 Description=LXMF propagation node
-After=appliance-rnsd.service
-Wants=appliance-rnsd.service
+After=rnsd.service
+Wants=rnsd.service
 
 [Kube]
-Yaml=/usr/share/appliance-reticulum/appliance-lxmd-pod.yaml
+Yaml=/usr/share/appliance-reticulum/lxmd-pod.yaml
 Network=host
 
 [Service]

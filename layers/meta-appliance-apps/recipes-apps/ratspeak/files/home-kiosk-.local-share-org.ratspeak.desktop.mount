@@ -3,7 +3,7 @@ Description=Bind-mount Ratspeak persistent data
 RequiresMountsFor=/data
 DefaultDependencies=no
 After=appliance-init.service data.mount
-Before=appliance-app-ratspeak.service
+Before=ratspeak.service
 
 [Mount]
 What=/data/apps/reticulum/ratspeak
@@ -12,4 +12,4 @@ Type=none
 Options=bind
 
 [Install]
-WantedBy=appliance-app-ratspeak.service
+WantedBy=ratspeak.service

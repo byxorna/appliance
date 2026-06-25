@@ -12,7 +12,7 @@ Description=Bind-mount Jellyfin Desktop persistent config
 RequiresMountsFor=/data
 DefaultDependencies=no
 After=appliance-init.service data.mount
-Before=appliance-app-jellyfin-desktop.service
+Before=jellyfin-desktop.service
 
 [Mount]
 What=/data/apps/jellyfin-desktop
@@ -21,4 +21,4 @@ Type=none
 Options=bind
 
 [Install]
-WantedBy=appliance-app-jellyfin-desktop.service
+WantedBy=jellyfin-desktop.service

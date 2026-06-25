@@ -12,4 +12,4 @@ set -e
 
 LOG_LEVEL="${JFN_LOG_LEVEL:-info}"
 
-exec /opt/jellyfin-desktop/AppRun --log-level "$LOG_LEVEL" "$@"
+exec /opt/jellyfin-desktop/AppRun --log-level "$LOG_LEVEL" --platform-paint shm "$@"

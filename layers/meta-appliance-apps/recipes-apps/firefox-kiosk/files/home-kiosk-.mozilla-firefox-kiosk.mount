@@ -13,7 +13,7 @@ Description=Bind-mount Firefox Kiosk persistent profile
 RequiresMountsFor=/data
 DefaultDependencies=no
 After=appliance-init.service data.mount
-Before=appliance-app-firefox-kiosk.service
+Before=firefox-kiosk.service
 
 [Mount]
 What=/data/apps/firefox-kiosk/profile
@@ -22,4 +22,4 @@ Type=none
 Options=bind
 
 [Install]
-WantedBy=appliance-app-firefox-kiosk.service
+WantedBy=firefox-kiosk.service

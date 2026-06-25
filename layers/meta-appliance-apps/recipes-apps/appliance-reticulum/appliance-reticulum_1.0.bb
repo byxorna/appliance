@@ -10,10 +10,10 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 COMMUNITY_NODES_URL = "https://codeberg.org/latticeworks/wiki/raw/branch/main/resources/reticulum/community_nodes_list"
 
 SRC_URI = " \
-    file://appliance-rnsd.kube \
-    file://appliance-lxmd.kube \
-    file://appliance-rnsd-pod.yaml \
-    file://appliance-lxmd-pod.yaml \
+    file://rnsd.kube \
+    file://lxmd.kube \
+    file://rnsd-pod.yaml \
+    file://lxmd-pod.yaml \
     file://reticulum-config.template \
     file://lxmf-config \
     file://appliance-reticulum-data.conf \
@@ -36,16 +36,16 @@ do_compile() {
 
 do_install() {
     install -d ${D}${sysconfdir}/containers/systemd
-    install -m 0644 ${WORKDIR}/appliance-rnsd.kube \
-        ${D}${sysconfdir}/containers/systemd/appliance-rnsd.kube
-    install -m 0644 ${WORKDIR}/appliance-lxmd.kube \
-        ${D}${sysconfdir}/containers/systemd/appliance-lxmd.kube
+    install -m 0644 ${WORKDIR}/rnsd.kube \
+        ${D}${sysconfdir}/containers/systemd/rnsd.kube
+    install -m 0644 ${WORKDIR}/lxmd.kube \
+        ${D}${sysconfdir}/containers/systemd/lxmd.kube
 
     install -d ${D}${datadir}/appliance-reticulum
-    install -m 0644 ${WORKDIR}/appliance-rnsd-pod.yaml \
-        ${D}${datadir}/appliance-reticulum/appliance-rnsd-pod.yaml
-    install -m 0644 ${WORKDIR}/appliance-lxmd-pod.yaml \
-        ${D}${datadir}/appliance-reticulum/appliance-lxmd-pod.yaml
+    install -m 0644 ${WORKDIR}/rnsd-pod.yaml \
+        ${D}${datadir}/appliance-reticulum/rnsd-pod.yaml
+    install -m 0644 ${WORKDIR}/lxmd-pod.yaml \
+        ${D}${datadir}/appliance-reticulum/lxmd-pod.yaml
     install -m 0644 ${WORKDIR}/reticulum-config \
         ${D}${datadir}/appliance-reticulum/reticulum-config.default
     install -m 0644 ${WORKDIR}/lxmf-config \
