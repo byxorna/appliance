@@ -85,7 +85,7 @@ endef
 
 $(foreach n,$(CONTAINER_NAMES),$(eval $(call CONTAINER_RULES,$(n))))
 
-.PHONY: shell kas-shell check build build-image build-update build-firmware build-all status clean clean-cache clean-cache-all rpiboot _build-info print-variants print-machines $(addprefix x-rebuild-redeploy-,$(VARIANTS))
+.PHONY: shell kas-shell check build build-image build-update build-firmware build-all release status clean clean-cache clean-cache-all rpiboot _build-info print-variants print-machines $(addprefix x-rebuild-redeploy-,$(VARIANTS))
 
 # Known artifact extensions produced by build and build-update targets.
 # Only these are checksummed in the build-info sidecar.
@@ -198,6 +198,98 @@ build-all: ## Build all variants sequentially
 		echo "=== Building variant: $$v ==="; \
 		$(MAKE) VARIANT=$$v build || exit 1; \
 	done
+
+# --- Release build matrix ----------------------------------------------------
+# Builds all containers and all variants, captures logs per job, and prints a
+# summary table at the end.  Each job's output goes to logs/<job>.log so
+# failures can be inspected without scrolling.
+#
+# Container app versions are extracted from ARG *VERSION= or *REF= lines in
+# each Dockerfile.  Rootfs version comes from git describe.
+
+RELEASE_LOG_DIR := $(CURDIR)/logs
+
+# Extract the app version from a container's Dockerfile.
+# Finds the first ARG whose name ends in _VERSION or _REF.
+_container_version = $(shell awk -F= '/^ARG .+_(VERSION|REF)=/{print $$2; exit}' containers/$(1)/Dockerfile 2>/dev/null || echo "latest")
+
+release: ## Build all containers and variants with summary
+	@mkdir -p "$(RELEASE_LOG_DIR)" "$(ARTIFACTS_DIR)"
+	@GIT_SHA=$$(git -C "$(CURDIR)" rev-parse --short HEAD 2>/dev/null || echo "unknown"); \
+	GIT_DIRTY=$$(git -C "$(CURDIR)" diff --quiet 2>/dev/null && echo "" || echo "-dirty"); \
+	GIT_DESC=$$(git -C "$(CURDIR)" describe --tags --long --always --dirty 2>/dev/null | sed 's/^v//' || echo "$$GIT_SHA$$GIT_DIRTY"); \
+	START=$$(date +%s); \
+	TOTAL=0; PASSED=0; FAILED=0; \
+	CLR="\033[2K\r"; \
+	echo ""; \
+	echo "release $$GIT_DESC"; \
+	echo ""; \
+	LOG="$(RELEASE_LOG_DIR)/build-image.log"; \
+	printf "  %-40s %-10s ..." "build-image" "setup"; \
+	if $(MAKE) --no-print-directory build-image > "$$LOG" 2>&1; then \
+		printf "$$CLR  %-40s %-10s ✓\n" "build-image" "setup"; \
+	else \
+		printf "$$CLR  %-40s %-10s ✗  -> %s\n" "build-image" "setup" "$$LOG"; \
+		echo ""; echo "build-image failed; cannot continue."; \
+		cat "$$LOG"; \
+		exit 1; \
+	fi; \
+	for c in $(CONTAINER_NAMES); do \
+		TOTAL=$$((TOTAL + 1)); \
+		APP_VER=$$(awk -F= '/^ARG .+_(VERSION|REF)=/{print $$2; exit}' "containers/$$c/Dockerfile" 2>/dev/null); \
+		[ -z "$$APP_VER" ] && APP_VER="latest"; \
+		VER_LABEL="$$APP_VER ($$GIT_SHA$$GIT_DIRTY)"; \
+		LOG="$(RELEASE_LOG_DIR)/container-$$c.log"; \
+		IMG_TAG="appliance-$$c:latest"; \
+		printf "  %-40s container  ..." "$$IMG_TAG"; \
+		if $(MAKE) --no-print-directory save-container-$$c > "$$LOG" 2>&1; then \
+			PASSED=$$((PASSED + 1)); \
+			SIZE=$$(du -h "$(ARTIFACTS_DIR)/appliance-$$c-latest.tar" 2>/dev/null | cut -f1 | tr -d ' '); \
+			printf "$$CLR  %-40s container  ✓  %-20s  %s\n" "$$IMG_TAG" "$$VER_LABEL" "$$SIZE"; \
+		else \
+			FAILED=$$((FAILED + 1)); \
+			printf "$$CLR  %-40s container  ✗  %-20s  -> %s\n" "$$IMG_TAG" "$$VER_LABEL" "$$LOG"; \
+		fi; \
+	done; \
+	echo ""; \
+	for v in $(VARIANTS); do \
+		for phase in firmware update; do \
+			TOTAL=$$((TOTAL + 1)); \
+			LOG="$(RELEASE_LOG_DIR)/$$v-$$phase.log"; \
+			printf "  %-40s %-10s ..." "$$v" "$$phase"; \
+			if [ "$$phase" = "firmware" ]; then \
+				TARGET="build-firmware"; \
+			else \
+				TARGET="build-update"; \
+			fi; \
+			if $(MAKE) --no-print-directory VARIANT=$$v $$TARGET > "$$LOG" 2>&1; then \
+				PASSED=$$((PASSED + 1)); \
+				V_MACHINE=$$(awk '/^machine:/ {print $$2}' kas/variant-$$v.yaml); \
+				V_IMAGE=$$(awk '/^target:/ {print $$2}' kas/variant-$$v.yaml kas/common.yaml | head -1); \
+				if [ "$$phase" = "firmware" ]; then \
+					ART="$(ARTIFACTS_DIR)/$$v-$$V_IMAGE-$$V_MACHINE.wic.bz2"; \
+					[ -f "$$ART" ] || ART="$(ARTIFACTS_DIR)/$$v-$$V_IMAGE-$$V_MACHINE.wic"; \
+				else \
+					ART="$(ARTIFACTS_DIR)/$$v-$$V_IMAGE-$$V_MACHINE.raucb"; \
+				fi; \
+				SIZE=$$(du -h "$$ART" 2>/dev/null | cut -f1 | tr -d ' '); \
+				printf "$$CLR  %-40s %-10s ✓  %-20s  %s\n" "$$v" "$$phase" "$$GIT_DESC" "$$SIZE"; \
+			else \
+				FAILED=$$((FAILED + 1)); \
+				printf "$$CLR  %-40s %-10s ✗  %-20s  -> %s\n" "$$v" "$$phase" "$$GIT_DESC" "$$LOG"; \
+			fi; \
+		done; \
+	done; \
+	END=$$(date +%s); \
+	ELAPSED=$$((END - START)); \
+	MINS=$$((ELAPSED / 60)); \
+	SECS=$$((ELAPSED % 60)); \
+	echo ""; \
+	echo "$$PASSED/$$TOTAL passed, $$FAILED failed  ($${MINS}m$${SECS}s)"; \
+	echo "artifacts: $(ARTIFACTS_DIR)/"; \
+	echo "logs:      $(RELEASE_LOG_DIR)/"; \
+	echo ""; \
+	[ "$$FAILED" -eq 0 ]
 
 status: ## Show bitbake progress from running build containers
 	@CIDS=$$($(CONTAINER_ENGINE) ps -q --filter ancestor=$(IMAGE_NAME)); \
