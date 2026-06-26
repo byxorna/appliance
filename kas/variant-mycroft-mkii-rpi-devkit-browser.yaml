@@ -16,4 +16,4 @@ local_conf_header:
   app: |
     IMAGE_INSTALL:append = " firefox-kiosk"
   identity: |
-    hostname:pn-base-files = "mycroft-mkii-rpi-devkit-browser"
+    hostname:pn-base-files = "mycroft-mkii"

@@ -16,4 +16,4 @@ local_conf_header:
   app: |
     IMAGE_INSTALL:append = " jellyfin-desktop"
   identity: |
-    hostname:pn-base-files = "mycroft-mkii-rpi-devkit-tv"
+    hostname:pn-base-files = "mycroft-mkii"

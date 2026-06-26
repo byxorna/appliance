@@ -16,4 +16,4 @@ local_conf_header:
   app: |
     IMAGE_INSTALL:append = " firefox-kiosk"
   identity: |
-    hostname:pn-base-files = "reterminal-browser"
+    hostname:pn-base-files = "reterminal"

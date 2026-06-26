@@ -17,4 +17,4 @@ local_conf_header:
   app: |
     IMAGE_INSTALL:append = " feishin"
   identity: |
-    hostname:pn-base-files = "reterminal-hifi"
+    hostname:pn-base-files = "reterminal"

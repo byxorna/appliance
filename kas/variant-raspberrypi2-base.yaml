@@ -13,4 +13,4 @@ machine: raspberrypi2
 
 local_conf_header:
   identity: |
-    hostname:pn-base-files = "raspberrypi2-base"
+    hostname:pn-base-files = "raspberrypi2"

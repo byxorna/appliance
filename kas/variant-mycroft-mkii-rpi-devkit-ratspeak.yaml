@@ -16,4 +16,4 @@ local_conf_header:
   app: |
     IMAGE_INSTALL:append = " ratspeak appliance-reticulum"
   identity: |
-    hostname:pn-base-files = "mycroft-mkii-rpi-devkit-ratspeak"
+    hostname:pn-base-files = "mycroft-mkii"
