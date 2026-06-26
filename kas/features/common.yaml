@@ -76,8 +76,6 @@ repos:
   meta-appliance-apps:
     path: layers/meta-appliance-apps
 
-  meta-appliance-audio:
-    path: layers/meta-appliance-audio
 
 local_conf_header:
   rauc: |
@@ -112,16 +110,9 @@ local_conf_header:
     INHERIT += "extrausers"
     EXTRA_USERS_PARAMS = "usermod -s /usr/bin/zsh root;"
 
-  kiosk: |
-    IMAGE_INSTALL:append = " weston weston-init kiosk-user appliance-init podman crun fuse-overlayfs dbus-user-session mesa-megadriver gpu-libs"
-    SYSTEMD_DEFAULT_TARGET = "graphical.target"
+  container-runtime: |
+    IMAGE_INSTALL:append = " podman crun fuse-overlayfs gpu-libs"
 
   docs: |
     IMAGE_INSTALL:append = " appliance-docs appliance-selfupdate"
-
-  audio: |
-    IMAGE_INSTALL:append = " pipewire wireplumber pipewire-pulse pipewire-user-services"
-
-  input-handler: |
-    IMAGE_INSTALL:append = " appliance-input-handler"
 

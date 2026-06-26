@@ -4,10 +4,11 @@
 header:
   version: 14
   includes:
-    - kas/common.yaml
-    - kas/machine-seeed-reterminal.yaml
-    - kas/debug.yaml
-    - kas/devtools.yaml
+    - kas/features/common.yaml
+    - kas/machines/seeed-reterminal.yaml
+    - kas/features/kiosk.yaml
+    - kas/features/debug.yaml
+    - kas/features/devtools.yaml
 
 machine: seeed-reterminal
 

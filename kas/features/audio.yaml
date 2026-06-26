@@ -1,0 +1,14 @@
+# Audio feature: PipeWire stack and D-Bus user session.
+# Included by kiosk.yaml (display variants get audio automatically) and can be
+# included independently by headless variants that need audio.
+
+header:
+  version: 14
+
+repos:
+  meta-appliance-audio:
+    path: layers/meta-appliance-audio
+
+local_conf_header:
+  audio: |
+    IMAGE_INSTALL:append = " pipewire wireplumber pipewire-pulse pipewire-user-services dbus-user-session"

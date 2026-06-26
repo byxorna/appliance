@@ -76,7 +76,7 @@ To include hardware test tools (evtest, i2c-tools, alsa-utils, etc.):
 kas build kas/variant-reterminal-hifi.yaml:kas/test-tools.yaml
 ```
 
-> **Note:** Common upstream SRCREVs are pinned in `kas/common.yaml`. Variant-specific repos and machine config are in `kas/variant-<name>.yaml`. See `docs/layers.md` for the pinned versions table.
+> **Note:** Common upstream SRCREVs are pinned in `kas/features/common.yaml`. Variant-specific repos and machine config are in `kas/variant-<name>.yaml`. See `docs/layers.md` for the pinned versions table.
 
 ## Inspecting build output
 

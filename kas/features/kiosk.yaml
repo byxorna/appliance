@@ -1,0 +1,14 @@
+# Kiosk feature: Weston display stack, input handler, and audio.
+# Included by display variants. Pulls in audio.yaml automatically.
+
+header:
+  version: 14
+  includes:
+    - kas/features/audio.yaml
+
+local_conf_header:
+  kiosk: |
+    IMAGE_INSTALL:append = " weston weston-init kiosk-user appliance-init mesa-megadriver"
+    SYSTEMD_DEFAULT_TARGET = "graphical.target"
+  input-handler: |
+    IMAGE_INSTALL:append = " appliance-input-handler"

@@ -4,10 +4,11 @@
 header:
   version: 14
   includes:
-    - kas/common.yaml
-    - kas/machine-mycroft-mkii-rpi-devkit.yaml
-    - kas/debug.yaml
-    - kas/devtools.yaml
+    - kas/features/common.yaml
+    - kas/machines/mycroft-mkii-rpi-devkit.yaml
+    - kas/features/kiosk.yaml
+    - kas/features/debug.yaml
+    - kas/features/devtools.yaml
 
 machine: mycroft-mkii-rpi-devkit
 

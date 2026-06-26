@@ -1,0 +1,16 @@
+# kas configuration for Raspberry Pi Zero 2 W base image (64-bit).
+# Headless: container runtime, no display stack, no audio.
+
+header:
+  version: 14
+  includes:
+    - kas/features/common.yaml
+    - kas/machines/raspberrypi0-2w-64.yaml
+    - kas/features/debug.yaml
+    - kas/features/devtools.yaml
+
+machine: raspberrypi0-2w-64
+
+local_conf_header:
+  identity: |
+    hostname:pn-base-files = "raspberrypi0-2w-64-base"

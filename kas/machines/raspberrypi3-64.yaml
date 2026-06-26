@@ -1,0 +1,36 @@
+# Machine configuration for the Raspberry Pi 3B (64-bit).
+# WiFi: bcm43430/bcm43455. BT: bcm43430a1/bcm4345c0.
+
+header:
+  version: 14
+
+machine: raspberrypi3-64
+
+repos:
+  meta-raspberrypi:
+    url: "https://git.yoctoproject.org/meta-raspberrypi"
+    path: build/repos/meta-raspberrypi
+    branch: scarthgap
+    commit: 2c646d29912dcc873469a57b1c207e1549c5094d
+
+  meta-rauc-community:
+    url: "https://github.com/rauc/meta-rauc-community.git"
+    path: build/repos/meta-rauc-community
+    branch: scarthgap
+    commit: 222c61275054974cdbd09bd5faa2b7a37ddbd840
+    layers:
+      meta-rauc-raspberrypi:
+
+  meta-appliance-bsp-raspberrypi:
+    path: layers/meta-appliance-bsp-raspberrypi
+
+local_conf_header:
+  raspberrypi3-64-hw: |
+    IMAGE_INSTALL:append = " \
+        pi-bluetooth \
+        bluez5 \
+    "
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
+  rauc-bsp: |
+    RPI_USE_U_BOOT = "1"
+    WKS_FILE = "appliance-dual-rootfs.wks.in"

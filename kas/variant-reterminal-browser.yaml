@@ -1,13 +1,14 @@
 # kas configuration for reTerminal Browser Appliance
-# Boots into Firefox kiosk mode on the reTerminal's DSI display.
+# Builds on common.yaml + machine config, adding Firefox kiosk.
 
 header:
   version: 14
   includes:
-    - kas/common.yaml
-    - kas/machine-seeed-reterminal.yaml
-    - kas/debug.yaml
-    - kas/devtools.yaml
+    - kas/features/common.yaml
+    - kas/machines/seeed-reterminal.yaml
+    - kas/features/kiosk.yaml
+    - kas/features/debug.yaml
+    - kas/features/devtools.yaml
 
 machine: seeed-reterminal
 

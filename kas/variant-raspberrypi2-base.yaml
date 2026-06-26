@@ -1,0 +1,16 @@
+# kas configuration for Raspberry Pi 2B base image.
+# Headless: container runtime, no display stack, no audio.
+
+header:
+  version: 14
+  includes:
+    - kas/features/common.yaml
+    - kas/machines/raspberrypi2.yaml
+    - kas/features/debug.yaml
+    - kas/features/devtools.yaml
+
+machine: raspberrypi2
+
+local_conf_header:
+  identity: |
+    hostname:pn-base-files = "raspberrypi2-base"

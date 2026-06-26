@@ -1,0 +1,37 @@
+# Machine configuration for the Raspberry Pi Zero 2 W (64-bit).
+# WiFi: bcm43436/bcm43436s (plus bcm43430/43455 inherited from Pi 3).
+# BT: bcm43430b0 (plus bcm43430a1/bcm4345c0 inherited from Pi 3).
+
+header:
+  version: 14
+
+machine: raspberrypi0-2w-64
+
+repos:
+  meta-raspberrypi:
+    url: "https://git.yoctoproject.org/meta-raspberrypi"
+    path: build/repos/meta-raspberrypi
+    branch: scarthgap
+    commit: 2c646d29912dcc873469a57b1c207e1549c5094d
+
+  meta-rauc-community:
+    url: "https://github.com/rauc/meta-rauc-community.git"
+    path: build/repos/meta-rauc-community
+    branch: scarthgap
+    commit: 222c61275054974cdbd09bd5faa2b7a37ddbd840
+    layers:
+      meta-rauc-raspberrypi:
+
+  meta-appliance-bsp-raspberrypi:
+    path: layers/meta-appliance-bsp-raspberrypi
+
+local_conf_header:
+  raspberrypi0-2w-64-hw: |
+    IMAGE_INSTALL:append = " \
+        pi-bluetooth \
+        bluez5 \
+    "
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch Firmware-cypress-rpidistro"
+  rauc-bsp: |
+    RPI_USE_U_BOOT = "1"
+    WKS_FILE = "appliance-dual-rootfs.wks.in"

@@ -254,7 +254,7 @@ AUTOREV policy is an upstream meta-seeed-cm4 problem, not Yocto-specific.
 **Symptom:** The `kiosk` user is never created.
 
 **Root cause:** kas emits `local_conf_header` blocks alphabetically.
-The `kiosk` block in `kas/common.yaml` uses `+=` to append a
+The `kiosk` block in `kas/features/kiosk.yaml` uses `+=` to append a
 `useradd` command to `EXTRA_USERS_PARAMS`, but the `utilities` block
 uses bare `=` which overwrites the accumulated value. Since
 `k` sorts before `u`, the kiosk useradd runs first, then gets clobbered.

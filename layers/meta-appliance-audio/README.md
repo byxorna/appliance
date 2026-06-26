@@ -33,7 +33,7 @@ wanted services automatically.
 
 ## Build integration
 
-Add the `audio` `local_conf_header` block (see `kas/common.yaml`) to install the
+Add the `audio` `local_conf_header` block (see `kas/features/audio.yaml`) to install the
 stack:
 
 ```

@@ -1,0 +1,16 @@
+# kas configuration for Raspberry Pi 3B base image (64-bit).
+# Headless: container runtime, no display stack, no audio.
+
+header:
+  version: 14
+  includes:
+    - kas/features/common.yaml
+    - kas/machines/raspberrypi3-64.yaml
+    - kas/features/debug.yaml
+    - kas/features/devtools.yaml
+
+machine: raspberrypi3-64
+
+local_conf_header:
+  identity: |
+    hostname:pn-base-files = "raspberrypi3-64-base"

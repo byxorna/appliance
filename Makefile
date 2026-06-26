@@ -7,7 +7,7 @@ IMAGE_NAME := appliance-builder:latest
 # Override with `make CONTAINER_ENGINE=docker <target>` to use Docker
 CONTAINER_ENGINE := podman
 MACHINE := $(shell awk '/^machine:/ {print $$2}' $(KAS_CONFIG))
-IMAGE := $(shell awk '/^target:/ {print $$2}' $(KAS_CONFIG) kas/common.yaml | head -1)
+IMAGE := $(shell awk '/^target:/ {print $$2}' $(KAS_CONFIG) kas/features/common.yaml | head -1)
 ARTIFACTS_DIR := $(CURDIR)/artifacts
 ARTIFACT_PREFIX := $(VARIANT)-$(IMAGE)-$(MACHINE)
 
@@ -265,7 +265,7 @@ release: ## Build all containers and variants with summary
 			if $(MAKE) --no-print-directory VARIANT=$$v $$TARGET > "$$LOG" 2>&1; then \
 				PASSED=$$((PASSED + 1)); \
 				V_MACHINE=$$(awk '/^machine:/ {print $$2}' kas/variant-$$v.yaml); \
-				V_IMAGE=$$(awk '/^target:/ {print $$2}' kas/variant-$$v.yaml kas/common.yaml | head -1); \
+				V_IMAGE=$$(awk '/^target:/ {print $$2}' kas/variant-$$v.yaml kas/features/common.yaml | head -1); \
 				if [ "$$phase" = "firmware" ]; then \
 					ART="$(ARTIFACTS_DIR)/$$v-$$V_IMAGE-$$V_MACHINE.wic.bz2"; \
 					[ -f "$$ART" ] || ART="$(ARTIFACTS_DIR)/$$v-$$V_IMAGE-$$V_MACHINE.wic"; \
@@ -353,7 +353,7 @@ x-rebuild-redeploy-$(1): ## Rebuild + deploy $(1) to DEVICE_IP
 	$$(if $$(DEVICE_IP),,@echo "ERROR: DEVICE_IP is required"; exit 1)
 	$(eval _CONTAINER := $(call _variant_container,$(1)))
 	$(eval _V_MACHINE := $(shell awk '/^machine:/ {print $$2}' kas/variant-$(1).yaml))
-	$(eval _V_IMAGE := $(shell awk '/^target:/ {print $$2}' kas/variant-$(1).yaml kas/common.yaml | head -1))
+	$(eval _V_IMAGE := $(shell awk '/^target:/ {print $$2}' kas/variant-$(1).yaml kas/features/common.yaml | head -1))
 	$(eval _RAUCB := $(ARTIFACTS_DIR)/$(1)-$(_V_IMAGE)-$(_V_MACHINE).raucb)
 	$(eval _CONTAINER_TAR := $(ARTIFACTS_DIR)/appliance-$(_CONTAINER)-latest.tar)
 	@echo "══════════════════════════════════════════════════════════════"
