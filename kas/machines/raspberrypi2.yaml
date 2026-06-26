@@ -24,7 +24,4 @@ repos:
   meta-appliance-bsp-raspberrypi:
     path: layers/meta-appliance-bsp-raspberrypi
 
-local_conf_header:
-  rauc-bsp: |
-    RPI_USE_U_BOOT = "1"
-    WKS_FILE = "appliance-dual-rootfs.wks.in"
+

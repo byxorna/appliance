@@ -81,6 +81,9 @@ local_conf_header:
   rauc: |
     IMAGE_INSTALL:append = " rauc rauc-grow-data-part appliance-mark-good etc-overlay"
     IMAGE_FSTYPES:append = " ext4"
+  rauc-bsp: |
+    RPI_USE_U_BOOT = "1"
+    WKS_FILE = "appliance-dual-rootfs.wks.in"
   connectivity: |
     IMAGE_INSTALL:append = " \
         openssh-sshd \

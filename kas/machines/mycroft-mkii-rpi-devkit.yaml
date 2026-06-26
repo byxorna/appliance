@@ -49,6 +49,3 @@ local_conf_header:
         sj201-rev10-pwm-fan-overlay.dtbo;overlays/sj201-rev10-pwm-fan-overlay.dtbo \
     "
     do_image_wic[depends] += "sj201-dtoverlays:do_deploy"
-  rauc-bsp: |
-    RPI_USE_U_BOOT = "1"
-    WKS_FILE = "appliance-dual-rootfs.wks.in"
