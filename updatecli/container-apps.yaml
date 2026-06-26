@@ -1,0 +1,126 @@
+# Updatecli manifest: container application version pins
+# Tracks the latest release of each containerized app.
+#
+# Set UPDATECLI_GITHUB_TOKEN for GitHub release lookups. A read-only
+# fine-grained PAT with no permissions is sufficient for public repos.
+# Without a token, githubrelease sources fail gracefully and layer
+# manifests still run.
+#
+# Run: updatecli diff --config updatecli/container-apps.yaml
+#      updatecli apply --config updatecli/container-apps.yaml
+
+name: Container application versions
+
+sources:
+  feishin:
+    name: Feishin latest release
+    kind: githubrelease
+    spec:
+      owner: jeffvli
+      repository: feishin
+      token: '{{ env "UPDATECLI_GITHUB_TOKEN" }}'
+      versionfilter:
+        kind: semver
+    transformers:
+      - trimprefix: "v"
+
+  ratspeak:
+    name: Ratspeak latest release
+    kind: githubrelease
+    spec:
+      owner: ratspeak
+      repository: Ratspeak
+      token: '{{ env "UPDATECLI_GITHUB_TOKEN" }}'
+      versionfilter:
+        kind: semver
+    transformers:
+      - trimprefix: "v"
+
+  rsreticulum:
+    name: rsReticulum latest release
+    kind: githubrelease
+    spec:
+      owner: ratspeak
+      repository: rsReticulum
+      token: '{{ env "UPDATECLI_GITHUB_TOKEN" }}'
+      versionfilter:
+        kind: semver
+
+  rslxmf:
+    name: rsLXMF latest release
+    kind: githubrelease
+    spec:
+      owner: ratspeak
+      repository: rsLXMF
+      token: '{{ env "UPDATECLI_GITHUB_TOKEN" }}'
+      versionfilter:
+        kind: semver
+
+  jellyfin-desktop:
+    name: jellyfin-desktop HEAD
+    kind: gitbranch
+    spec:
+      url: https://github.com/jellyfin/jellyfin-desktop.git
+      branch: main
+      key: hash
+
+targets:
+  feishin:
+    name: FEISHIN_VERSION in containers/feishin/Dockerfile
+    kind: dockerfile
+    sourceid: feishin
+    spec:
+      file: containers/feishin/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: FEISHIN_VERSION
+
+  ratspeak:
+    name: RATSPEAK_VERSION in containers/ratspeak/Dockerfile
+    kind: dockerfile
+    sourceid: ratspeak
+    spec:
+      file: containers/ratspeak/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: RATSPEAK_VERSION
+
+  rsreticulum-rnsd:
+    name: RSRETICULUM_VERSION in containers/rnsd/Dockerfile
+    kind: dockerfile
+    sourceid: rsreticulum
+    spec:
+      file: containers/rnsd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: RSRETICULUM_VERSION
+
+  rsreticulum-lxmd:
+    name: RSRETICULUM_VERSION in containers/lxmd/Dockerfile
+    kind: dockerfile
+    sourceid: rsreticulum
+    spec:
+      file: containers/lxmd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: RSRETICULUM_VERSION
+
+  rslxmf:
+    name: RSLXMF_VERSION in containers/lxmd/Dockerfile
+    kind: dockerfile
+    sourceid: rslxmf
+    spec:
+      file: containers/lxmd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: RSLXMF_VERSION
+
+  jellyfin-desktop:
+    name: JELLYFIN_DESKTOP_REF in containers/jellyfin-desktop/Dockerfile
+    kind: dockerfile
+    sourceid: jellyfin-desktop
+    spec:
+      file: containers/jellyfin-desktop/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: JELLYFIN_DESKTOP_REF

@@ -1,0 +1,121 @@
+# Updatecli manifest: Yocto upstream layer pins in kas/features/common.yaml
+# Tracks the HEAD commit on each layer's pinned branch.
+#
+# Run: updatecli diff --config updatecli/yocto-layers.yaml
+#      updatecli apply --config updatecli/yocto-layers.yaml
+
+name: Yocto upstream layer pins
+
+sources:
+  poky:
+    name: poky (scarthgap)
+    kind: gitbranch
+    spec:
+      url: https://git.yoctoproject.org/poky
+      branch: scarthgap
+      key: hash
+
+  meta-openembedded:
+    name: meta-openembedded (scarthgap)
+    kind: gitbranch
+    spec:
+      url: https://git.openembedded.org/meta-openembedded
+      branch: scarthgap
+      key: hash
+
+  meta-clang:
+    name: meta-clang (scarthgap)
+    kind: gitbranch
+    spec:
+      url: https://github.com/kraj/meta-clang.git
+      branch: scarthgap
+      key: hash
+
+  meta-browser:
+    name: meta-browser (scarthgap)
+    kind: gitbranch
+    spec:
+      url: https://github.com/OSSystems/meta-browser.git
+      branch: scarthgap
+      key: hash
+
+  meta-rauc:
+    name: meta-rauc (scarthgap)
+    kind: gitbranch
+    spec:
+      url: https://github.com/rauc/meta-rauc.git
+      branch: scarthgap
+      key: hash
+
+  meta-lts-mixins-rust:
+    name: meta-lts-mixins rust (scarthgap/rust)
+    kind: gitbranch
+    spec:
+      url: https://git.yoctoproject.org/meta-lts-mixins
+      branch: scarthgap/rust
+      key: hash
+
+  meta-lts-mixins-uboot:
+    name: meta-lts-mixins u-boot (scarthgap/u-boot)
+    kind: gitbranch
+    spec:
+      url: https://git.yoctoproject.org/meta-lts-mixins
+      branch: scarthgap/u-boot
+      key: hash
+
+targets:
+  poky:
+    name: poky commit in common.yaml
+    kind: yaml
+    sourceid: poky
+    spec:
+      file: kas/features/common.yaml
+      key: $.repos.poky.commit
+
+  meta-openembedded:
+    name: meta-openembedded commit in common.yaml
+    kind: yaml
+    sourceid: meta-openembedded
+    spec:
+      file: kas/features/common.yaml
+      key: $.repos.meta-openembedded.commit
+
+  meta-clang:
+    name: meta-clang commit in common.yaml
+    kind: yaml
+    sourceid: meta-clang
+    spec:
+      file: kas/features/common.yaml
+      key: $.repos.meta-clang.commit
+
+  meta-browser:
+    name: meta-browser commit in common.yaml
+    kind: yaml
+    sourceid: meta-browser
+    spec:
+      file: kas/features/common.yaml
+      key: $.repos.meta-browser.commit
+
+  meta-rauc:
+    name: meta-rauc commit in common.yaml
+    kind: yaml
+    sourceid: meta-rauc
+    spec:
+      file: kas/features/common.yaml
+      key: $.repos.meta-rauc.commit
+
+  meta-lts-mixins-rust:
+    name: meta-lts-mixins-rust commit in common.yaml
+    kind: yaml
+    sourceid: meta-lts-mixins-rust
+    spec:
+      file: kas/features/common.yaml
+      key: $.repos.meta-lts-mixins-rust.commit
+
+  meta-lts-mixins-uboot:
+    name: meta-lts-mixins-uboot commit in common.yaml
+    kind: yaml
+    sourceid: meta-lts-mixins-uboot
+    spec:
+      file: kas/features/common.yaml
+      key: $.repos.meta-lts-mixins-uboot.commit

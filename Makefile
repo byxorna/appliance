@@ -85,7 +85,7 @@ endef
 
 $(foreach n,$(CONTAINER_NAMES),$(eval $(call CONTAINER_RULES,$(n))))
 
-.PHONY: shell kas-shell check build build-image build-update build-firmware build-all release status clean clean-cache clean-cache-all rpiboot _build-info print-variants print-machines $(addprefix x-rebuild-redeploy-,$(VARIANTS))
+.PHONY: shell kas-shell check build build-image build-update build-firmware build-all release status clean clean-cache clean-cache-all rpiboot _build-info print-variants print-machines check-updates apply-updates $(addprefix x-rebuild-redeploy-,$(VARIANTS))
 
 # Known artifact extensions produced by build and build-update targets.
 # Only these are checksummed in the build-info sidecar.
@@ -415,6 +415,23 @@ x-rebuild-redeploy-$(1): ## Rebuild + deploy $(1) to DEVICE_IP
 endef
 
 $(foreach v,$(VARIANTS),$(eval $(call DEPLOY_RULES,$(v))))
+
+UPDATECLI_IMAGE := ghcr.io/updatecli/updatecli:latest
+UPDATECLI_GITHUB_TOKEN ?=
+UPDATECLI_RUN = $(CONTAINER_ENGINE) run --rm \
+	--authfile "$(EMPTY_AUTH)" \
+	-v "$(CURDIR)/updatecli:/workspace/updatecli:ro" \
+	-v "$(CURDIR)/kas:/workspace/kas" \
+	-v "$(CURDIR)/containers:/workspace/containers" \
+	-w /workspace \
+	$(if $(UPDATECLI_GITHUB_TOKEN),-e UPDATECLI_GITHUB_TOKEN=$(UPDATECLI_GITHUB_TOKEN),) \
+	$(UPDATECLI_IMAGE)
+
+check-updates: $(EMPTY_AUTH) ## Show outdated dependency pins (layer commits, container versions)
+	$(UPDATECLI_RUN) diff --config updatecli/
+
+apply-updates: $(EMPTY_AUTH) ## Update dependency pins in-place (layer commits, container versions)
+	$(UPDATECLI_RUN) apply --config updatecli/
 
 clean-cache: ## Reset build state (build volume + sstate) for current VARIANT
 	$(CONTAINER_ENGINE) volume rm $(BUILD_VOL) || :

@@ -1,0 +1,62 @@
+# Updatecli manifest: BSP layer pins in kas/machines/*.yaml
+# Tracks the HEAD commit on each BSP layer's pinned branch.
+#
+# Uses searchpattern to glob kas/machines/*.yaml, so adding a new machine
+# config picks it up automatically.
+#
+# Run: updatecli diff --config updatecli/bsp-layers.yaml
+#      updatecli apply --config updatecli/bsp-layers.yaml
+
+name: BSP layer pins
+
+sources:
+  meta-raspberrypi:
+    name: meta-raspberrypi (scarthgap)
+    kind: gitbranch
+    spec:
+      url: https://git.yoctoproject.org/meta-raspberrypi
+      branch: scarthgap
+      key: hash
+
+  meta-rauc-community:
+    name: meta-rauc-community (scarthgap)
+    kind: gitbranch
+    spec:
+      url: https://github.com/rauc/meta-rauc-community.git
+      branch: scarthgap
+      key: hash
+
+  meta-seeed-cm4:
+    name: meta-seeed-cm4 (main)
+    kind: gitbranch
+    spec:
+      url: https://github.com/Seeed-Studio/meta-seeed-cm4.git
+      branch: main
+      key: hash
+
+targets:
+  meta-raspberrypi:
+    name: meta-raspberrypi commit in all machine configs
+    kind: yaml
+    sourceid: meta-raspberrypi
+    spec:
+      file: kas/machines/*.yaml
+      searchpattern: true
+      key: $.repos.meta-raspberrypi.commit
+
+  meta-rauc-community:
+    name: meta-rauc-community commit in all machine configs
+    kind: yaml
+    sourceid: meta-rauc-community
+    spec:
+      file: kas/machines/*.yaml
+      searchpattern: true
+      key: $.repos.meta-rauc-community.commit
+
+  meta-seeed-cm4:
+    name: meta-seeed-cm4 commit in seeed-reterminal
+    kind: yaml
+    sourceid: meta-seeed-cm4
+    spec:
+      file: kas/machines/seeed-reterminal.yaml
+      key: $.repos.meta-seeed-cm4.commit
