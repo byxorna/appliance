@@ -221,6 +221,16 @@ release: ## Build all containers and variants with summary
 	START=$$(date +%s); \
 	TOTAL=0; PASSED=0; FAILED=0; \
 	CLR="\033[2K\r"; \
+	art_size() { \
+		_vm=$$(awk '/^machine:/ {print $$2}' kas/variant-$$1.yaml); \
+		_vi=$$(awk '/^target:/ {print $$2}' kas/variant-$$1.yaml kas/features/common.yaml | head -1); \
+		_pfx="$(ARTIFACTS_DIR)/$$1-$$_vi-$$_vm"; \
+		case $$2 in \
+			firmware) _a="$$_pfx.wic.bz2"; [ -f "$$_a" ] || _a="$$_pfx.wic" ;; \
+			update)   _a="$$_pfx.raucb" ;; \
+		esac; \
+		du -h "$$_a" 2>/dev/null | cut -f1 | tr -d ' '; \
+	}; \
 	echo ""; \
 	echo "release $$GIT_DESC"; \
 	echo ""; \
@@ -257,26 +267,21 @@ release: ## Build all containers and variants with summary
 			TOTAL=$$((TOTAL + 1)); \
 			LOG="$(RELEASE_LOG_DIR)/$$v-$$phase.log"; \
 			printf "  %-40s %-10s ..." "$$v" "$$phase"; \
-			if [ "$$phase" = "firmware" ]; then \
-				TARGET="build-firmware"; \
-			else \
-				TARGET="build-update"; \
-			fi; \
+			[ "$$phase" = "firmware" ] && TARGET="build-firmware" || TARGET="build-update"; \
 			if $(MAKE) --no-print-directory VARIANT=$$v $$TARGET > "$$LOG" 2>&1; then \
 				PASSED=$$((PASSED + 1)); \
-				V_MACHINE=$$(awk '/^machine:/ {print $$2}' kas/variant-$$v.yaml); \
-				V_IMAGE=$$(awk '/^target:/ {print $$2}' kas/variant-$$v.yaml kas/features/common.yaml | head -1); \
-				if [ "$$phase" = "firmware" ]; then \
-					ART="$(ARTIFACTS_DIR)/$$v-$$V_IMAGE-$$V_MACHINE.wic.bz2"; \
-					[ -f "$$ART" ] || ART="$(ARTIFACTS_DIR)/$$v-$$V_IMAGE-$$V_MACHINE.wic"; \
-				else \
-					ART="$(ARTIFACTS_DIR)/$$v-$$V_IMAGE-$$V_MACHINE.raucb"; \
-				fi; \
-				SIZE=$$(du -h "$$ART" 2>/dev/null | cut -f1 | tr -d ' '); \
-				printf "$$CLR  %-40s %-10s ✓  %-20s  %s\n" "$$v" "$$phase" "$$GIT_DESC" "$$SIZE"; \
+				printf "$$CLR  %-40s %-10s ✓  %-20s  %s\n" "$$v" "$$phase" "$$GIT_DESC" "$$(art_size $$v $$phase)"; \
 			else \
-				FAILED=$$((FAILED + 1)); \
-				printf "$$CLR  %-40s %-10s ✗  %-20s  -> %s\n" "$$v" "$$phase" "$$GIT_DESC" "$$LOG"; \
+				printf "$$CLR  %-40s %-10s ✗  retrying with clean cache...\n" "$$v" "$$phase"; \
+				$(MAKE) --no-print-directory VARIANT=$$v clean-cache 2>/dev/null || :; \
+				RETRY_LOG="$(RELEASE_LOG_DIR)/$$v-$$phase.retry.log"; \
+				if $(MAKE) --no-print-directory VARIANT=$$v $$TARGET > "$$RETRY_LOG" 2>&1; then \
+					PASSED=$$((PASSED + 1)); \
+					printf "  %-40s %-10s ✓  %-20s  %s  (retry)\n" "$$v" "$$phase" "$$GIT_DESC" "$$(art_size $$v $$phase)"; \
+				else \
+					FAILED=$$((FAILED + 1)); \
+					printf "  %-40s %-10s ✗  %-20s  -> %s\n" "$$v" "$$phase" "$$GIT_DESC" "$$RETRY_LOG"; \
+				fi; \
 			fi; \
 		done; \
 	done; \
